@@ -7,7 +7,7 @@ import {
     EmptyTitle,
 } from "@/components/ui/empty"
 import { Button } from "../ui/button"
-import { ArrowUpRightIcon, CircleAlertIcon, InfoIcon, TriangleAlertIcon } from "lucide-react"
+import {  CircleAlertIcon, } from "lucide-react"
 import Link from "next/link"
 
 export default function FailedVerification() {
@@ -25,9 +25,9 @@ export default function FailedVerification() {
             </EmptyHeader>
             <EmptyContent>
                 <div className="flex flex-wrap gap-2">
-                    <Button size="sm" variant="default">Resend verification link</Button>
+                    {/* <Button size="sm" variant="default">Resend verification link</Button> */}
                     <Button size="sm" variant="outline" asChild>
-                        <Link href="">Sign-up agin</Link>
+                        <Link href="/auth/sign-up">Sign up again</Link>
                     </Button>
                 </div>
             </EmptyContent>
