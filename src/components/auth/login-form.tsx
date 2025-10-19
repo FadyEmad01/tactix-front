@@ -11,9 +11,10 @@ import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "../ui/button"
 import { LoadingSwap } from "../ui/loading-swap"
-import { toast } from "sonner"
+// import { toast } from "sonner"
 import { LoginFormData, loginSchema } from "@/validation/authSchemas"
 import { useState } from "react"
+import { toastManager } from "../ui/toast"
 
 export function LoginForm({
   className,
@@ -34,15 +35,29 @@ export function LoginForm({
 
   function onSubmit(data: z.infer<typeof loginSchema>) {
 
-    toast.success(`Welcome back, ${data.email.split("@")[0]}!`)
-
+    // toast.success(`Welcome back, ${data.email.split("@")[0]}!`)
+    toastManager.add({
+      title: `👋🏻 Helloo ${data.email.split("@")[0]}!`,
+      description: `Welcome back`,
+      // type:"success"
+    })
   }
 
   async function handleGoogleLogin() {
     setGoogleLoading(true)
-    toast("Redirecting to Google...")
+    // toast("Redirecting to Google...")
+    const id = toastManager.add({
+      title: "Loading…",
+      description: "Redirecting to Google...",
+      type: "loading",
+    })
     await new Promise((resolve) => setTimeout(resolve, 2000))
     setGoogleLoading(false)
+    toastManager.close(id)
+    toastManager.add({
+      title: "Done",
+      description: "Google login logic here...",
+    })
     console.log("Google login logic here...")
   }
 

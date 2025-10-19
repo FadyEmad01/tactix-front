@@ -241,6 +241,8 @@
    --shadow-2xl: 0px 1px 2px 0px hsl(0 0% 0% / 0.45);
 
    /* coss.com ui */
+   --destructive-saturated: oklch(0.637 0.237 25.331);
+   --destructive-foreground-saturated: oklch(0.704 0.191 22.216);
    --info: oklch(0.623 0.214 259.815);
    --info-foreground: oklch(0.707 0.165 254.624);
    --success: oklch(0.696 0.17 162.48);
@@ -302,6 +304,8 @@
    --shadow-2xl: var(--shadow-2xl);
 
    /* coss.com ui */
+   --color-destructive-saturated: var(--destructive-saturated);
+   --color-destructive-foreground-saturated: var(--destructive-foreground-saturated);
    --color-warning-foreground: var(--warning-foreground);
    --color-warning: var(--warning);
    --color-success-foreground: var(--success-foreground);

@@ -1,5 +1,5 @@
-import { Metadata } from "next"
-
+// import { Metadata } from "next"
+"use client"
 import { cn } from "@/lib/utils"
 import {
   Card,
@@ -10,7 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -22,479 +21,146 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
+import { Controller, useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import z from "zod"
+import ImageCropperForm from "@/components/settings/ImageCropperForm"
+import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from "@/components/ui/item"
 
-export const metadata: Metadata = {
-  title: "Settings",
-  description: "Manage your account settings",
-}
+// export const metadata: Metadata = {
+//   title: "Settings",
+//   description: "Manage your account settings",
+// }
 
-const timezones = [
-  {
-    label: "Americas",
-    timezones: [
-      { value: "America/New_York", label: "(GMT-5) New York" },
-      { value: "America/Los_Angeles", label: "(GMT-8) Los Angeles" },
-      { value: "America/Chicago", label: "(GMT-6) Chicago" },
-      { value: "America/Toronto", label: "(GMT-5) Toronto" },
-      { value: "America/Vancouver", label: "(GMT-8) Vancouver" },
-      { value: "America/Sao_Paulo", label: "(GMT-3) São Paulo" },
-    ],
-  },
-  {
-    label: "Europe",
-    timezones: [
-      { value: "Europe/London", label: "(GMT+0) London" },
-      { value: "Europe/Paris", label: "(GMT+1) Paris" },
-      { value: "Europe/Berlin", label: "(GMT+1) Berlin" },
-      { value: "Europe/Rome", label: "(GMT+1) Rome" },
-      { value: "Europe/Madrid", label: "(GMT+1) Madrid" },
-      { value: "Europe/Amsterdam", label: "(GMT+1) Amsterdam" },
-    ],
-  },
-  {
-    label: "Asia/Pacific",
-    timezones: [
-      { value: "Asia/Tokyo", label: "(GMT+9) Tokyo" },
-      { value: "Asia/Shanghai", label: "(GMT+8) Shanghai" },
-      { value: "Asia/Singapore", label: "(GMT+8) Singapore" },
-      { value: "Asia/Dubai", label: "(GMT+4) Dubai" },
-      { value: "Australia/Sydney", label: "(GMT+11) Sydney" },
-      { value: "Asia/Seoul", label: "(GMT+9) Seoul" },
-    ],
-  },
-] as const
+const signUpSchema = z.object({
+  name: z.string().min(2),
+  email: z.string().email(),
+  password: z.string().min(8),
+  confirmPassword: z.string().min(8),
+})
 
-const loginHistory = [
-  {
-    date: "2024-01-01",
-    ip: "192.168.1.1",
-    location: "New York, USA",
-  },
-  {
-    date: "2023-12-29",
-    ip: "172.16.0.100",
-    location: "London, UK",
-  },
-  {
-    date: "2023-12-28",
-    ip: "10.0.0.50",
-    location: "Toronto, Canada",
-  },
-  {
-    date: "2023-12-25",
-    ip: "192.168.2.15",
-    location: "Sydney, Australia",
-  },
-] as const
-
-const activeSessions = [
-  {
-    device: "MacBook Pro",
-    browser: "Chrome",
-    os: "macOS",
-  },
-  {
-    device: "iPhone",
-    browser: "Safari",
-    os: "iOS",
-  },
-  {
-    device: "iPad",
-    browser: "Safari",
-    os: "iOS",
-  },
-  {
-    device: "Android Phone",
-    browser: "Chrome",
-    os: "Android",
-  },
-] as const
+type SignUpFormData = z.infer<typeof signUpSchema>
 
 export default function SettingsPage() {
+
+  const form = useForm<SignUpFormData>({
+    resolver: zodResolver(signUpSchema),
+    mode: "onSubmit",
+    defaultValues: {
+      name: "Fady Emad",
+      email: "fadyemad@hotmail.com",
+      password: "asdhkH823#",
+      confirmPassword: "asdhkH823",
+    },
+  })
+
+  const { isSubmitting } = form.formState
+
   return (
-    <div className="@container/page flex flex-1 flex-col gap-8 p-6 pt-0">
-      <Tabs defaultValue="account" className="gap-6">
-        <div
-          data-slot="dashboard-header"
-          className="flex items-center justify-between"
-        >
-          <TabsList>
-            <TabsTrigger value="account">Account</TabsTrigger>
-            <TabsTrigger value="security">Security</TabsTrigger>
-            <TabsTrigger value="notifications">Notifications</TabsTrigger>
-            <TabsTrigger value="privacy">Privacy</TabsTrigger>
-          </TabsList>
+    <>
+      <div className="lg:space-y-6 space-y-4">
+        <div>
+          <h2 className="text-2xl font-semibold tracking-tight">
+            Profile
+          </h2>
+          {/* <h3 className="text-lg font-medium">Profile</h3> */}
+          <p className="text-sm text-muted-foreground">
+            Update your profile details.
+          </p>
         </div>
-        <TabsContent value="account" className="grid gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Account Settings</CardTitle>
-              <CardDescription>
-                Make changes to your account here.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form id="form-account" className="@container">
-                <FieldGroup>
-                  <Field>
-                    <Label htmlFor="name">Name</Label>
-                    <FieldControl>
-                      <Input
-                        id="name"
-                        placeholder="First and last name"
-                        required
-                      />
-                    </FieldControl>
-                    <FieldDescription>
-                      This is your public display name.
-                    </FieldDescription>
-                  </Field>
-                  <Field>
-                    <Label htmlFor="email">Email</Label>
-                    <FieldControl>
-                      <Input
-                        id="email"
-                        placeholder="you@example.com"
-                        required
-                      />
-                    </FieldControl>
-                  </Field>
-                  <Field>
-                    <Label htmlFor="timezone">Timezone</Label>
-                    <FieldControl>
-                      <Select>
-                        <SelectTrigger id="timezone">
-                          <SelectValue placeholder="Select a timezone" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {timezones.map((timezone) => (
-                            <SelectGroup key={timezone.label}>
-                              <SelectLabel>{timezone.label}</SelectLabel>
-                              {timezone.timezones.map((time) => (
-                                <SelectItem key={time.value} value={time.value}>
-                                  {time.label}
-                                </SelectItem>
-                              ))}
-                            </SelectGroup>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </FieldControl>
-                  </Field>
-                </FieldGroup>
-              </form>
-            </CardContent>
-            <CardFooter className="border-t">
-              <Button type="submit" form="form-account" variant="secondary">
-                Save changes
-              </Button>
-            </CardFooter>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Notifications</CardTitle>
-              <CardDescription>
-                Manage how you receive notifications.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form id="form-notifications" className="@container">
-                <FieldGroup>
-                  <Field>
-                    <Label htmlFor="channels">Notification Channels</Label>
-                    <FieldControl className="flex flex-col gap-2">
-                      <div className="flex items-center gap-2">
-                        <Checkbox id="notification-email" />
-                        <Label htmlFor="notification-email">Email</Label>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Checkbox id="notification-sms" />
-                        <Label htmlFor="notification-sms">SMS</Label>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Checkbox id="notification-push" />
-                        <Label htmlFor="notification-push">Push</Label>
-                      </div>
-                    </FieldControl>
-                    <FieldDescription>
-                      Choose how you want to receive notifications.
-                    </FieldDescription>
-                  </Field>
-                  <Field>
-                    <Label htmlFor="types">Notification Types</Label>
-                    <FieldControl className="flex flex-col gap-2">
-                      <div className="flex items-center gap-2">
-                        <Checkbox id="notification-account" />
-                        <Label htmlFor="notification-account">
-                          Account Activity
-                        </Label>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          id="notification-security"
-                          defaultChecked
-                          disabled
+        <Separator />
+        <Card>
+          <CardHeader>
+            <CardTitle>Profile Settings</CardTitle>
+            <CardDescription>
+              Make changes to your profile here.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form id="form-account" className="@container">
+              <FieldGroup className="@container/field-group flex max-w-4xl min-w-0 flex-col gap-8 @3xl:gap-6">
+                <ImageCropperForm />
+
+                <Controller
+                  control={form.control}
+                  name="name"
+                  render={({ field, fieldState }) => (
+                    <Field className="grid auto-rows-min items-start gap-3 *:data-[slot=label]:col-start-1 *:data-[slot=label]:row-start-1 @3xl/field-group:grid-cols-2 @3xl/field-group:gap-6" data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="name">Name</FieldLabel>
+                      <div className="flex flex-col gap-2">
+                        <Input
+                          {...field}
+                          aria-invalid={fieldState.invalid}
+                          id="name"
+                          type="text"
+                          autoComplete="additional-name"
+                          placeholder="Evil Rabbit"
                         />
-                        <Label htmlFor="notification-security">
-                          Security Alerts
-                        </Label>
+
+                        {fieldState.invalid && (
+                          <FieldError className="" errors={[fieldState.error]} />
+                        )}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Checkbox id="notification-marketing" />
-                        <Label htmlFor="notification-marketing">
-                          Marketing & Promotions
-                        </Label>
-                      </div>
-                    </FieldControl>
-                    <FieldDescription>
-                      Choose how you want to receive notifications.
-                    </FieldDescription>
-                  </Field>
-                </FieldGroup>
-              </form>
-            </CardContent>
-            <CardFooter className="border-t">
-              <Button
-                type="submit"
-                form="form-notifications"
-                variant="secondary"
-              >
-                Save changes
+
+                    </Field>
+                  )}
+                />
+                <Controller
+                  control={form.control}
+                  name="email"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid} className="grid auto-rows-min items-start gap-3 *:data-[slot=label]:col-start-1 *:data-[slot=label]:row-start-1 @3xl/field-group:grid-cols-2 @3xl/field-group:gap-6">
+                      <FieldLabel htmlFor="email">Email</FieldLabel>
+                      <Input
+                        {...field}
+                        aria-invalid={fieldState.invalid}
+                        id="email"
+                        type="email"
+                        autoComplete="email"
+                        placeholder="m@example.com"
+                      />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
+                  )}
+                />
+
+              </FieldGroup>
+            </form>
+          </CardContent>
+          <CardFooter className="border-t">
+            {/* <Button className="text-destructive-foreground-saturated" type="submit" form="form-account" variant="destructive-outline">
+              Save changes
+            </Button> */}
+            <Button size="sm" type="submit" form="form-account" variant="default">
+              Save changes
+            </Button>
+          </CardFooter>
+        </Card>
+
+        <Card className="border-destructive/10 bg-destructive-saturated/10">
+          <CardContent className="flex w-full items-center justify-between flex-wrap gap-6">
+            <div className="flex flex-col gap-2">
+              <h5 className="text-destructive leading-none font-semibold text-base">Danger Zone</h5>
+              <p className="text-muted-foreground text-sm">Make changes to your profile here.</p>
+            </div>
+            <div className="flex gap-2">
+              <Button className="text-destructive-saturated bg-card dark:bg-primary dark:hover:bg-primary/90 border-input hover:bg-card/70" size="sm">
+              change visability
               </Button>
-            </CardFooter>
-          </Card>
-        </TabsContent>
-        <TabsContent
-          value="security"
-          className="grid gap-6 @3xl/page:grid-cols-2"
-        >
-          <Card className="@3xl/page:col-span-2">
-            <CardHeader>
-              <CardTitle>Security Settings</CardTitle>
-              <CardDescription>
-                Make changes to your security settings here.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="@container">
-              <form id="form-security">
-                <FieldGroup>
-                  <Field>
-                    <Label htmlFor="current-password">Current Password</Label>
-                    <FieldControl>
-                      <Input
-                        id="current-password"
-                        placeholder="Current password"
-                        required
-                      />
-                    </FieldControl>
-                    <FieldDescription>
-                      This is your current password.
-                    </FieldDescription>
-                  </Field>
-                  <Field>
-                    <Label htmlFor="new-password">New Password</Label>
-                    <FieldControl>
-                      <Input
-                        id="new-password"
-                        placeholder="New password"
-                        required
-                      />
-                    </FieldControl>
-                  </Field>
-                  <Field>
-                    <Label htmlFor="confirm-password">Confirm Password</Label>
-                    <FieldControl>
-                      <Input
-                        id="confirm-password"
-                        placeholder="Confirm password"
-                      />
-                    </FieldControl>
-                  </Field>
-                  <Field>
-                    <FieldControl>
-                      <Switch
-                        id="enable-two-factor-auth"
-                        className="self-start"
-                      />
-                    </FieldControl>
-                    <Label htmlFor="enable-two-factor-auth">
-                      Enable two-factor authentication
-                    </Label>
-                    <FieldDescription>
-                      This will add an extra layer of security to your account.
-                      Make this an extra long description to test the layout.
-                    </FieldDescription>
-                  </Field>
-                </FieldGroup>
-              </form>
-            </CardContent>
-            <CardFooter className="border-t">
-              <Button type="submit" form="form-security" variant="secondary">
-                Save changes
+              <Button className="bg-destructive-saturated" variant="destructive" size="sm">
+                Delete Account
               </Button>
-            </CardFooter>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Login History</CardTitle>
-              <CardDescription>
-                Recent login activities on your account.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead className="hidden @md/page:table-cell">
-                      IP
-                    </TableHead>
-                    <TableHead>Location</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {loginHistory.map((login) => (
-                    <TableRow key={login.date}>
-                      <TableCell>
-                        <div className="flex flex-col gap-1">
-                          {new Date(login.date).toLocaleDateString("en-US", {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          })}
-                          <span className="flex @md/page:hidden">
-                            {login.ip}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden @md/page:table-cell">
-                        {login.ip}
-                      </TableCell>
-                      <TableCell>{login.location}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Active Sessions</CardTitle>
-              <CardDescription>
-                Current active sessions on your account.
-              </CardDescription>
-              <CardAction>
-                <Button variant="outline" size="sm">
-                  <span className="hidden @md/card-header:block">
-                    Manage Sessions
-                  </span>
-                  <span className="block @md/card-header:hidden">Manage</span>
-                </Button>
-              </CardAction>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Device</TableHead>
-                    <TableHead>Browser</TableHead>
-                    <TableHead>OS</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {activeSessions.map((session) => (
-                    <TableRow key={session.device}>
-                      <TableCell>{session.device}</TableCell>
-                      <TableCell>{session.browser}</TableCell>
-                      <TableCell>{session.os}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
-  )
-}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-function FieldGroup({ children }: React.ComponentProps<"div">) {
-  return (
-    <div
-      data-slot="field-group"
-      className="@container/field-group flex max-w-4xl min-w-0 flex-col gap-8 @3xl:gap-6"
-    >
-      {children}
-    </div>
-  )
-}
+    </>
 
-function Field({ children, className, ...props }: React.ComponentProps<"div">) {
-  return (
-    <div
-      data-slot="field"
-      className={cn(
-        "grid auto-rows-min items-start gap-3 *:data-[slot=label]:col-start-1 *:data-[slot=label]:row-start-1 @3xl/field-group:grid-cols-2 @3xl/field-group:gap-6",
-        className
-      )}
-      {...props}
-    >
-      {children}
-    </div>
-  )
-}
-
-function FieldControl({
-  children,
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
-  return (
-    <div
-      data-slot="field-control"
-      className={cn(
-        "@3xl/field-group:col-start-2 @3xl/field-group:row-span-2 @3xl/field-group:row-start-1 @3xl/field-group:self-start",
-        className
-      )}
-      {...props}
-    >
-      {children}
-    </div>
-  )
-}
-
-function FieldDescription({
-  children,
-  className,
-  ...props
-}: React.ComponentProps<"p">) {
-  return (
-    <p
-      data-slot="field-description"
-      className={cn(
-        "text-muted-foreground text-sm @3xl/field-group:col-start-1 @3xl/field-group:row-start-1 @3xl/field-group:translate-y-6",
-        className
-      )}
-      {...props}
-    >
-      {children}
-    </p>
   )
 }

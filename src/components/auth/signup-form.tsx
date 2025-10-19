@@ -14,7 +14,8 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { SignUpFormData, signUpSchema } from "@/validation/authSchemas"
 import { useState } from "react"
 import z from "zod"
-import { toast } from "sonner"
+// import { toast } from "sonner"
+import { toastManager } from "../ui/toast"
 
 
 export function SignupForm({
@@ -38,15 +39,32 @@ export function SignupForm({
 
     function onSubmit(data: z.infer<typeof signUpSchema>) {
 
-        toast.success(`Hello, ${data.email.split("@")[0]}!`)
+        // toast.success(`Hello, ${data.email.split("@")[0]}!`)
+
+        toastManager.add({
+            title: `👋🏻 Hello ${data.email.split("@")[0]}!`,
+            // description: `Welcome back`,
+            // type:"success"
+        })
 
     }
 
     async function handleGoogleSignUp() {
         setGoogleLoading(true)
-        toast("Redirecting to Google...")
+        // toast("Redirecting to Google...")
+        const id = toastManager.add({
+            title: "Loading…",
+            description: "Redirecting to Google...",
+            type: "loading",
+        })
         await new Promise((resolve) => setTimeout(resolve, 2000))
         setGoogleLoading(false)
+        toastManager.close(id)
+        toastManager.add({
+            title: "Done",
+            description: "Google login logic here...",
+            timeout: 1000
+        })
         console.log("Google sgin-up logic here...")
     }
 
@@ -128,7 +146,7 @@ export function SignupForm({
                                     name="confirmPassword"
                                     render={({ field, fieldState }) => (
                                         <Field data-invalid={fieldState.invalid}>
-                                            <FieldLabel  htmlFor="confirm-password">Confirm Password</FieldLabel>
+                                            <FieldLabel htmlFor="confirm-password">Confirm Password</FieldLabel>
                                             <PasswordInput
                                                 {...field}
                                                 aria-invalid={fieldState.invalid}

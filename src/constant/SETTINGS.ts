@@ -1,23 +1,13 @@
 export const SETTINGS_NAV_ITEMS = [
     {
-      title: "General",
+      title: "Profile",
       href: "/dashboard/settings",
-      icon: "gauge",
-    },
-    {
-      title: "Account",
-      href: "/",
-      icon: "settings",
+      icon: "UserRoundCog",
     },
     {
       title: "Appearance",
       href: "/dashboard/settings/appearance",
-      icon: "handCoins",
-    },
-    {
-      title: "Notifications",
-      href: "/dashboard/settings/notifications",
-      icon: "messageCircleMore",
+      icon: "SunMoon",
     },
   ]
   

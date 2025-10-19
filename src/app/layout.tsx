@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "../styles/globals.css";
 import { ThemeProvider } from "@/provider/theme-provider";
-import { Toaster } from "@/components/ui/sonner";
+// import { Toaster } from "@/components/ui/sonner";
+import { ToastProvider } from "@/components/ui/toast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,8 +36,15 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
-          <Toaster position="bottom-right"/>
+          {/* coss.com toast */}
+          <ToastProvider>
+            {children}
+          </ToastProvider>
+
+
+          {/* shadcn toast */}
+          {/* <Toaster position="bottom-right"/> */}
+
         </ThemeProvider>
       </body>
     </html>

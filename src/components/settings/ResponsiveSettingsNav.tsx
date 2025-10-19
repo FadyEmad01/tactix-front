@@ -139,7 +139,7 @@ export function ResponsiveSettingsNav({ items }: ResponsiveSettingsNavProps) {
             </div>
 
             {/* Desktop version: Sidebar */}
-            <div className="hidden lg:block">
+            <div className="hidden lg:block sticky top-6">
                 <SidebarNav items={items} />
             </div>
         </>

@@ -11,7 +11,7 @@ export default function SettingsLayout({ children }: Readonly<{
             <Container>
                 <div className="space-y-6 py-10 pb-16">
                     <div className="space-y-0.5">
-                        <h2 className="text-2xl font-bold tracking-tight">Settings</h2>
+                        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
                         <p className="text-muted-foreground">
                             {/* Manage your account settings. */}
                             Update account preferences and manage
