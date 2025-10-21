@@ -1,4 +1,5 @@
 "use client"
+
 import {
   Card,
   CardAction,
@@ -15,6 +16,7 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 import { Controller, useForm } from "react-hook-form"
 import ImageCropperForm from "@/components/settings/ImageCropperForm"
 import DarkLightMode from "@/components/theme/DarkLightMode"
+import { Metadata } from "next"
 
 // export const metadata: Metadata = {
 //   title: "Settings",

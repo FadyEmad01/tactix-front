@@ -26,7 +26,7 @@ export function SignupForm({
 
     const form = useForm<SignUpFormData>({
         resolver: zodResolver(signUpSchema),
-        mode: "all",
+        mode: "onBlur",
         defaultValues: {
             name: "",
             email: "",

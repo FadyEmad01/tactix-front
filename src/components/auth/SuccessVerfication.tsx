@@ -16,7 +16,7 @@ export default function SuccessVerification() {
       <EmptyHeader>
         <EmptyMedia variant="icon">
           <CheckCircle2Icon className="text-green-500 size-5" />
-        </EmptyMedia>
+        </EmptyMedia>s
         <EmptyTitle>Email verified successfully</EmptyTitle>
         <EmptyDescription>
           Your email has been verified successfully. You can now explore your account and start using all features.

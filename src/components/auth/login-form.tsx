@@ -24,7 +24,7 @@ export function LoginForm({
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    mode: "all",
+    mode: 'onBlur',
     defaultValues: {
       email: "",
       password: "",
@@ -57,6 +57,7 @@ export function LoginForm({
     toastManager.add({
       title: "Done",
       description: "Google login logic here...",
+      timeout : 3000,
     })
     console.log("Google login logic here...")
   }
@@ -107,12 +108,12 @@ export function LoginForm({
                     <Field data-invalid={fieldState.invalid}>
                       <div className="flex items-center">
                         <FieldLabel htmlFor="password">Password</FieldLabel>
-                        <a
-                          href="#"
+                        <Link
+                          href="forget-password"
                           className="ml-auto text-sm underline-offset-2 hover:underline text-primary"
                         >
                           Forgot your password?
-                        </a>
+                        </Link>
                       </div>
                       <PasswordInput
                         {...field}
