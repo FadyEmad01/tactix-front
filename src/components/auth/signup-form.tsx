@@ -26,7 +26,7 @@ export function SignupForm({
 
     const form = useForm<SignUpFormData>({
         resolver: zodResolver(signUpSchema),
-        mode: "onBlur",
+        mode: "all",
         defaultValues: {
             userName: "",
             email: "",
@@ -49,51 +49,92 @@ export function SignupForm({
 
     // }
 
+    // async function onSubmit(data: z.infer<typeof signUpSchema>) {
+    //     let id: string | undefined;
+    //     try {
+    //         const formData = new FormData();
+    //         formData.append("userName", data.userName);
+    //         formData.append("email", data.email);
+    //         formData.append("password", data.password);
+
+    //         if (data.image instanceof File) {
+    //             formData.append("image", data.image);
+    //         }
+
+    //         id = toastManager.add({
+    //             title: "Creating account...",
+    //             type: "loading",
+    //         });
+
+    //         const result = await signUp(formData);
+    //         toastManager.close(id)
+    //         toastManager.add({
+    //             title: "Success",
+    //             description: result.message,
+    //             type: "success"
+    //         });
+
+    //     } catch (err: any) {
+
+    //         if (id) toastManager.close(id);
+
+    //         toastManager.add({
+    //             title: "Error",
+    //             description: err.message || "Something went wrong",
+    //             type: "error",
+    //             timeout: 3000,
+    //         });
+
+    //         await new Promise((resolve) => setTimeout(resolve, 3000));
+
+    //         toastManager.add({
+    //             title: "Please try again",
+    //             timeout: 3000,
+    //         });
+    //     }
+    // }
+
     async function onSubmit(data: z.infer<typeof signUpSchema>) {
         let id: string | undefined;
+      
         try {
-            const formData = new FormData();
-            formData.append("userName", data.userName);
-            formData.append("email", data.email);
-            formData.append("password", data.password);
-
-            if (data.image instanceof File) {
-                formData.append("image", data.image);
-            }
-
-            id = toastManager.add({
-                title: "Creating account...",
-                type: "loading",
-            });
-
-            const result = await signUp(formData);
-            toastManager.close(id)
-            toastManager.add({
-                title: "Success",
-                description: result.message,
-                type: "success"
-            });
-
+          const formData = new FormData();
+          formData.append("userName", data.userName);
+          formData.append("email", data.email);
+          formData.append("password", data.password);
+      
+          if (data.image instanceof File) {
+            formData.append("image", data.image);
+          }
+      
+          id = toastManager.add({
+            title: "Creating account...",
+            type: "loading",
+          });
+      
+          const result = await signUp(formData);
+      
+          // ✅ Close loading toast
+          toastManager.close(id);
+      
+          // ✅ Show success message that doesn’t close automatically
+          toastManager.add({
+            title: "Account created!",
+            description: "Please check your email to verify your account.",
+            type: "success",
+          });
+      
         } catch (err: any) {
-
-            if (id) toastManager.close(id);
-
-            toastManager.add({
-                title: "Error",
-                description: err.message || "Something went wrong",
-                type: "error",
-                timeout: 3000,
-            });
-
-            await new Promise((resolve) => setTimeout(resolve, 3000));
-
-            toastManager.add({
-                title: "Please try again",
-                timeout: 3000,
-            });
+          if (id) toastManager.close(id);
+      
+          toastManager.add({
+            title: "Error",
+            description: err.message || "Something went wrong",
+            type: "error",
+            timeout: 3000,
+          });
         }
-    }
-
+      }
 
     async function handleGoogleSignUp() {
         setGoogleLoading(true)
@@ -259,7 +300,7 @@ export function SignupForm({
                                 </div>
                                 <div className="text-center text-sm">
                                     have an account?{" "}
-                                    <Link href="/login" className="underline underline-offset-4">
+                                    <Link href="/auth/login" className="underline underline-offset-4">
                                         Login
                                     </Link>
                                 </div>

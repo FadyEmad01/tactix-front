@@ -2,10 +2,19 @@ import Container from "@/components/layout/Container";
 import { ResponsiveSettingsNav } from "@/components/settings/ResponsiveSettingsNav";
 
 import { SETTINGS_NAV_ITEMS } from "@/constant/SETTINGS";
+import { cookies } from "next/headers";
 
-export default function SettingsLayout({ children }: Readonly<{
+export default async function SettingsLayout({ children }: Readonly<{
     children: React.ReactNode;
 }>) {
+
+    const cookieStore = await cookies()
+    const userCookie = cookieStore.get("user")?.value
+    const user = userCookie ? JSON.parse(userCookie) : null
+
+    const name = user?.userName || ""
+    const email = user?.email || ""
+
     return (
         <>
             <Container>

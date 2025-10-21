@@ -16,20 +16,20 @@ export default function SuccessVerification() {
       <EmptyHeader>
         <EmptyMedia variant="icon">
           <CheckCircle2Icon className="text-green-500 size-5" />
-        </EmptyMedia>s
+        </EmptyMedia>
         <EmptyTitle>Email verified successfully</EmptyTitle>
         <EmptyDescription>
-          Your email has been verified successfully. You can now explore your account and start using all features.
+          Your email has been verified successfully. You must now <span className="underline">Login</span> to go to the dashboard.
         </EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
         <div className="flex flex-wrap gap-2">
           <Button size="sm" asChild>
-            <Link href="/">Go to Dashboard</Link>
+            <Link href="/auth/login">Login</Link>
           </Button>
-          <Button size="sm" variant="outline" asChild>
+          {/* <Button size="sm" variant="outline" asChild>
             <Link href="/profile">View Profile</Link>
-          </Button>
+          </Button> */}
         </div>
       </EmptyContent>
     </Empty>

@@ -1,9 +1,7 @@
 // import { Metadata } from "next"
 "use client"
-import { cn } from "@/lib/utils"
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
@@ -11,16 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
@@ -28,7 +17,7 @@ import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import z from "zod"
 import ImageCropperForm from "@/components/settings/ImageCropperForm"
-import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from "@/components/ui/item"
+import { useEffect } from "react"
 
 // export const metadata: Metadata = {
 //   title: "Settings",
@@ -50,12 +39,27 @@ export default function SettingsPage() {
     resolver: zodResolver(signUpSchema),
     mode: "onSubmit",
     defaultValues: {
-      name: "Fady Emad",
-      email: "fadyemad@hotmail.com",
-      password: "asdhkH823#",
-      confirmPassword: "asdhkH823",
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
     },
   })
+
+  const { setValue, formState } = form
+
+  useEffect(() => {
+    try {
+      const userString = sessionStorage.getItem("user")
+      if (userString) {
+        const user = JSON.parse(userString)
+        if (user?.userName) setValue("name", user.userName)
+        if (user?.email) setValue("email", user.email)
+      }
+    } catch (error) {
+      console.error("Error loading user data:", error)
+    }
+  }, [setValue])
 
   const { isSubmitting } = form.formState
 

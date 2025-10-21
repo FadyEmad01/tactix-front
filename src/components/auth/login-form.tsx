@@ -27,7 +27,7 @@ export function LoginForm({
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    mode: 'onBlur',
+    mode: 'all',
     defaultValues: {
       email: "",
       password: "",
@@ -46,51 +46,76 @@ export function LoginForm({
   //   })
   // }
 
+  // async function onSubmit(data: z.infer<typeof loginSchema>) {
+  //   let id: string | undefined;
+  //   try {
+  //     const result = await login({
+  //       email: data.email,
+  //       password: data.password,
+  //     });
+
+  //     id = toastManager.add({
+  //       title: "Loging...",
+  //       type: "loading",
+  //     });
+
+  //     toastManager.close(id)
+  //     toastManager.add({
+  //       title: "Success",
+  //       description: result.message,
+  //       type: "success",
+  //       timeout: 2000,
+  //     });
+  //     await new Promise((resolve) => setTimeout(resolve, 1500));
+  //     router.push("/");
+  //   } catch (err: any) {
+  //     if (id) toastManager.close(id);
+  //     toastManager.add({
+  //       title: "Error",
+  //       description: err.message || "Something went wrong",
+  //       type: "error",
+  //       timeout: 3000,
+  //     });
+
+  //     await new Promise((resolve) => setTimeout(resolve, 3000));
+
+  //   }
+  // }
+
   async function onSubmit(data: z.infer<typeof loginSchema>) {
     let id: string | undefined;
+  
     try {
-      // const formData = new FormData();
-      // formData.append("email", data.email);
-      // formData.append("password", data.password);
+      id = toastManager.add({
+        title: "Logging in...",
+        type: "loading",
+      });
+  
       const result = await login({
         email: data.email,
         password: data.password,
       });
-
-      // console.log(formData)
-      // console.log(data.email)
-      // console.log(data.password)
-
-      id = toastManager.add({
-        title: "Loging...",
-        type: "loading",
-      });
-
-      // const result = await login(formData);
-      toastManager.close(id)
+  
+      toastManager.close(id);
       toastManager.add({
-        title: "Success",
-        description: result.message,
+        title: "Welcome back!",
+        description: result.message || "Login successful",
         type: "success",
         timeout: 2000,
       });
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+  
+      // ✅ استنى شوية ثم روح للصفحة الرئيسية
+      await new Promise((resolve) => setTimeout(resolve, 1200));
       router.push("/");
     } catch (err: any) {
       if (id) toastManager.close(id);
+  
       toastManager.add({
-        title: "Error",
-        description: err.message || "Something went wrong",
+        title: "Login failed",
+        description: err.message || "Invalid credentials or server error",
         type: "error",
         timeout: 3000,
       });
-
-      await new Promise((resolve) => setTimeout(resolve, 3000));
-
-      // toastManager.add({
-      //   title: "Please try again",
-      //   timeout: 3000,
-      // });
     }
   }
 
@@ -215,7 +240,7 @@ export function LoginForm({
               </div>
               <div className="text-center text-sm">
                 Don&apos;t have an account?{" "}
-                <Link href="sign-up" className="underline underline-offset-4">
+                <Link href="/auth/sign-up" className="underline underline-offset-4">
                   Sign up
                 </Link>
               </div>
