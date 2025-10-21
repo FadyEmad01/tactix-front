@@ -1,4 +1,3 @@
-"use client"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -17,8 +16,8 @@ export default function Home() {
       </Link>
 
       {/* Main Card */}
-      <Card className="max-w-md w-full text-center md:rounded-3xl shadow-md">
-        <CardContent className="flex flex-col items-center justify-center gap-6 py-10 px-6">
+      <Card className="max-w-sm w-full text-center rounded-3xl shadow-md">
+        <CardContent className="flex flex-col items-center justify-center gap-4 py-6 px-6">
           <h1 className="text-3xl font-bold">Welcome to Tactix</h1>
           <p className="text-muted-foreground text-balance">
             Your journey starts here — login to continue or create a new account.

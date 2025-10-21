@@ -15,12 +15,15 @@ import { LoadingSwap } from "../ui/loading-swap"
 import { LoginFormData, loginSchema } from "@/validation/authSchemas"
 import { useState } from "react"
 import { toastManager } from "../ui/toast"
+import { login } from "@/lib/auth/login"
+import { useRouter } from "next/navigation"
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
   const [googleLoading, setGoogleLoading] = useState(false)
+  const router = useRouter();
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -33,14 +36,62 @@ export function LoginForm({
 
   const { isSubmitting } = form.formState
 
-  function onSubmit(data: z.infer<typeof loginSchema>) {
+  // function onSubmit(data: z.infer<typeof loginSchema>) {
 
-    // toast.success(`Welcome back, ${data.email.split("@")[0]}!`)
-    toastManager.add({
-      title: `👋🏻 Helloo ${data.email.split("@")[0]}!`,
-      description: `Welcome back`,
-      // type:"success"
-    })
+  //   // toast.success(`Welcome back, ${data.email.split("@")[0]}!`)
+  //   toastManager.add({
+  //     title: `👋🏻 Helloo ${data.email.split("@")[0]}!`,
+  //     description: `Welcome back`,
+  //     // type:"success"
+  //   })
+  // }
+
+  async function onSubmit(data: z.infer<typeof loginSchema>) {
+    let id: string | undefined;
+    try {
+      // const formData = new FormData();
+      // formData.append("email", data.email);
+      // formData.append("password", data.password);
+      const result = await login({
+        email: data.email,
+        password: data.password,
+      });
+
+      // console.log(formData)
+      // console.log(data.email)
+      // console.log(data.password)
+
+      id = toastManager.add({
+        title: "Loging...",
+        type: "loading",
+      });
+
+      // const result = await login(formData);
+      toastManager.close(id)
+      toastManager.add({
+        title: "Success",
+        description: result.message,
+        type: "success",
+        timeout: 2000,
+      });
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      router.push("/");
+    } catch (err: any) {
+      if (id) toastManager.close(id);
+      toastManager.add({
+        title: "Error",
+        description: err.message || "Something went wrong",
+        type: "error",
+        timeout: 3000,
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+
+      // toastManager.add({
+      //   title: "Please try again",
+      //   timeout: 3000,
+      // });
+    }
   }
 
   async function handleGoogleLogin() {
@@ -57,14 +108,14 @@ export function LoginForm({
     toastManager.add({
       title: "Done",
       description: "Google login logic here...",
-      timeout : 3000,
+      timeout: 3000,
     })
     console.log("Google login logic here...")
   }
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="overflow-hidden p-0 md:rounded-3xl">
+      <Card className="overflow-hidden p-0 rounded-3xl">
         <CardContent className="grid p-0 md:grid-cols-2">
           <form id="form-login" onSubmit={form.handleSubmit(onSubmit)} className="p-6 md:p-8">
             <div className="flex flex-col gap-6">

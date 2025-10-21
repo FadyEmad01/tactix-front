@@ -12,19 +12,7 @@ import { Button } from "../ui/button"
 import { LoadingSwap } from "../ui/loading-swap"
 import { useState } from "react"
 import { toastManager } from "../ui/toast"
-
-// Validation schema
-const resetPasswordSchema = z
-  .object({
-    password: z.string().min(8, "Password must be at least 8 characters"),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  })
-
-type ResetPasswordData = z.infer<typeof resetPasswordSchema>
+import { ResetPasswordData, resetPasswordSchema } from "@/validation/authSchemas"
 
 export function ResetPasswordForm({
   className,
@@ -49,12 +37,14 @@ export function ResetPasswordForm({
     toastManager.add({
       title: "Password reset successful!",
       description: "You can now log in with your new password.",
+      type: "success",
+      timeout: 3000
     })
   }
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="overflow-hidden p-0 md:rounded-3xl">
+      <Card className="overflow-hidden p-0 rounded-3xl">
         <CardContent className="grid p-0 md:grid-cols-1">
           <form id="form-reset" onSubmit={form.handleSubmit(onSubmit)} className="p-6 md:p-8">
             <div className="flex flex-col gap-6">
@@ -120,18 +110,6 @@ export function ResetPasswordForm({
               </div>
             </div>
           </form>
-
-          {/* <div className="p-2 relative hidden md:block">
-            <div className="relative w-full h-full rounded-2xl overflow-hidden">
-              <Image
-                src="/images/placeholder.jpeg"
-                alt="Image"
-                fill
-                priority
-                className="object-cover pointer-events-none"
-              />
-            </div>
-          </div> */}
         </CardContent>
       </Card>
 

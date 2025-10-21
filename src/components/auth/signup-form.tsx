@@ -2,10 +2,9 @@
 import { cn } from "@/lib/utils"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import Image from "next/image"
 import { PasswordInput } from "../ui/password-input"
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "../ui/field"
+import { Field, FieldError, FieldGroup, FieldLabel } from "../ui/field"
 import Link from "next/link"
 import { Button } from "../ui/button"
 import { LoadingSwap } from "../ui/loading-swap"
@@ -16,6 +15,7 @@ import { useState } from "react"
 import z from "zod"
 // import { toast } from "sonner"
 import { toastManager } from "../ui/toast"
+import { signUp } from "@/lib/auth/signup"
 
 
 export function SignupForm({
@@ -28,7 +28,7 @@ export function SignupForm({
         resolver: zodResolver(signUpSchema),
         mode: "onBlur",
         defaultValues: {
-            name: "",
+            userName: "",
             email: "",
             password: "",
             confirmPassword: "",
@@ -37,17 +37,63 @@ export function SignupForm({
 
     const { isSubmitting } = form.formState
 
-    function onSubmit(data: z.infer<typeof signUpSchema>) {
+    // function onSubmit(data: z.infer<typeof signUpSchema>) {
 
-        // toast.success(`Hello, ${data.email.split("@")[0]}!`)
+    //     // toast.success(`Hello, ${data.email.split("@")[0]}!`)
 
-        toastManager.add({
-            title: `👋🏻 Hello ${data.email.split("@")[0]}!`,
-            // description: `Welcome back`,
-            // type:"success"
-        })
+    //     toastManager.add({
+    //         title: `👋🏻 Hello ${data.email.split("@")[0]}!`,
+    //         // description: `Welcome back`,
+    //         // type:"success"
+    //     })
 
+    // }
+
+    async function onSubmit(data: z.infer<typeof signUpSchema>) {
+        let id: string | undefined;
+        try {
+            const formData = new FormData();
+            formData.append("userName", data.userName);
+            formData.append("email", data.email);
+            formData.append("password", data.password);
+
+            if (data.image instanceof File) {
+                formData.append("image", data.image);
+            }
+
+            id = toastManager.add({
+                title: "Creating account...",
+                type: "loading",
+            });
+
+            const result = await signUp(formData);
+            toastManager.close(id)
+            toastManager.add({
+                title: "Success",
+                description: result.message,
+                type: "success"
+            });
+
+        } catch (err: any) {
+
+            if (id) toastManager.close(id);
+
+            toastManager.add({
+                title: "Error",
+                description: err.message || "Something went wrong",
+                type: "error",
+                timeout: 3000,
+            });
+
+            await new Promise((resolve) => setTimeout(resolve, 3000));
+
+            toastManager.add({
+                title: "Please try again",
+                timeout: 3000,
+            });
+        }
     }
+
 
     async function handleGoogleSignUp() {
         setGoogleLoading(true)
@@ -70,7 +116,7 @@ export function SignupForm({
 
     return (
         <div className={cn("flex flex-col gap-6", className)} {...props}>
-            <Card className="overflow-hidden p-0 md:rounded-3xl">
+            <Card className="overflow-hidden p-0 rounded-3xl">
                 <CardContent className="grid p-0 md:grid-cols-2">
                     <form id="form-signup" onSubmit={form.handleSubmit(onSubmit)} className="p-6 md:p-8">
                         <FieldGroup>
@@ -83,7 +129,7 @@ export function SignupForm({
                                 </div>
                                 <Controller
                                     control={form.control}
-                                    name="name"
+                                    name="userName"
                                     render={({ field, fieldState }) => (
                                         <Field data-invalid={fieldState.invalid}>
                                             <FieldLabel htmlFor="name">Full name</FieldLabel>
@@ -94,6 +140,25 @@ export function SignupForm({
                                                 type="text"
                                                 autoComplete="additional-name"
                                                 placeholder="Evil Rabbit"
+                                            />
+
+                                            {fieldState.invalid && (
+                                                <FieldError errors={[fieldState.error]} />
+                                            )}
+                                        </Field>
+                                    )}
+                                />
+                                <Controller
+                                    control={form.control}
+                                    name="image"
+                                    render={({ field, fieldState }) => (
+                                        <Field data-invalid={fieldState.invalid}>
+                                            <FieldLabel htmlFor="image">Profile Image</FieldLabel>
+                                            <Input
+                                                id="image"
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => field.onChange(e.target.files?.[0])}
                                             />
 
                                             {fieldState.invalid && (
@@ -150,7 +215,7 @@ export function SignupForm({
                                             <PasswordInput
                                                 {...field}
                                                 aria-invalid={fieldState.invalid}
-                                                id="password"
+                                                id="confirm-password"
                                                 placeholder="********"
                                             // required
                                             />

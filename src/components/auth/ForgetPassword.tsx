@@ -12,12 +12,7 @@ import { Button } from "../ui/button"
 import { LoadingSwap } from "../ui/loading-swap"
 import { useState } from "react"
 import { toastManager } from "../ui/toast"
-
-const forgotPasswordSchema = z.object({
-  email: z.string().email("Please enter a valid email"),
-})
-
-type ForgotPasswordData = z.infer<typeof forgotPasswordSchema>
+import { ForgotPasswordData, forgotPasswordSchema } from "@/validation/authSchemas"
 
 export function ForgotPasswordForm({
   className,
@@ -41,12 +36,14 @@ export function ForgotPasswordForm({
     toastManager.add({
       title: "Password reset link sent!",
       description: `Check your inbox at ${data.email}`,
+      type: "success",
+      timeout: 3000
     })
   }
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="overflow-hidden p-0 md:rounded-3xl">
+      <Card className="overflow-hidden p-0 rounded-3xl">
         <CardContent className="grid p-0 md:grid-cols">
           <form id="form-forgot" onSubmit={form.handleSubmit(onSubmit)} className="p-6 md:p-8">
             <div className="flex flex-col gap-6">

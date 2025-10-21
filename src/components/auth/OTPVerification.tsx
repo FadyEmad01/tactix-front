@@ -260,7 +260,7 @@ export function OTPVerificationComponent() {
 
     return (
         <div className="bg-muted dark:bg-background flex min-h-svh flex-col items-center justify-center p-6 md:p-10">
-            <Card className="overflow-hidden p-0 md:rounded-3xl">
+            <Card className="overflow-hidden p-0 rounded-3xl">
                 <CardContent className="p-6 md:p-8">
                     <div className="flex flex-col gap-6">
                         <div className="flex flex-col items-center text-center">

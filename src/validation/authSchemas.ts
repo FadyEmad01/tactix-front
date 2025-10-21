@@ -29,7 +29,7 @@ export type LoginFormData = z.infer<typeof loginSchema>
 //  Sign Up Schema (with confirm password)
 export const signUpSchema = z
   .object({
-    name: z.string().min(2, "Name must be at least 2 characters"),
+    userName: z.string().min(2, "Name must be at least 2 characters"),
     email: z
       .string()
       .email("Invalid email address")
@@ -37,6 +37,7 @@ export const signUpSchema = z
     password: passwordRules,
     // confirmPassword: z.string().min(8, "Please confirm your password"),
     confirmPassword: z.string(), // dh 3shan ygeb error:"Passwords do not match"; 3la tol men 8er "Please confirm your password"
+    image: z.any().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     path: ["confirmPassword"], // shows the error under confirmPassword field
@@ -44,3 +45,26 @@ export const signUpSchema = z
   })
 
 export type SignUpFormData = z.infer<typeof signUpSchema>
+
+
+export const forgotPasswordSchema = z.object({
+  email: z
+    .string()
+    .email("Invalid email address")
+    .refine(isAllowedEmail, "Only Gmail, Yahoo, Outlook, or Hotmail emails are allowed"),
+})
+
+export type ForgotPasswordData = z.infer<typeof forgotPasswordSchema>
+
+
+export const resetPasswordSchema = z
+  .object({
+    password: passwordRules,
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  })
+
+  export type ResetPasswordData = z.infer<typeof resetPasswordSchema>
