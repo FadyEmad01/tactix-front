@@ -22,7 +22,7 @@ export default function LogoutButton() {
   };
 
   return (
-    <Button variant="destructive" onClick={handleLogout}>
+    <Button className="bg-destructive-saturated" variant="destructive" onClick={handleLogout}>
       Logout
     </Button>
   );
