@@ -1,6 +1,6 @@
 export const SETTINGS_NAV_ITEMS = [
     {
-      title: "Profile",
+      title: "Edit Profile",
       href: "/dashboard/settings",
       icon: "UserRoundCog",
     },
