@@ -1,5 +1,5 @@
-// import { Metadata } from "next"
 "use client"
+
 import {
   Card,
   CardContent,
@@ -9,57 +9,87 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import z from "zod"
+import * as z from "zod"
 import ImageCropperForm from "@/components/settings/ImageCropperForm"
 import { useEffect } from "react"
+import { updateProfile } from "@/lib/auth/profile"
+import { toast } from "sonner" // or your toast library
+import { useRouter } from "next/navigation"
 
-// export const metadata: Metadata = {
-//   title: "Settings",
-//   description: "Manage your account settings",
-// }
-
-const signUpSchema = z.object({
-  name: z.string().min(2),
-  email: z.string().email(),
-  password: z.string().min(8),
-  confirmPassword: z.string().min(8),
+const settingsSchema = z.object({
+  userName: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Invalid email address"),
 })
 
-type SignUpFormData = z.infer<typeof signUpSchema>
+type SettingsFormData = z.infer<typeof settingsSchema>
 
 export default function SettingsPage() {
-
-  const form = useForm<SignUpFormData>({
-    resolver: zodResolver(signUpSchema),
+  const router = useRouter()
+  
+  const form = useForm<SettingsFormData>({
+    resolver: zodResolver(settingsSchema),
     mode: "onSubmit",
     defaultValues: {
-      name: "",
+      userName: "",
       email: "",
-      password: "",
-      confirmPassword: "",
     },
   })
 
-  const { setValue, formState } = form
+  const { setValue } = form
 
   useEffect(() => {
     try {
-      const userString = sessionStorage.getItem("user")
-      if (userString) {
-        const user = JSON.parse(userString)
-        if (user?.userName) setValue("name", user.userName)
-        if (user?.email) setValue("email", user.email)
+      // Read from cookie only (single source of truth)
+      const cookieUser = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('user='))
+        ?.split('=')[1];
+
+      if (cookieUser && cookieUser !== 'undefined') {
+        const user = JSON.parse(decodeURIComponent(cookieUser));
+        if (user && typeof user === 'object') {
+          setValue("userName", user.userName || "");
+          setValue("email", user.email || "");
+        }
       }
     } catch (error) {
-      console.error("Error loading user data:", error)
+      console.error("Error loading user data:", error);
+      toast.error("Failed to load user data");
     }
   }, [setValue])
+
+  const onSubmit = form.handleSubmit(async (values) => {
+    try {
+      console.log("Submitting profile update:", values);
+      const result = await updateProfile(values);
+      console.log("Update successful:", result);
+      
+      // Show success toast
+      toast.success("Profile updated successfully!");
+      
+      // Small delay to ensure cookies are set
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Refresh the page data without full reload
+      router.refresh();
+      
+    } catch (error: any) {
+      console.error("Update failed:", error);
+      toast.error(error?.message || "Failed to update profile");
+      
+      // If it's an auth error, might need to re-login
+      if (error?.message?.includes("Unauthorized")) {
+        setTimeout(() => {
+          router.push("/login");
+        }, 2000);
+      }
+    }
+  });
 
   const { isSubmitting } = form.formState
 
@@ -70,7 +100,6 @@ export default function SettingsPage() {
           <h2 className="text-2xl font-semibold tracking-tight">
             Profile
           </h2>
-          {/* <h3 className="text-lg font-medium">Profile</h3> */}
           <p className="text-sm text-muted-foreground">
             Update your profile details.
           </p>
@@ -84,21 +113,21 @@ export default function SettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form id="form-account" className="@container">
+            <form id="form-account" className="@container" onSubmit={onSubmit}>
               <FieldGroup className="@container/field-group flex max-w-4xl min-w-0 flex-col gap-8 @3xl:gap-6">
                 <ImageCropperForm />
 
                 <Controller
                   control={form.control}
-                  name="name"
+                  name="userName"
                   render={({ field, fieldState }) => (
                     <Field className="grid auto-rows-min items-start gap-3 *:data-[slot=label]:col-start-1 *:data-[slot=label]:row-start-1 @3xl/field-group:grid-cols-2 @3xl/field-group:gap-6" data-invalid={fieldState.invalid}>
-                      <FieldLabel htmlFor="name">Name</FieldLabel>
+                      <FieldLabel htmlFor="userName">Name</FieldLabel>
                       <div className="flex flex-col gap-2">
                         <Input
                           {...field}
                           aria-invalid={fieldState.invalid}
-                          id="name"
+                          id="userName"
                           type="text"
                           autoComplete="additional-name"
                           placeholder="Evil Rabbit"
@@ -137,11 +166,14 @@ export default function SettingsPage() {
             </form>
           </CardContent>
           <CardFooter className="border-t">
-            {/* <Button className="text-destructive-foreground-saturated" type="submit" form="form-account" variant="destructive-outline">
-              Save changes
-            </Button> */}
-            <Button size="sm" type="submit" form="form-account" variant="default">
-              Save changes
+            <Button 
+              size="sm" 
+              type="submit" 
+              form="form-account" 
+              variant="default" 
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Saving..." : "Save changes"}
             </Button>
           </CardFooter>
         </Card>
@@ -154,7 +186,7 @@ export default function SettingsPage() {
             </div>
             <div className="flex gap-2">
               <Button className="text-destructive-saturated bg-card dark:bg-primary dark:hover:bg-primary/90 border-input hover:bg-card/70" size="sm">
-              change visability
+                change visability
               </Button>
               <Button className="bg-destructive-saturated" variant="destructive" size="sm">
                 Delete Account
@@ -163,8 +195,6 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
       </div>
-
     </>
-
   )
 }
