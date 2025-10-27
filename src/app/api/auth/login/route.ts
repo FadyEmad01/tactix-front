@@ -24,12 +24,5 @@ export async function POST(req: Request) {
     path: "/",
   });
 
-  response.cookies.set("user", JSON.stringify(result.user), {
-    httpOnly: false,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-    path: "/",
-  });
-
   return response;
 }

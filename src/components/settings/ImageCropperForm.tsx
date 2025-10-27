@@ -77,7 +77,13 @@ async function getCroppedImg(
   }
 }
 
-export default function ImageCropperForm() {
+export default function ImageCropperForm({
+  defaultImage,
+  onImageSelect,
+}: {
+  defaultImage?: string
+  onImageSelect?: (file: File | null) => void
+}) {
   const [
     { files, isDragging },
     {
@@ -95,7 +101,8 @@ export default function ImageCropperForm() {
   const previewUrl = files[0]?.preview || null
   const fileId = files[0]?.id
 
-  const [finalImageUrl, setFinalImageUrl] = useState<string | null>(null)
+  // const [finalImageUrl, setFinalImageUrl] = useState<string | null>(null)
+  const [finalImageUrl, setFinalImageUrl] = useState<string | null>(defaultImage || null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
   const [zoom, setZoom] = useState(1)
@@ -130,6 +137,10 @@ export default function ImageCropperForm() {
       const newFinalUrl = URL.createObjectURL(croppedBlob)
       if (finalImageUrl) URL.revokeObjectURL(finalImageUrl)
       setFinalImageUrl(newFinalUrl)
+      if (croppedBlob) {
+        const file = new File([croppedBlob], "cropped-image.jpg", { type: "image/jpeg" })
+        onImageSelect?.(file)
+      }
       setIsDialogOpen(false)
     } catch (error) {
       console.error("Error during apply:", error)
@@ -140,6 +151,7 @@ export default function ImageCropperForm() {
   const handleRemoveFinalImage = () => {
     if (finalImageUrl) URL.revokeObjectURL(finalImageUrl)
     setFinalImageUrl(null)
+    onImageSelect?.(null)
   }
 
   useEffect(() => {

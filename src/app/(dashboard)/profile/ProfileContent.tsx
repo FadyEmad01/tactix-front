@@ -4,54 +4,15 @@ import Image from "next/image";
 import Container from "@/components/layout/Container";
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 import { useState, useEffect } from "react";
-import { Mail, Calendar, MapPin, Shield, User, Clock } from "lucide-react";
+import { Mail, Calendar, MapPin, Shield, User, Clock, UserCheckIcon } from "lucide-react";
 
 interface ProfileContentProps {
   user: any | null;
 }
 
-export default function ProfileContent({ user: serverUser }: ProfileContentProps) {
-  const [imageError, setImageError] = useState(false);
-  const [user, setUser] = useState(serverUser);
-
-  // Sync with cookie changes (for when profile is updated)
-  useEffect(() => {
-    const syncUserData = () => {
-      try {
-        const cookieUser = document.cookie
-          .split('; ')
-          .find(row => row.startsWith('user='))
-          ?.split('=')[1];
-
-        if (cookieUser && cookieUser !== 'undefined') {
-          const parsedUser = JSON.parse(decodeURIComponent(cookieUser));
-          if (parsedUser && typeof parsedUser === 'object') {
-            console.log("ProfileContent - synced user data:", parsedUser);
-            setUser(parsedUser);
-          }
-        }
-      } catch (error) {
-        console.error("Error syncing user data:", error);
-      }
-    };
-
-    // Sync on mount and when coming back to the page
-    syncUserData();
-
-    // Listen for visibility change (user switching tabs)
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        console.log("Page became visible - syncing user data");
-        syncUserData();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, []);
+export default function ProfileContent({ user }: ProfileContentProps) {
+  // const [imageError, setImageError] = useState(false);
+  // const [user, setUser] = useState(serverUser);
 
   if (!user) {
     return (
@@ -68,35 +29,46 @@ export default function ProfileContent({ user: serverUser }: ProfileContentProps
     );
   }
 
-  const name = user?.userName || user?.name || user?.fullName || user?.email || 'User';
-  const role = user?.role || user?.title || 'Analyst';
-  const email = user?.email || null;
-  const location = user?.location || user?.city || null;
-  const joinDate = user?.createdAt || user?.joinDate || user?.registeredAt || null;
-  const bio = user?.bio || user?.description || null;
-  const department = user?.department || user?.team || null;
-  const phone = user?.phone || user?.phoneNumber || null;
-  
-  const defaultAvatar = '/avatar-placeholder.png';
-  const avatarSrc = !imageError ? (user?.avatar || user?.profileImage || defaultAvatar) : defaultAvatar;
-  const coverImage = user?.coverImage || user?.banner || null;
+  // const name = user?.username || user?.name || user?.fullName || user?.email || 'User';
+  // const role = user?.role || user?.title || 'Analyst';
+  // const email = user?.email || null;
+  // const location = user?.location || user?.city || null;
+  // const joinDate = user?.createdAt || user?.joinDate || user?.registeredAt || null;
+  // const bio = user?.bio || user?.description || null;
+  // const department = user?.department || user?.team || null;
+  // const phone = user?.phone || user?.phoneNumber || null;
+
+  // const defaultAvatar = '/avatar-placeholder.png';
+  // const avatarSrc = !imageError ? (user?.profileImageUrl || user?.profileImage || defaultAvatar) : defaultAvatar;
+  // const coverImage = user?.coverImage || user?.banner || null;
+
+  const name = user?.username || "Guest User";
+  const email = user?.email || "example@email.com";
+  const role = user?.role || "Artist";
+  const phone = user?.phone || "+20 100 000 0000";
+  const location = user?.location || "Cairo, Egypt";
+  const joinDate = user?.createdAt || "2024-01-01";
+  const bio = user?.bio || "This user hasn’t added a bio yet.";
+  const department = user?.department || "Creative Department";
+  const avatarSrc = user?.profileImageUrl || "/avatar-placeholder.png";
+  const coverImage = user?.coverImage || null;
 
   const formatDate = (dateString: string) => {
     try {
-      return new Date(dateString).toLocaleDateString('en-US', { 
-        month: 'long', 
-        year: 'numeric' 
+      return new Date(dateString).toLocaleDateString("en-US", {
+        month: "long",
+        year: "numeric"
       });
     } catch {
-      return dateString;
+      return "Unknown";
     }
   };
 
   return (
     <Container>
-      <section>
+      <section className="mb-9">
         {/* Cover Image */}
-        <div className="h-64 mt-9">
+        <div className="h-52 mt-9">
           <div className="relative flex h-full w-full items-center justify-center overflow-hidden">
             {coverImage ? (
               <div className="relative w-full h-full">
@@ -105,6 +77,13 @@ export default function ProfileContent({ user: serverUser }: ProfileContentProps
                   alt="Profile cover"
                   fill
                   className="object-cover rounded-2xl"
+                  style={{
+                    filter: "brightness(60%) grayscale(30%)",
+                    maskImage:
+                      "linear-gradient(to top, transparent 0%, var(--foreground) 100%)",
+                    WebkitMaskImage:
+                      "linear-gradient(to top, transparent 0%, var(--foreground) 100%)",
+                  }}
                   priority
                   onError={() => {
                     const element = document.querySelector('.cover-fallback');
@@ -114,38 +93,35 @@ export default function ProfileContent({ user: serverUser }: ProfileContentProps
                 <div className="cover-fallback hidden absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/80 to-primary" />
               </div>
             ) : (
-              <div className="h-full w-full rounded-2xl bg-gradient-to-br from-primary/80 to-primary" />
+              <div className="h-full w-full rounded-2xl bg-gradient-to-br from-primary/80 to-primary"
+                style={{
+                  filter: "brightness(60%) grayscale(30%)",
+                  maskImage:
+                    "linear-gradient(to top, transparent 0%, var(--foreground) 100%)",
+                  WebkitMaskImage:
+                    "linear-gradient(to top, transparent 0%, var(--foreground) 100%)",
+                }} />
             )}
           </div>
         </div>
 
         {/* Profile Header */}
-        <div className="-mt-20 sm:px-6">
-          <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-end">
-            <div 
-              className="relative w-40 h-40 flex items-center justify-center overflow-hidden rounded-full border-4 border-background bg-muted shadow-lg"
-              suppressHydrationWarning
-            >
+        <div className="-mt-12 sm:px-6">
+          <div className="flex flex-col sm:flex-row gap-x-4 items-center">
+            <div className="relative flex size-44 items-center justify-center overflow-hidden rounded-full border-[7px] border-background bg-muted shadow-sm shadow-black/10">
               <Image
                 src={avatarSrc}
                 alt={`${name}'s profile picture`}
-                width={160}
-                height={160}
+                fill
                 className="object-cover"
                 priority
-                onError={() => {
-                  setImageError(true);
-                }}
               />
             </div>
-            <div className="flex flex-col items-center sm:items-start pb-4 bg-background/95 backdrop-blur-sm px-6 py-3 rounded-lg">
-              <h1 className="text-4xl tracking-tight font-bold text-foreground">
+            <div className="flex flex-col items-center sm:items-start relative z-50">
+              <h1 className="text-4xl mt-2 tracking-tight font-semibold">
                 {name}
               </h1>
-              <div className="flex items-center gap-2 mt-2">
-                <Shield className="w-4 h-4 text-muted-foreground" />
-                <p className="text-lg text-muted-foreground font-medium">{role}</p>
-              </div>
+              <p className="text-muted-foreground mt-1">{role}</p>
             </div>
           </div>
         </div>
