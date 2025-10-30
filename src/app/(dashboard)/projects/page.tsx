@@ -363,7 +363,7 @@ function ProjectCard({
     };
 
     const cardContent = (
-        <Card className={`overflow-hidden bg-background border-none p-0 rounded-none transition-all ${isSelectionMode && isSelected ? "p-1.5 rounded-[19px] ring-2 ring-primary" : ""}`}>
+        <Card className={`shadow-none overflow-hidden bg-background border-none p-0 rounded-none transition-all ${isSelectionMode && isSelected ? "p-1.5 rounded-[19px] ring-2 ring-primary" : ""}`}>
             <div className={`relative aspect-square rounded-2xl bg-muted overflow-hidden transition-opacity ${isDropdownOpen ? "opacity-65" : "opacity-100 group-hover:opacity-65"}`}>
                 {isSelectionMode && (
                     <div className="absolute top-3 left-3 z-10">
