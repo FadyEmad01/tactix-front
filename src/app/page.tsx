@@ -33,6 +33,9 @@ export default async function Home() {
               <Button size="lg" className="w-full" asChild>
                 <Link href="/dashboard/settings">Go to Dashboard</Link>
               </Button>
+              <Button size="lg" variant="outline" className="w-full" asChild>
+                <Link href="/video-editor">Analyze a video</Link>
+              </Button>
               <LogoutButton/>
             </div>
           </CardContent>
