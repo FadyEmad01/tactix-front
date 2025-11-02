@@ -46,6 +46,12 @@ export default async function Home() {
                 <Button size="lg" variant="outline" className="w-full" asChild>
                   <Link href="/profile">Profile</Link>
                 </Button>
+                <Button size="lg" variant="outline" className="w-full" asChild>
+                  <Link href="/video-editor">Analyze a video</Link>
+                </Button>
+                <Button size="lg" variant="outline" className="w-full" asChild>
+                  <Link href="/projects">Upload a video</Link>
+                </Button>
                 <LogoutButton />
               </div>
             </CardContent>

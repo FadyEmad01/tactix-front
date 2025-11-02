@@ -168,7 +168,7 @@ export default function ProjectsPage() {
     return (
         <div className="min-h-screen bg-background">
             <div className="pt-6 px-6 flex items-center justify-between w-full h-16">
-                <Button variant="ghost" className="flex items-center gap-1 hover:text-muted-foreground hover:bg-transparent transition-colors">
+                <Button variant="ghost" className="flex items-center gap-1 p-0 hover:text-muted-foreground hover:bg-transparent transition-colors">
                     <ChevronLeft className="size-5 shrink-0" />
                     <span className="text-sm font-medium">Back</span>
                 </Button>
@@ -363,7 +363,7 @@ function ProjectCard({
     };
 
     const cardContent = (
-        <Card className={`overflow-hidden bg-background border-none p-0 rounded-none transition-all ${isSelectionMode && isSelected ? "p-1.5 rounded-[19px] ring-2 ring-primary" : ""}`}>
+        <Card className={`shadow-none overflow-hidden bg-background border-none p-0 rounded-none transition-all ${isSelectionMode && isSelected ? "p-1.5 rounded-[19px] ring-2 ring-primary" : ""}`}>
             <div className={`relative aspect-square rounded-2xl bg-muted overflow-hidden transition-opacity ${isDropdownOpen ? "opacity-65" : "opacity-100 group-hover:opacity-65"}`}>
                 {isSelectionMode && (
                     <div className="absolute top-3 left-3 z-10">
