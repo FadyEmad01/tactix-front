@@ -2,6 +2,8 @@
 
 import { cookies } from "next/headers"
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"
+
 export async function updateProfile(formData: FormData) {
   try {
     const cookieStore = await cookies()
@@ -11,22 +13,56 @@ export async function updateProfile(formData: FormData) {
       throw new Error("Unauthorized — missing token")
     }
 
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile`, {
+    // Check if FormData has a file
+    let hasFile = false
+    let userName = ""
+    
+    for (const [key, value] of formData.entries()) {
+      if (value instanceof File) {
+        hasFile = true
+      } else if (key === "userName") {
+        userName = value as string
+      }
+    }
+
+    // If there's a file, send FormData (multipart/form-data)
+    // If no file, send JSON (application/json) - backend expects this format
+    let body: BodyInit
+    let headers: HeadersInit = {
+      Authorization: `Bearer ${token}`,
+    }
+
+    if (hasFile) {
+      // Send FormData when there's a file (image upload - commented out for now)
+      // Don't set Content-Type - browser will set it automatically with boundary
+      body = formData
+    } else {
+      // Send JSON when there's no file (backend expects JSON format)
+      body = JSON.stringify({ userName })
+      headers["Content-Type"] = "application/json"
+    }
+
+    const res = await fetch(`${API_URL}/api/profile`, {
       method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: formData,
+      headers,
+      body,
       cache: "no-store",
     })
 
     if (!res.ok) {
       const errorText = await res.text()
-      throw new Error(`Failed to update profile: ${errorText || res.statusText}`)
+      let errorMessage = errorText
+      try {
+        const errorJson = JSON.parse(errorText)
+        errorMessage = errorJson.message || errorText
+      } catch {
+        // If not JSON, use text as is
+      }
+      throw new Error(errorMessage || `Failed to update profile: ${res.statusText}`)
     }
 
-    const data = await res.json()
-    return data
+    const result = await res.json()
+    return result
   } catch (err: any) {
     console.error("updateProfile error:", err)
     throw new Error(err.message || "Something went wrong")

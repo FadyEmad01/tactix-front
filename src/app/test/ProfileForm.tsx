@@ -5,13 +5,13 @@ import * as z from "zod"
 import { useState, useMemo, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Field, FieldError, FieldLabel, FieldGroup } from "@/components/ui/field"
+import { Field, FieldError, FieldLabel, FieldGroup, FieldDescription } from "@/components/ui/field"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { toastManager } from "@/components/ui/toast"
 import ImageCropperForm from "@/components/settings/ImageCropperForm"
-import { updateProfile } from "@/lib/updateProfile"
 import { useRouter } from "next/navigation"
 import { ProfileFormData, profileSchema } from "@/validation/profileSchemas"
+import { updateProfile } from "./profileActions"
 
 
 export default function ProfileForm({ user }: { user: any | null }) {
@@ -28,112 +28,147 @@ export default function ProfileForm({ user }: { user: any | null }) {
       ProfileImageUrl: user?.profileImageUrl || "",
     },
   })
-  const { control, watch, formState, handleSubmit, setValue } = form
-  const { isSubmitting } = formState
 
+  // Sync form values when user prop changes (Next.js 15 fix)
+  useEffect(() => {
+    if (user) {
+      form.reset({
+        userName: user?.username || "",
+        ProfileImageUrl: user?.profileImageUrl || "",
+      })
+    }
+  }, [user, form])
+
+  const watchedValues = form.watch()
+  const { isSubmitting } = form.formState
+
+  // Simplified: always allow submission if there's a value (testing PUT only)
   const hasChanges = useMemo(() => {
-    const current = watch()
-    const nameChanged = current.userName !== user?.username
-    const imageChanged = !!imageFile
-    return nameChanged || imageChanged
-  }, [watch, user, imageFile])
+    const hasName = watchedValues.userName.trim().length > 0
+    const hasImage = !!imageFile
+    return hasName || hasImage
+  }, [watchedValues.userName, imageFile])
 
-  const onSubmit = handleSubmit(async (values) => {
+  const onSubmit = async (data: ProfileFormData) => {
     let id: string | undefined
     try {
+      // Create FormData
+      // Backend accepts userName (camelCase) and profileImageUrl (optional) for image
       const formData = new FormData()
-      formData.append("userName", values.userName)
-      if (imageFile) formData.append("image", imageFile)
+      formData.append("userName", data.userName)
+      
+      // Append image if file exists (optional field)
+      if (imageFile) {
+        formData.append("profileImageUrl", imageFile)
+      }
+
+      // Debug: Log what we're sending (client-side)
+      console.log("📤 Client - Sending FormData (PUT only - no fetch):")
+      console.log("  - userName:", data.userName)
+      console.log("  - profileImageUrl (image):", imageFile ? `${imageFile.name} (${imageFile.size} bytes)` : "none (optional)")
+      console.log("  - hasChanges:", hasChanges)
 
       id = toastManager.add({ title: "Updating...", type: "loading" })
-      const res = await updateProfile(formData)
+
+      // Call server action (handles token from HttpOnly cookie)
+      const result = await updateProfile(formData)
 
       toastManager.close(id)
       toastManager.add({
         title: "Success",
-        description: res?.message || "Profile updated successfully!",
+        description: result?.message || "Profile updated successfully!",
         type: "success",
       })
 
       router.refresh()
       setImageFile(null)
-    } catch (err: any) {
-      if (id) toastManager.close(id)
+      
+      // Reset form to new default values after successful submission
+      // Backend returns { message, data: { username, profileImageUrl, ... } }
+      const updatedUser = result?.data || result?.user || result
+      form.reset({
+        userName: updatedUser?.username || data.userName,
+        ProfileImageUrl: updatedUser?.profileImageUrl || "",
+      })
+    } catch (err: any){
+      if (id) toastManager.close(id);
       toastManager.add({
         title: "Error",
         description: err.message || "Failed to update profile",
         type: "error",
       })
-      console.error(err)
+      console.error("❌ Client Error:", err)
     }
-  })
+  }
+
 
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle>Profile Settings</CardTitle>
-          <CardDescription>
-            Make changes to your profile here.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form id="form-account" className="@container" onSubmit={onSubmit}>
-            <FieldGroup className="@container/field-group flex max-w-4xl min-w-0 flex-col gap-8 @3xl:gap-6">
-
-              {/* 🖼 Image upload with default preview */}
+      {/* The <form> tag wraps the whole card to ensure the footer button works */}
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Profile Settings</CardTitle>
+            <CardDescription>
+              Make changes to your profile here.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {/* FieldGroup wraps all the fields */}
+            <FieldGroup className="space-y-6">
+              {/* 🖼 Image upload component remains the same */}
               <ImageCropperForm
-                defaultImage={user?.profileImageUrl}
+                defaultImage={user?.profileImageUrl || undefined}
                 onImageSelect={(file) => {
                   setImageFile(file)
-                  setValue("ProfileImageUrl", file?.name || "")
+                  // Trigger validation and change detection
+                  form.setValue("ProfileImageUrl", file?.name || "", {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  })
                 }}
               />
 
+              {/* Use Controller to connect react-hook-form to Field components */}
               <Controller
-                control={control}
+                control={form.control}
                 name="userName"
                 render={({ field, fieldState }) => (
-                  <Field
-                    className="grid auto-rows-min items-start gap-3 *:data-[slot=label]:col-start-1 *:data-[slot=label]:row-start-1 
-                           @3xl/field-group:grid-cols-2 @3xl/field-group:gap-6"
-                    data-invalid={fieldState.invalid}
-                  >
-                    <FieldLabel htmlFor="userName">Name</FieldLabel>
-                    <div className="flex flex-col gap-2">
-                      <Input
-                        {...field}
-                        aria-invalid={fieldState.invalid}
-                        id="userName"
-                        type="text"
-                        autoComplete="additional-name"
-                        placeholder="Evil Rabbit"
-                      />
-                      {fieldState.invalid && (
-                        <FieldError errors={[fieldState.error]} />
-                      )}
-                    </div>
+                  <Field className="grid gap-2" data-invalid={fieldState.invalid}>
+                    <FieldLabel>Name</FieldLabel>
+                    <Input
+                      placeholder="Your display name"
+                      autoComplete="additional-name"
+                      aria-invalid={fieldState.invalid}
+                      {...field}
+                    />
+                    <FieldDescription>
+                      This is your public display name.
+                    </FieldDescription>
+                    {fieldState.invalid && (
+                      <FieldError>{fieldState.error?.message}</FieldError>
+                    )}
                   </Field>
                 )}
               />
             </FieldGroup>
-          </form>
-        </CardContent>
+          </CardContent>
 
-        <CardFooter className="border-t">
-          <Button
-            size="sm"
-            type="submit"
-            form="form-account"
-            variant="default"
-            disabled={!hasChanges || isSubmitting}
-          >
-            {isSubmitting ? "Saving..." : "Save changes"}
-          </Button>
-        </CardFooter>
-      </Card>
+          <CardFooter className="border-t pt-6">
+            <Button
+              size="sm"
+              type="submit"
+              variant="default"
+              disabled={!hasChanges || isSubmitting}
+            >
+              {isSubmitting ? "Saving..." : "Save changes"}
+            </Button>
+          </CardFooter>
+        </Card>
+      </form>
 
+      {/* Danger Zone Card remains outside the profile form */}
       <Card className="border-destructive/10 bg-destructive-saturated/10">
         <CardContent className="flex w-full items-center justify-between flex-wrap gap-6">
           <div className="flex flex-col gap-2">
@@ -141,7 +176,7 @@ export default function ProfileForm({ user }: { user: any | null }) {
               Danger Zone
             </h5>
             <p className="text-muted-foreground text-sm">
-              Make changes to your profile here.
+              Be careful with these actions.
             </p>
           </div>
           <div className="flex gap-2">
@@ -149,7 +184,7 @@ export default function ProfileForm({ user }: { user: any | null }) {
               className="text-destructive-saturated bg-card dark:bg-primary dark:hover:bg-primary/90 border-input hover:bg-card/70"
               size="sm"
             >
-              change visability
+              Change visability
             </Button>
             <Button
               className="bg-destructive-saturated"
