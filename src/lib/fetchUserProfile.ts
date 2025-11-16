@@ -1,5 +1,7 @@
 import { cookies } from "next/headers";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+
 export async function fetchUserProfile() {
   const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value;
@@ -7,7 +9,7 @@ export async function fetchUserProfile() {
   if (!token) return null;
 
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile`, {
+    const res = await fetch(`${API_URL}/api/profile`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -20,8 +22,9 @@ export async function fetchUserProfile() {
     }
 
     const result = await res.json();
-
-    const user = result?.user || result;
+    
+    // Backend returns { message, data: { username, profileImageUrl, ... } } or { user: {...} }
+    const user = result?.data || result?.user || result;
     return user;
   } catch (error) {
     console.error("Error fetching user profile:", error);
