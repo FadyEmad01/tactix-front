@@ -1027,7 +1027,7 @@ function VideoPanel({
   );
 }
 
-export function EventPanel({
+function EventPanel({
   activeTag,
   onStartTag,
   onEndTag
@@ -1116,7 +1116,7 @@ export function EventPanel({
   )
 }
 
-export function TagsPanel({
+function TagsPanel({
   tags,
   activeTag,
   onPlayClip,

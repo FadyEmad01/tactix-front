@@ -20,10 +20,14 @@ import { formatTime } from "@/lib/video-utils";
 import { Tag, VideoPanelProps } from "@/types/video-editor";
 import { Check, Edit, Maximize, Pause, Play, Redo, Settings, StopCircle, Timer, Trash2, Undo, Volume2, VolumeX, X } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 const generateId = () => `tag_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
 export default function page() {
+  const searchParams = useSearchParams();
+  const matchId = searchParams.get("matchId");
+
   const [tags, setTags] = useState<Tag[]>([]);
   const [activeTag, setActiveTag] = useState<Tag | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
@@ -91,6 +95,26 @@ export default function page() {
 
     setTags(prev => [...prev, completedTag].sort((a, b) => a.startTime - b.startTime));
     setActiveTag(null);
+
+    // Persist tag to backend if matchId is available
+    if (matchId) {
+      const payload = {
+        startTime: String(completedTag.startTime),
+        endTime: String(completedTag.endTime ?? currentTime),
+        event: completedTag.eventName,
+        notes: completedTag.notes,
+      };
+
+      fetch(`/api/tag/${matchId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      }).catch((err) => {
+        console.error("Failed to create tag:", err);
+      });
+    }
   };
 
   // Play clip from tag
@@ -220,7 +244,7 @@ export default function page() {
   );
 }
 
-function VideoPanel({
+export function VideoPanel({
   videoRef,
   currentTime,
   activeTag,
@@ -250,7 +274,7 @@ function VideoPanel({
   );
 }
 
-function EventPanel({
+export function EventPanel({
   activeTag,
   onStartTag,
   onEndTag
@@ -340,7 +364,7 @@ function EventPanel({
 }
 
 
-function TagsPanel({
+export function TagsPanel({
   tags,
   activeTag,
   onPlayClip,

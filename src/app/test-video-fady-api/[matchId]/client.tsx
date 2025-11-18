@@ -1,4 +1,5 @@
-"use client"
+"use client";
+
 import Container from "@/components/layout/Container";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,19 +12,45 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { AlertCircleIcon, Check, Edit, ImageUpIcon, Play, StopCircle, Trash2, X } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import { fetchMatchById, createTag, deleteTag } from "@/lib/matches";
+import { Tag } from "@/types/video-editor";
 import { Categories } from "@/constant/EVENTS";
 import { formatTime } from "@/lib/video-utils";
-import { Tag, VideoPanelProps } from "@/types/video-editor";
-import { Check, Edit, Maximize, Pause, Play, Redo, Settings, StopCircle, Timer, Trash2, Undo, Volume2, VolumeX, X } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+
 
 const generateId = () => `tag_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-export default function page() {
+interface BackendTag {
+  _id?: string;
+  matchId?: string;
+  startTime: number;
+  endTime: number | null;
+  event: string;
+  notes?: string;
+  createdAt?: string;
+}
+
+const mapBackendTagToTag = (backend: BackendTag): Tag => ({
+  id: backend._id ?? generateId(),
+  tagId: backend._id,
+  categoryName:
+    Categories.find((category) => category.events.includes(backend.event))?.name ??
+    "Imported",
+  eventName: backend.event,
+  startTime: backend.startTime ?? 0,
+  endTime: backend.endTime ?? null,
+  notes: backend.notes,
+  createdAt: backend.createdAt ? new Date(backend.createdAt).getTime() : Date.now(),
+});
+
+export default function MatchEditorPage({ matchId }: { matchId: any }) {
+
   const [tags, setTags] = useState<Tag[]>([]);
   const [activeTag, setActiveTag] = useState<Tag | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
@@ -31,17 +58,54 @@ export default function page() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [tagHistory, setTagHistory] = useState<Tag[][]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  // Load match to get real video URL - NOW USES API HELPER
+  useEffect(() => {
+    const loadMatch = async () => {
+      try {
+        // Use the new server action to fetch match data
+        const match = await fetchMatchById(matchId);
+
+        if (match) {
+          setVideoUrl(match.videoUrl ?? null);
+          const initialTags = (match.tags ?? []).map(mapBackendTagToTag);
+          setTags(initialTags);
+          setTagHistory([initialTags]);
+          setHistoryIndex(0);
+        }
+
+
+        // NOTE: In a complete app, you would also fetch existing tags here.
+      } catch (err) {
+        console.error("Error loading match:", err);
+      }
+    };
+    loadMatch();
+  }, [matchId]);
+
   // Sync current time with video
+  // useEffect(() => {
+  //   const video = videoRef.current;
+  //   if (!video) return;
+
+  //   const updateTime = () => setCurrentTime(video.currentTime);
+  //   video.addEventListener("timeupdate", updateTime);
+  //   return () => video.removeEventListener("timeupdate", updateTime);
+  // }, []);
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-
-    const updateTime = () => setCurrentTime(video.currentTime);
-    video.addEventListener('timeupdate', updateTime);
-    return () => video.removeEventListener('timeupdate', updateTime);
+  
+    const handleLoaded = () => {
+      setCurrentTime(video.currentTime);
+    };
+  
+    video.addEventListener("loadedmetadata", handleLoaded);
+  
+    return () => video.removeEventListener("loadedmetadata", handleLoaded);
   }, []);
 
   // Fullscreen listeners
@@ -49,8 +113,8 @@ export default function page() {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
     };
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
   // Add history to make undo and redo
@@ -68,11 +132,14 @@ export default function page() {
       endActiveTag();
     }
 
+    const video = videoRef.current;
+
     const newTag: Tag = {
       id: generateId(),
       categoryName,
       eventName,
-      startTime: currentTime,
+      // startTime: currentTime,
+      startTime: video ? video.currentTime : currentTime,
       endTime: null,
       createdAt: Date.now(),
     };
@@ -80,17 +147,44 @@ export default function page() {
     setActiveTag(newTag);
   };
 
-  // End the active tag
-  const endActiveTag = () => {
+  // End the active tag - NOW USES API HELPER
+  const endActiveTag = async () => {
     if (!activeTag) return;
+
+    const finalEndTime = videoRef.current?.currentTime ?? currentTime; // MOST accurate
 
     const completedTag: Tag = {
       ...activeTag,
-      endTime: currentTime,
+      // endTime: currentTime,
+      endTime: finalEndTime,
     };
 
-    setTags(prev => [...prev, completedTag].sort((a, b) => a.startTime - b.startTime));
+    // Optimistic UI update
+    setTags((prev) => [...prev, completedTag].sort((a, b) => a.startTime - b.startTime));
     setActiveTag(null);
+    addToHistory([...tags, completedTag]); // don't forget history!
+
+    // Persist tag to backend using the new server action
+    const payload = {
+      startTime: String(completedTag.startTime),
+      // endTime: String(completedTag.endTime ?? currentTime),
+      endTime: completedTag.endTime!.toFixed(3),     // ← USE THE REAL VALUE
+      event: completedTag.eventName,
+      notes: completedTag.notes,
+    };
+
+    try {
+      const result = await createTag(matchId, payload);
+      if (result.success) {
+
+
+      } else {
+        console.error("Failed to create tag via server action:", result.error);
+        // Optionally rollback the UI update here if necessary
+      }
+    } catch (err) {
+      console.error("Failed to create tag:", err);
+    }
   };
 
   // Play clip from tag
@@ -100,34 +194,48 @@ export default function page() {
     videoRef.current.currentTime = tag.startTime;
     videoRef.current.play();
 
-    // Optional: pause at end time
     if (tag.endTime) {
       const checkTime = () => {
         if (videoRef.current && videoRef.current.currentTime >= tag.endTime!) {
           videoRef.current.pause();
-          videoRef.current.removeEventListener('timeupdate', checkTime);
+          videoRef.current.removeEventListener("timeupdate", checkTime);
         }
       };
-      videoRef.current.addEventListener('timeupdate', checkTime);
+      videoRef.current.addEventListener("timeupdate", checkTime);
     }
   };
 
-  // Delete tag
-  const deleteTag = (tagId: string) => {
-    // setTags(prev => prev.filter(t => t.id !== tagId));
+  // Delete tag - NOW USES API HELPER
+  const deleteTagHandler = async (tagId: string) => {
+    const tagToDelete = tags.find(t => t.id === tagId);
 
-    const newTags = tags.filter(t => t.id !== tagId);
+    // Optimistic UI update
+    const newTags = tags.filter((t) => t.id !== tagId);
     setTags(newTags);
     addToHistory(newTags);
+
+    // Call backend delete only if we have a backend ID
+    if (tagToDelete?.tagId) {
+      try {
+        const result = await deleteTag(matchId, tagToDelete.tagId);
+        if (!result.success) {
+          console.error("Failed to delete tag on backend. The UI is updated locally.");
+        }
+      } catch (err) {
+        console.error("Error deleting tag:", err);
+      }
+    } else {
+      console.warn(`Tag ID ${tagId} did not have a backend 'tagId'. Only deleting locally.`);
+    }
   };
+
 
   // Update tag
   const updateTag = (updatedTag: Tag) => {
-    // setTags(prev => prev.map(t => t.id === updatedTag.id ? updatedTag : t)
-    //   .sort((a, b) => a.startTime - b.startTime));
-    // setEditingTag(null);
-
-    const newTags = tags.map(t => t.id === updatedTag.id ? updatedTag : t).sort((a, b) => a.startTime - b.startTime);
+    // NOTE: A real implementation should update the backend via a new updateTag API call.
+    const newTags = tags
+      .map((t) => (t.id === updatedTag.id ? updatedTag : t))
+      .sort((a, b) => a.startTime - b.startTime);
     setTags(newTags);
     addToHistory(newTags);
     setEditingTag(null);
@@ -153,14 +261,18 @@ export default function page() {
     }
   };
 
+  if (!videoUrl) {
+    return (
+      <Container className="py-20">
+        <VideoUploadComponent onVideoSelected={(url) => setVideoUrl(url)} />
+      </Container>
+    );
+  }
+
   return (
     <main className="h-svh overflow-hidden py-10">
       <Container className="max-w-full h-full">
-        {/* dh autoSaveId="persistence 3shan lw 3yz a3ml save lel Resize fel localStorage" */}
-        <ResizablePanelGroup
-          direction="horizontal"
-          className="w-full h-full gap-2"
-        >
+        <ResizablePanelGroup direction="horizontal" className="w-full h-full gap-2">
           <ResizablePanel className="space-y-4" minSize={40} defaultSize={70}>
             <ResizablePanelGroup className="gap-2" direction="vertical">
               {/* video panel */}
@@ -170,6 +282,7 @@ export default function page() {
                   currentTime={currentTime}
                   activeTag={activeTag}
                   onEndTag={endActiveTag}
+                  videoUrl={videoUrl}
                 />
               </ResizablePanel>
 
@@ -184,7 +297,7 @@ export default function page() {
                   tags={tags}
                   activeTag={activeTag}
                   onPlayClip={playClip}
-                  onDeleteTag={deleteTag}
+                  onDeleteTag={deleteTagHandler} // <-- USING NEW HANDLER
                   onEditTag={setEditingTag}
                 />
               </ResizablePanel>
@@ -197,7 +310,6 @@ export default function page() {
           />
 
           {/* events panel*/}
-
           <ResizablePanel defaultSize={30}>
             <EventPanel
               activeTag={activeTag}
@@ -205,7 +317,6 @@ export default function page() {
               onEndTag={endActiveTag}
             />
           </ResizablePanel>
-
         </ResizablePanelGroup>
       </Container>
 
@@ -220,16 +331,18 @@ export default function page() {
   );
 }
 
-function VideoPanel({
+export function VideoPanel({
   videoRef,
   currentTime,
   activeTag,
-  onEndTag
+  onEndTag,
+  videoUrl,
 }: {
   videoRef: React.RefObject<HTMLVideoElement | null>;
   currentTime: number;
   activeTag: Tag | null;
   onEndTag: () => void;
+  videoUrl: string | null;
 }) {
   return (
     <div className="w-full h-full rounded-3xl bg-card border overflow-hidden shadow-sm relative">
@@ -241,19 +354,17 @@ function VideoPanel({
         controls
         preload="metadata"
       >
-        <source src="/videos/vid1.mp4" type="video/mp4" />
-        {/* <source src="https://storage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4" type="video/mp4" /> */}
-        {/* <source src="https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4" type="video/mp4" /> */}
+        <source src={videoUrl!} type="video/mp4" />
         Your browser does not support the video tag.
       </video>
     </div>
   );
 }
 
-function EventPanel({
+export function EventPanel({
   activeTag,
   onStartTag,
-  onEndTag
+  onEndTag,
 }: {
   activeTag: Tag | null;
   onStartTag: (category: string, event: string) => void;
@@ -281,7 +392,6 @@ function EventPanel({
 
         <div className="flex-1 overflow-hidden min-h-0">
           <TabsContent value="tagging-events" className="p-4 flex flex-col h-full overflow-hidden min-h-0">
-
             {activeTag && (
               <div className="mb-4 p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg">
                 <div className="flex items-center justify-between">
@@ -333,19 +443,17 @@ function EventPanel({
             </ScrollArea>
           </TabsContent>
         </div>
-
       </Tabs>
     </div>
-  )
+  );
 }
 
-
-function TagsPanel({
+export function TagsPanel({
   tags,
   activeTag,
   onPlayClip,
   onDeleteTag,
-  onEditTag
+  onEditTag,
 }: {
   tags: Tag[];
   activeTag: Tag | null;
@@ -359,11 +467,10 @@ function TagsPanel({
         <div className="p-4 border-b">
           <h3 className="font-semibold text-lg">Timeline Tags</h3>
           <p className="text-sm text-muted-foreground">
-            {tags.length} tag{tags.length !== 1 ? 's' : ''} created
+            {tags.length} tag{tags.length !== 1 ? "s" : ""} created
             {activeTag && <span className="text-red-600 ml-2">• Recording...</span>}
           </p>
         </div>
-
 
         <div className="p-4 space-y-2">
           {tags.length === 0 && !activeTag && (
@@ -385,14 +492,14 @@ function TagsPanel({
         </div>
       </ScrollArea>
     </div>
-  )
+  );
 }
 
 function TagItem({
   tag,
   onPlay,
   onDelete,
-  onEdit
+  onEdit,
 }: {
   tag: Tag;
   onPlay: () => void;
@@ -424,7 +531,7 @@ function TagItem({
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <span>{formatTime(tag.startTime)}</span>
         <span>→</span>
-        <span>{tag.endTime ? formatTime(tag.endTime) : 'ongoing'}</span>
+        <span>{tag.endTime ? formatTime(tag.endTime) : "ongoing"}</span>
         {tag.endTime && (
           <span className="ml-auto">({duration.toFixed(1)}s)</span>
         )}
@@ -439,11 +546,10 @@ function TagItem({
   );
 }
 
-// Edit Tag Dialog Component
 function EditTagDialog({
   tag,
   onSave,
-  onCancel
+  onCancel,
 }: {
   tag: Tag;
   onSave: (tag: Tag) => void;
@@ -459,12 +565,40 @@ function EditTagDialog({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <Label>Event Name</Label>
             <Input
               value={editedTag.eventName}
-              onChange={(e) => setEditedTag(prev => ({ ...prev, eventName: e.target.value }))}
+              onChange={(e) =>
+                setEditedTag((prev) => ({ ...prev, eventName: e.target.value }))
+              }
             />
+          </div> */}
+
+          <div className="space-y-2">
+            <Label>Event Name</Label>
+            <Select
+              value={editedTag.eventName}
+              onValueChange={(value) =>
+                setEditedTag((prev) => ({ ...prev, eventName: value }))
+              }
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select an event" />
+              </SelectTrigger>
+              <SelectContent>
+                {Categories.map((category) => (
+                  <SelectGroup key={category.name}>
+                    <SelectLabel>{category.name}</SelectLabel>
+                    {category.events.map((event) => (
+                      <SelectItem key={event} value={event}>
+                        {event}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -474,10 +608,12 @@ function EditTagDialog({
                 type="number"
                 step="0.1"
                 value={editedTag.startTime}
-                onChange={(e) => setEditedTag(prev => ({
-                  ...prev,
-                  startTime: parseFloat(e.target.value)
-                }))}
+                onChange={(e) =>
+                  setEditedTag((prev) => ({
+                    ...prev,
+                    startTime: parseFloat(e.target.value),
+                  }))
+                }
               />
             </div>
 
@@ -486,11 +622,13 @@ function EditTagDialog({
               <Input
                 type="number"
                 step="0.1"
-                value={editedTag.endTime || ''}
-                onChange={(e) => setEditedTag(prev => ({
-                  ...prev,
-                  endTime: parseFloat(e.target.value) || null
-                }))}
+                value={editedTag.endTime || ""}
+                onChange={(e) =>
+                  setEditedTag((prev) => ({
+                    ...prev,
+                    endTime: parseFloat(e.target.value) || null,
+                  }))
+                }
               />
             </div>
           </div>
@@ -498,8 +636,10 @@ function EditTagDialog({
           <div className="space-y-2">
             <Label>Notes (optional)</Label>
             <Textarea
-              value={editedTag.notes || ''}
-              onChange={(e) => setEditedTag(prev => ({ ...prev, notes: e.target.value }))}
+              value={editedTag.notes || ""}
+              onChange={(e) =>
+                setEditedTag((prev) => ({ ...prev, notes: e.target.value }))
+              }
               placeholder="Add any notes about this event..."
             />
           </div>
@@ -517,5 +657,94 @@ function EditTagDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+
+function VideoUploadComponent({ onVideoSelected }: { onVideoSelected: (url: string) => void }) {
+  const [file, setFile] = useState<File | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const maxSizeMB = 50;
+  const maxSize = maxSizeMB * 1024 * 1024;
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(false);
+
+    const f = e.dataTransfer.files?.[0];
+    if (!f) return;
+
+    if (f.size > maxSize) {
+      setError(`Max allowed size is ${maxSizeMB}MB`);
+      return;
+    }
+
+    const url = URL.createObjectURL(f);
+    setFile(f);
+    onVideoSelected(url);
+  };
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (f.size > maxSize) {
+      setError(`Max allowed size is ${maxSizeMB}MB`);
+      return;
+    }
+    const url = URL.createObjectURL(f);
+    setFile(f);
+    onVideoSelected(url);
+  };
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div
+        onDrop={handleDrop}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragging(true);
+        }}
+        onDragLeave={() => setDragging(false)}
+        className={`relative flex min-h-52 flex-col items-center justify-center rounded-xl border border-dashed p-4 ${dragging ? "bg-accent/50" : ""
+          }`}
+      >
+        {!file ? (
+          <>
+            <input type="file" accept="video/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={handleFile} />
+            <div className="flex flex-col items-center">
+              <div className="mb-2 flex size-11 items-center justify-center rounded-full border bg-background">
+                <ImageUpIcon className="size-4 opacity-60" />
+              </div>
+              <p className="text-sm font-medium">Drop your video here or click to browse</p>
+              <p className="text-xs text-muted-foreground">Max size: {maxSizeMB}MB</p>
+            </div>
+          </>
+        ) : (
+          <div className="text-sm">{file.name}</div>
+        )}
+      </div>
+
+      {file && (
+        <button
+          type="button"
+          onClick={() => {
+            setFile(null);
+            onVideoSelected("");
+          }}
+          className="flex items-center gap-2 text-xs text-red-600"
+        >
+          <X className="size-3" /> Remove video
+        </button>
+      )}
+
+      {error && (
+        <div className="flex items-center gap-1 text-xs text-destructive">
+          <AlertCircleIcon className="size-3" />
+          {error}
+        </div>
+      )}
+    </div>
   );
 }
