@@ -57,10 +57,10 @@ import { Calendar } from "@/components/ui/calendar";
 import { Project, createMatch, deleteMatch } from "@/lib/matches";
 
 interface MatchesDashboardProps {
-    initialProjects: Project[];
+    initialProjects?: Project[];
 }
 
-export default function MatchesDashboard({ initialProjects }: MatchesDashboardProps) {
+export default function MatchesDashboard({ initialProjects = [] }: MatchesDashboardProps) {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const [isSelectionMode, setIsSelectionMode] = useState(false);

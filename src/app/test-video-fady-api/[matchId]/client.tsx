@@ -49,7 +49,7 @@ const mapBackendTagToTag = (backend: BackendTag): Tag => ({
   createdAt: backend.createdAt ? new Date(backend.createdAt).getTime() : Date.now(),
 });
 
-export default function MatchEditorPage({ matchId }: { matchId: any }) {
+export default function MatchEditorPage({ matchId }: { matchId: string }) {
 
   const [tags, setTags] = useState<Tag[]>([]);
   const [activeTag, setActiveTag] = useState<Tag | null>(null);

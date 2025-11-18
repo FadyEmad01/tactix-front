@@ -1,10 +1,13 @@
+'use client'
+import { use } from 'react'
+
 import MatchEditorPage from "./client";
 
 interface MatchPageProps {
-  params: Promise<{ matchId: any }>;
+  params: Promise<{ matchId: string }>;
 }
-export default async function Page({ params }: MatchPageProps) {
-  const { matchId } = await params;
+export default function Page({ params }: MatchPageProps) {
+  const { matchId } = use(params);
 
   return (
     <MatchEditorPage matchId={matchId}/>
