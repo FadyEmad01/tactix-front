@@ -1,11 +1,12 @@
 
 
-import { AppSidebar } from "@/components/layout/app-sidebar";
-import BreadcrumbNav from "@/components/layout/BreadcrumbNav";
+import { AppSidebar } from "@/components/ui/sidebar-nav/app-sidebar";
+import BreadcrumbNav from "@/components/ui/sidebar-nav/BreadcrumbNav";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
+import { fetchUserProfile } from "@/lib/fetchUserProfile";
 
 export default async function AppLayout({
   children,
@@ -16,12 +17,14 @@ export default async function AppLayout({
   const cookieStore = await cookies()
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true"
 
+  const user = await fetchUserProfile(); // <-- SERVER-SIDE
+
   return (
 
     <>
 
       <SidebarProvider defaultOpen={defaultOpen}>
-        <AppSidebar />
+        <AppSidebar user={user} />
         <SidebarInset className="md:h-[97dvh] overflow-y-scroll w-full scrollbar-hide">
 
 

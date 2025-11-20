@@ -19,6 +19,9 @@ import { usePathname } from "next/navigation";
 import { NAVIGATION_DATA } from "@/constant/sidebar";
 import { NavUser } from "./nav-user";
 
+type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
+  user: any | null;
+};
 
 function SidebarLogo() {
   const id = React.useId();
@@ -58,8 +61,9 @@ function SidebarLogo() {
   );
 }
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({user, ...props }: AppSidebarProps) {
   const pathname = usePathname(); // current route path
+
   return (
     <Sidebar collapsible="icon" variant="inset" {...props}>
       <SidebarHeader className="h-16 max-md:mt-2 mb-2 justify-center">
@@ -74,9 +78,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarGroupContent>
               <SidebarMenu>
                 {item.items.map((item) => {
-                  
+
                   // const isActive = pathname === item.url;
-                  
+
                   let isActive = false;
 
                   // Special handling for the 'Chat' item
@@ -116,7 +120,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ))}
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={NAVIGATION_DATA.user} />
+        {user && (
+          <NavUser
+            user={{
+              name: user.username ?? "User",
+              email: user.email ?? "",
+              avatar: user.profileImageUrl ?? "",
+            }}
+          />
+        )}
       </SidebarFooter>
     </Sidebar>
   );
