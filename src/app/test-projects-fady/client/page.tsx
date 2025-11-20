@@ -1,66 +1,15 @@
 "use client";
 
-import {
-    Calendar as CalendarIcon,
-    ChevronLeft,
-    MoreHorizontal,
-    ArrowDown01,
-    Plus,
-    Search,
-    Trash2,
-    Video,
-    X,
-} from "lucide-react";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format } from "date-fns";
-import { Calendar } from "@/components/ui/calendar";
-import { Project, createMatch, deleteMatch } from "@/lib/matches";
+import MatchesDashboard from "@/components/projects/MatchesDashboard";
+import type { Project } from "@/lib/matches";
 
 interface MatchesDashboardProps {
-    initialProjects?: Project[];
+  initialProjects?: Project[];
 }
 
-export default function MatchesDashboard({ initialProjects = [] }: MatchesDashboardProps) {
+export default function MatchesDashboardPage(props: MatchesDashboardProps) {
+  return <MatchesDashboard {...props} />;
+}
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const [isSelectionMode, setIsSelectionMode] = useState(false);

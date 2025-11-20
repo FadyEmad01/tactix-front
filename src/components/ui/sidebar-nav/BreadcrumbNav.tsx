@@ -91,7 +91,7 @@ import {
 import { usePathname } from "next/navigation";
 import React from "react";
 import Link from "next/link";
-import { NAVIGATION_DATA } from "@/constant/sidebar";
+import { NAVIGATION_DATA } from "@/constant/SIDEBAR";
 
 export default function BreadcrumbNav() {
   const pathname = usePathname();
