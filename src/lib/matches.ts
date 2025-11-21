@@ -266,7 +266,6 @@ export async function fetchMatchById(matchId: string): Promise<Project | null> {
         
         const match = json.data ?? json; // Handle { data: {...} } or {...}
 
-        console.log("asdasdasdassdgfhgasjhfghjasfgjkagsdfhjagsfhjdghjfs")
 
         if (!match || (!match.id && !match._id && !match.matchId)) {
             console.warn(`Match ${matchId} returned empty or invalid structure.`, json);

@@ -35,7 +35,14 @@ export default async function AppLayout({
                 {/* Left side */}
                 <div className="flex flex-1 items-center gap-2">
                   <SidebarTrigger className="-ms-1" />
-                  <div className="max-lg:hidden lg:contents">
+                  {/* <div className="max-lg:hidden lg:contents">
+                    <Separator
+                      orientation="vertical"
+                      className="me-2 data-[orientation=vertical]:h-4"
+                    />
+                    <BreadcrumbNav />
+                  </div> */}
+                  <div className="contents">
                     <Separator
                       orientation="vertical"
                       className="me-2 data-[orientation=vertical]:h-4"

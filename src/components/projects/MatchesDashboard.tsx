@@ -456,7 +456,7 @@ function ProjectCard({
     if (isSelectionMode) {
       onSelect?.(project.id, !isSelected);
     } else {
-      router.push(`/test-video-fady-api/${project.id}`);
+      router.push(`/video-editor/${project.id}`);
     }
   };
 
@@ -698,6 +698,7 @@ function CreateProjectDialog({
                   value={result}
                   onChange={(e) => setResult(e.target.value)}
                   placeholder="e.g., 2-1"
+                  required
                 />
               </div>
               <div className="space-y-2">
@@ -725,6 +726,7 @@ function CreateProjectDialog({
                       selected={matchDate}
                       onSelect={(d) => setMatchDate(d ?? undefined)}
                       initialFocus
+                      required
                     />
                   </PopoverContent>
                 </Popover>

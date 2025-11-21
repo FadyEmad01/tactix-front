@@ -1,11 +1,8 @@
 import { NavigationData } from "@/types/sidebar";
 import {
-  Gauge,
-  HandCoins,
-  MessageCircleMore,
+  Folders,
   Settings
 } from "lucide-react";
-import { RiCalendarEventLine } from "@remixicon/react"
 
 export const NAVIGATION_DATA: NavigationData = {
   user: {
@@ -18,25 +15,15 @@ export const NAVIGATION_DATA: NavigationData = {
     {
       title: "Home",
       items: [
-        {
-          title: "Dashboard",
-          url: "/dashboard",
-          icon: Gauge,
-        },
+        // {
+        //   title: "Home",
+        //   url: "/Home",
+        //   icon: Gauge,
+        // },
         {
           title: "Projects",
           url: "/projects",
-          icon: HandCoins,
-        },
-        {
-          title: "Chat",
-          url: "/chat",
-          icon: MessageCircleMore,
-        },
-        {
-          title: "Calendar",
-          url: "/calendar",
-          icon: RiCalendarEventLine,
+          icon: Folders,
         },
         {
           title: "Settings",

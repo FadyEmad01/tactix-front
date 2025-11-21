@@ -1,12 +1,12 @@
 export const SETTINGS_NAV_ITEMS = [
     {
       title: "Edit Profile",
-      href: "/dashboard/settings",
+      href: "/settings",
       icon: "UserRoundCog",
     },
     {
       title: "Appearance",
-      href: "/dashboard/settings/appearance",
+      href: "/settings/appearance",
       icon: "SunMoon",
     },
   ]

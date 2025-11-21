@@ -50,7 +50,7 @@ export function NavUser({
               <div className="grid flex-1 text-left text-sm leading-tight ms-1">
                 <span className="truncate font-medium">{user.name}</span>
               </div>
-              <div className="size-8 rounded-lg flex items-center justify-center bg-sidebar-accent/50 in-[[data-slot=dropdown-menu-trigger]:hover]:bg-transparent">
+              <div className="size-8 rounded-lg flex items-center justify-center cursor-pointer in-[[data-slot=dropdown-menu-trigger]:hover]:bg-transparent">
                 <RiMore2Line className="size-5 opacity-40" size={20} />
               </div>
             </SidebarMenuButton>
