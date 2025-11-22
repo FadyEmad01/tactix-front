@@ -16,7 +16,7 @@ import {
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
-import { NAVIGATION_DATA } from "@/constant/SIDEBAR";
+import { NAVIGATION_DATA } from "@/constant/SIDEBAR_NAVIGATION_DATA";
 import { NavUser } from "./nav-user";
 
 type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {

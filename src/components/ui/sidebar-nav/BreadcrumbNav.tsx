@@ -11,7 +11,7 @@ import {
 import { usePathname } from "next/navigation";
 import React from "react";
 import Link from "next/link";
-import { NAVIGATION_DATA } from "@/constant/SIDEBAR";
+import { NAVIGATION_DATA } from "@/constant/SIDEBAR_NAVIGATION_DATA";
 import { SETTINGS_NAV_ITEMS } from "@/constant/SETTINGS"; // <-- import your settings items
 
 export default function BreadcrumbNav() {
