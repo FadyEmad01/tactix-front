@@ -139,6 +139,9 @@ export async function createMatch(data: {
     }
 
     const json = await res.json();
+    
+    console.log("📥 Backend response:", json);
+
     revalidatePath("/");
     return { success: true, data: json } as const;
   } catch (error) {

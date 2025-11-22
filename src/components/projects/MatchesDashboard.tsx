@@ -54,7 +54,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
-import { Project, createMatch, deleteMatch } from "@/lib/matches";
+import { createMatch, deleteMatch, updateMatch } from "@/lib/match/actions";
+import { Project } from "@/types/match";
 
 interface MatchesDashboardProps {
   initialProjects?: Project[];
@@ -174,8 +175,46 @@ export default function MatchesDashboard({ initialProjects = [] }: MatchesDashbo
     await deleteMatch(id);
   };
 
-  const handleUpdateProject = (id: string, updates: Partial<Project>) => {
-    setProjects(projects.map((p) => (p.id === id ? { ...p, ...updates } : p)));
+  // const handleUpdateProject = (id: string, updates: Partial<Project>) => {
+  //   setProjects(projects.map((p) => (p.id === id ? { ...p, ...updates } : p)));
+  // };
+  const handleUpdateProject = async (id: string, updates: Partial<Project>) => {
+    try {
+      // Optimistically update the UI first
+      setProjects(projects.map((p) => (p.id === id ? { ...p, ...updates } : p)));
+
+      // Prepare the payload for the backend
+      const payload: Partial<{
+        title: string;
+        description?: string;
+        teamA: string;
+        teamB: string;
+        matchDate?: string;
+        result?: string;
+      }> = {};
+
+      // Map frontend field names to backend field names
+      if (updates.name !== undefined) payload.title = updates.name;
+      if (updates.description !== undefined) payload.description = updates.description;
+      if (updates.teamA !== undefined) payload.teamA = updates.teamA;
+      if (updates.teamB !== undefined) payload.teamB = updates.teamB;
+      if (updates.result !== undefined) payload.result = updates.result;
+      if (updates.matchDate !== undefined) payload.matchDate = updates.matchDate;
+
+      // Send to backend
+      const result = await updateMatch(id, payload);
+
+      if (!result.success) {
+        console.error("Failed to update match:", result.error);
+        // Optionally: revert the optimistic update or show an error message
+        return;
+      }
+
+      router.refresh(); // Refresh server components
+    } catch (error) {
+      console.error("Error updating match:", error);
+      // Optionally: revert the optimistic update or show an error message
+    }
   };
 
   const filteredProjects = projects.filter(
@@ -486,7 +525,10 @@ function ProjectCard({
                   size="sm"
                   className={`size-6 p-0 transition-all shrink-0 ml-2 ${isDropdownOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
                     }`}
-                  onClick={(e) => e.preventDefault()}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
                 >
                   <MoreHorizontal className="size-4" />
                 </Button>
@@ -495,6 +537,7 @@ function ProjectCard({
                 <DropdownMenuItem
                   onClick={(e) => {
                     e.preventDefault();
+                    e.stopPropagation();
                     setIsEditDialogOpen(true);
                     setIsDropdownOpen(false);
                   }}
@@ -506,6 +549,7 @@ function ProjectCard({
                   className="text-destructive focus:text-destructive"
                   onClick={(e) => {
                     e.preventDefault();
+                    e.stopPropagation();
                     setIsDeleteDialogOpen(true);
                     setIsDropdownOpen(false);
                   }}
@@ -524,7 +568,7 @@ function ProjectCard({
           </div>
         </div>
       </CardContent>
-    </Card>
+    </Card >
   );
 
   return (
@@ -869,6 +913,7 @@ function EditProjectDialog({
                   value={result}
                   onChange={(e) => setResult(e.target.value)}
                   placeholder="e.g., 2-1"
+                  required
                 />
               </div>
               <div className="space-y-2">
