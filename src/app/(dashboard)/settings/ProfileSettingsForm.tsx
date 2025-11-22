@@ -187,7 +187,7 @@ export default function ProfileSettingsForm({ user }: { user: any | null }) {
             <p className="text-muted-foreground text-sm">Make changes to your profile here.</p>
           </div>
           <div className="flex gap-2">
-            <Button className="text-destructive-saturated bg-card dark:bg-primary dark:hover:bg-primary/90 border-input hover:bg-card/70" size="sm">
+            <Button className="text-destructive-saturated bg-card border-input hover:bg-card/70" size="sm">
               change visability
             </Button>
             <Button className="bg-destructive-saturated" variant="destructive" size="sm">

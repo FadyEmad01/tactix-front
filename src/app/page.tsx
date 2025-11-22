@@ -14,7 +14,7 @@ export default async function Home() {
       {user ? (
         <>
           <Link
-            href="/dashboard/settings"
+            href="/settings"
             className="absolute top-4 right-4 text-muted-foreground hover:text-primary transition-colors"
             title="Settings"
           >
@@ -41,7 +41,7 @@ export default async function Home() {
               </p> */}
               <div className="flex flex-col gap-4 w-full mt-4">
                 <Button size="lg" className="w-full" asChild>
-                  <Link href="/dashboard/settings">Go to Dashboard</Link>
+                  <Link href="/settings">Go to Dashboard</Link>
                 </Button>
                 <Button size="lg" variant="outline" className="w-full" asChild>
                   <Link href="/profile">Profile</Link>
