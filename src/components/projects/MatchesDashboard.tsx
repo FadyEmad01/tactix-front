@@ -1187,6 +1187,7 @@ function EditProjectDialog({
                       mode="single"
                       selected={matchDate}
                       onSelect={(d) => setMatchDate(d ?? undefined)}
+                      captionLayout="dropdown"
                       initialFocus
                     />
                   </PopoverContent>
