@@ -4,7 +4,7 @@ export interface Project {
   description?: string;
   teamA: string;
   teamB: string;
-  result?: string;
+  matchResult?: string;
   matchDate?: string;
   createdAt: string;
   videoUrl?: string | null;

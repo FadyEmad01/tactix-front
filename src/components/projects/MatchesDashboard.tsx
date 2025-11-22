@@ -56,9 +56,16 @@ import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { createMatch, deleteMatch, updateMatch } from "@/lib/match/actions";
 import { Project } from "@/types/match";
+import { Badge } from "../ui/badge";
 
 interface MatchesDashboardProps {
   initialProjects?: Project[];
+}
+
+interface BackendTag {
+  id: string;
+  name: string;
+  color?: string;
 }
 
 export default function MatchesDashboard({ initialProjects = [] }: MatchesDashboardProps) {
@@ -88,7 +95,7 @@ export default function MatchesDashboard({ initialProjects = [] }: MatchesDashbo
         teamA: projectData.teamA,
         teamB: projectData.teamB,
         matchDate: projectData.matchDate,
-        result: projectData.result,
+        matchResult: projectData.matchResult,
       });
 
       if (!result || !result.success) {
@@ -126,7 +133,7 @@ export default function MatchesDashboard({ initialProjects = [] }: MatchesDashbo
         description: m.description ?? projectData.description,
         teamA: m.teamA ?? projectData.teamA,
         teamB: m.teamB ?? projectData.teamB,
-        result: m.result ?? projectData.result,
+        matchResult: m.matchResult ?? projectData.matchResult,
         matchDate: m.matchDate ?? projectData.matchDate,
         createdAt: m.createdAt ?? new Date().toISOString(),
       };
@@ -190,7 +197,7 @@ export default function MatchesDashboard({ initialProjects = [] }: MatchesDashbo
         teamA: string;
         teamB: string;
         matchDate?: string;
-        result?: string;
+        matchResult?: string;
       }> = {};
 
       // Map frontend field names to backend field names
@@ -198,7 +205,7 @@ export default function MatchesDashboard({ initialProjects = [] }: MatchesDashbo
       if (updates.description !== undefined) payload.description = updates.description;
       if (updates.teamA !== undefined) payload.teamA = updates.teamA;
       if (updates.teamB !== undefined) payload.teamB = updates.teamB;
-      if (updates.result !== undefined) payload.result = updates.result;
+      if (updates.matchResult !== undefined) payload.matchResult = updates.matchResult;
       if (updates.matchDate !== undefined) payload.matchDate = updates.matchDate;
 
       // Send to backend
@@ -456,6 +463,180 @@ export default function MatchesDashboard({ initialProjects = [] }: MatchesDashbo
   );
 }
 
+// function ProjectCard({
+//   project,
+//   isSelectionMode = false,
+//   isSelected = false,
+//   onSelect,
+//   onDelete,
+//   onUpdate,
+// }: {
+//   project: Project;
+//   isSelectionMode?: boolean;
+//   isSelected?: boolean;
+//   onSelect?: (projectId: string, checked: boolean) => void;
+//   onDelete: (id: string) => void;
+//   onUpdate: (id: string, updates: Partial<Project>) => void;
+// }) {
+//   const router = useRouter();
+//   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+//   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+//   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+//   const formatDate = (dateString: string) => {
+//     if (!dateString) return "No Date";
+//     try {
+//       const date = new Date(dateString);
+//       return date.toLocaleDateString("en-US", {
+//         month: "short",
+//         day: "numeric",
+//         year: "numeric",
+//       });
+//     } catch (e) {
+//       return dateString;
+//     }
+//   };
+
+//   const handleCardClick = (e: React.MouseEvent) => {
+//     e.preventDefault();
+//     if (isSelectionMode) {
+//       onSelect?.(project.id, !isSelected);
+//     } else {
+//       router.push(`/video-editor/${project.id}`);
+//     }
+//   };
+
+//   const cardContent = (
+//     <Card className={`shadow-none overflow-hidden  p-3 rounded-xl transition-all ${isSelectionMode && isSelected ? "p-1.5 rounded-[19px] ring-2 ring-primary" : ""
+//       }`}>
+//       <CardContent className="px-0 pt-0 flex flex-col gap-1">
+//         <div className="flex items-start justify-between">
+//           <div className="flex-1 min-w-0">
+//             <h3 className="font-medium text-sm leading-snug group-hover:text-foreground/90 transition-colors line-clamp-1">
+//               {project.name}
+//             </h3>
+//             <p className="text-sm text-muted-foreground mt-1 font-medium">
+//               {project.teamA} vs {project.teamB}
+//             </p>
+//             <p className="mt-2 text-xs text-muted-foreground italic border-l-2 border-muted-foreground/30 pl-2">
+//               {project.description}
+//             </p>
+//             {project.matchResult && (
+//               <p className="text-xs text-muted-foreground mt-0.5">
+//                 Result: {project.matchResult}
+//               </p>
+//             )}
+//           </div>
+//           {!isSelectionMode && (
+//             <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
+//               <DropdownMenuTrigger asChild>
+//                 <Button
+//                   variant="ghost"
+//                   size="sm"
+//                   className={`size-6 p-0 transition-all shrink-0 ml-2 ${isDropdownOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+//                     }`}
+//                   onClick={(e) => {
+//                     e.preventDefault();
+//                     e.stopPropagation();
+//                   }}
+//                 >
+//                   <MoreHorizontal className="size-4" />
+//                 </Button>
+//               </DropdownMenuTrigger>
+//               <DropdownMenuContent align="end">
+//                 <DropdownMenuItem
+//                   onClick={(e) => {
+//                     e.preventDefault();
+//                     e.stopPropagation();
+//                     setIsEditDialogOpen(true);
+//                     setIsDropdownOpen(false);
+//                   }}
+//                 >
+//                   Edit
+//                 </DropdownMenuItem>
+//                 <DropdownMenuSeparator />
+//                 <DropdownMenuItem
+//                   className="text-destructive focus:text-destructive"
+//                   onClick={(e) => {
+//                     e.preventDefault();
+//                     e.stopPropagation();
+//                     setIsDeleteDialogOpen(true);
+//                     setIsDropdownOpen(false);
+//                   }}
+//                 >
+//                   Delete
+//                 </DropdownMenuItem>
+//               </DropdownMenuContent>
+//             </DropdownMenu>
+//           )}
+//         </div>
+
+//         <div className="space-y-1 mt-1">
+//           <div className="flex gap-1.5 text-xs text-muted-foreground">
+//             <CalendarIcon className="size-3.5" />
+//             <span>{formatDate(project.matchDate || project.createdAt)}</span>
+//           </div>
+//         </div>
+//       </CardContent>
+//     </Card >
+//   );
+
+//   return (
+//     <>
+//       {isSelectionMode ? (
+//         <div
+//           role="button"
+//           tabIndex={0}
+//           onClick={handleCardClick}
+//           onKeyDown={(e) =>
+//             e.key === "Enter" && isSelectionMode && onSelect?.(project.id, !isSelected)
+//           }
+//           className="block group cursor-pointer w-full text-left"
+//         >
+//           {cardContent}
+//         </div>
+//       ) : (
+//         <div className="block group cursor-pointer" onClick={handleCardClick}>
+//           {cardContent}
+//         </div>
+//       )}
+
+//       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+//         <AlertDialogContent>
+//           <AlertDialogHeader>
+//             <AlertDialogTitle>Delete project?</AlertDialogTitle>
+//             <AlertDialogDescription>
+//               This action cannot be undone. This will permanently delete "{project.name}".
+//             </AlertDialogDescription>
+//           </AlertDialogHeader>
+//           <AlertDialogFooter>
+//             <AlertDialogCancel>Cancel</AlertDialogCancel>
+//             <AlertDialogAction
+//               onClick={() => {
+//                 onDelete(project.id);
+//                 setIsDeleteDialogOpen(false);
+//               }}
+//               className="bg-destructive-saturated border-none text-white hover:bg-destructive/90"
+//             >
+//               Delete
+//             </AlertDialogAction>
+//           </AlertDialogFooter>
+//         </AlertDialogContent>
+//       </AlertDialog>
+
+//       <EditProjectDialog
+//         isOpen={isEditDialogOpen}
+//         onOpenChange={setIsEditDialogOpen}
+//         project={project}
+//         onConfirm={(updates) => {
+//           onUpdate(project.id, updates);
+//           setIsEditDialogOpen(false);
+//         }}
+//       />
+//     </>
+//   );
+// }
+
 function ProjectCard({
   project,
   isSelectionMode = false,
@@ -476,14 +657,20 @@ function ProjectCard({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
+  // --- TAGS LOGIC ---
+  const MAX_TAGS = 2; // Number of tags to show before the "+N"
+  const tags = project.tags || [];
+  const visibleTags = tags.slice(0, MAX_TAGS);
+  const hiddenCount = tags.length - MAX_TAGS;
+
+  console.log(tags)
+
   const formatDate = (dateString: string) => {
     if (!dateString) return "No Date";
     try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString("en-US", {
+      return new Date(dateString).toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
-        year: "numeric",
       });
     } catch (e) {
       return dateString;
@@ -500,31 +687,40 @@ function ProjectCard({
   };
 
   const cardContent = (
-    <Card className={`shadow-none overflow-hidden  p-3 rounded-xl transition-all ${isSelectionMode && isSelected ? "p-1.5 rounded-[19px] ring-2 ring-primary" : ""
-      }`}>
-      <CardContent className="px-0 pt-0 flex flex-col gap-1">
+    <Card
+      className={`
+        group relative h-full flex flex-col justify-between p-0
+        border-border/40 bg-card/50 hover:bg-card/80 hover:border-border
+        transition-all duration-200 ease-in-out shadow-sm hover:shadow-md
+        rounded-xl overflow-hidden
+        ${isSelectionMode && isSelected ? "ring-2 ring-primary bg-primary/5" : ""}
+      `}
+    >
+      {/* Selection Overlay for better UX */}
+      {isSelectionMode && (
+        <div className="absolute top-3 right-3 z-10">
+          <Checkbox
+            checked={isSelected}
+            className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+          />
+        </div>
+      )}
+
+      <CardContent className="p-4 flex flex-col gap-3 h-full">
+        {/* Header: Date & Menu */}
         <div className="flex items-start justify-between">
-          <div className="flex-1 min-w-0">
-            <h3 className="font-medium text-sm leading-snug group-hover:text-foreground/90 transition-colors line-clamp-1">
-              {project.name}
-            </h3>
-            <p className="text-sm text-muted-foreground mt-1 font-medium">
-              {project.teamA} vs {project.teamB}
-            </p>
-            {project.result && (
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Result: {project.result}
-              </p>
-            )}
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium bg-muted/50 px-2 py-1 rounded-md">
+            <CalendarIcon className="size-3" />
+            <span>{formatDate(project.matchDate || project.createdAt)}</span>
           </div>
+
           {!isSelectionMode && (
             <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  size="sm"
-                  className={`size-6 p-0 transition-all shrink-0 ml-2 ${isDropdownOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                    }`}
+                  size="icon"
+                  className="h-6 w-6 -mr-2 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -533,7 +729,7 @@ function ProjectCard({
                   <MoreHorizontal className="size-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" className="w-40">
                 <DropdownMenuItem
                   onClick={(e) => {
                     e.preventDefault();
@@ -542,7 +738,7 @@ function ProjectCard({
                     setIsDropdownOpen(false);
                   }}
                 >
-                  Edit
+                  Edit details
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
@@ -554,23 +750,75 @@ function ProjectCard({
                     setIsDropdownOpen(false);
                   }}
                 >
-                  Delete
+                  Delete match
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           )}
         </div>
 
-        <div className="space-y-1 mt-1">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <CalendarIcon className="size-3.5" />
-            <span>{formatDate(project.matchDate || project.createdAt)}</span>
+        {/* Main Info: Teams & Score */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="font-semibold text-base text-foreground leading-tight line-clamp-1">
+              {project.teamA} <span className="text-muted-foreground/60 font-normal text-sm">vs</span> {project.teamB}
+            </h3>
           </div>
+
+          {/* Match Result Badge or Project Name */}
+          <div className="flex items-center gap-2">
+            {project.matchResult && (
+              <Badge variant="outline" className="rounded-md px-1.5 py-0 text-[10px] font-bold border-primary/20 text-primary bg-primary/5">
+                {project.matchResult}
+              </Badge>
+            )}
+            <p className="text-xs text-muted-foreground line-clamp-1 font-medium">
+              {project.name}
+            </p>
+          </div>
+          {project.description && (
+            <div className="mt-2 text-xs text-muted-foreground italic border-l-2 border-muted-foreground/30 pl-2 line-clamp-1">
+              {project.description}
+            </div>
+          )}
+        </div>
+
+
+        {/* Footer: Tags */}
+        <div className="pt-3 border-t border-border/40 flex items-center flex-wrap gap-1.5 min-h-[2rem]">
+          {tags.length > 0 ? (
+            <>
+              {visibleTags.map((tag, index) => (
+                <Badge
+                  key={index} // Use tag.id if available
+                  variant="secondary"
+                  className="h-5 px-1.5 text-[10px] font-normal bg-muted hover:bg-muted-foreground/20 text-muted-foreground"
+                >
+                  {/* Access tag.name depending on your interface */}
+                  {tag.event}
+                </Badge>
+              ))}
+
+              {hiddenCount > 0 && (
+                <Badge
+                  variant="outline"
+                  className="h-5 px-1.5 text-[10px] font-medium border-dashed text-muted-foreground"
+                >
+                  +{hiddenCount}
+                </Badge>
+              )}
+            </>
+          ) : (
+            <span className="text-[10px] text-muted-foreground/50 italic">
+              No tags
+            </span>
+          )}
         </div>
       </CardContent>
-    </Card >
+    </Card>
   );
 
+  // ... Rest of the render logic (AlertDialog, Dialogs wrapper) remains exactly the same ...
   return (
     <>
       {isSelectionMode ? (
@@ -578,19 +826,18 @@ function ProjectCard({
           role="button"
           tabIndex={0}
           onClick={handleCardClick}
-          onKeyDown={(e) =>
-            e.key === "Enter" && isSelectionMode && onSelect?.(project.id, !isSelected)
-          }
-          className="block group cursor-pointer w-full text-left"
+          onKeyDown={(e) => e.key === "Enter" && isSelectionMode && onSelect?.(project.id, !isSelected)}
+          className="block h-full w-full text-left cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl"
         >
           {cardContent}
         </div>
       ) : (
-        <div className="block group cursor-pointer" onClick={handleCardClick}>
+        <div className="block h-full cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl" onClick={handleCardClick}>
           {cardContent}
         </div>
       )}
 
+      {/* Keep your existing AlertDialog and EditDialog logic here */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -606,7 +853,7 @@ function ProjectCard({
                 onDelete(project.id);
                 setIsDeleteDialogOpen(false);
               }}
-              className="bg-destructive-saturated border-none text-white hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete
             </AlertDialogAction>
@@ -652,7 +899,7 @@ function CreateProjectDialog({
         description: description.trim(),
         teamA: teamA.trim() || "Team A",
         teamB: teamB.trim() || "Team B",
-        result: result.trim(),
+        matchResult: result.trim(),
         matchDate: matchDate ? matchDate.toISOString() : undefined,
       });
       // reset
@@ -769,6 +1016,7 @@ function CreateProjectDialog({
                       disabled={{ after: new Date() }}
                       selected={matchDate}
                       onSelect={(d) => setMatchDate(d ?? undefined)}
+                      captionLayout="dropdown"
                       initialFocus
                       required
                     />
@@ -811,7 +1059,7 @@ function EditProjectDialog({
   const [description, setDescription] = useState(project.description || "");
   const [teamA, setTeamA] = useState(project.teamA);
   const [teamB, setTeamB] = useState(project.teamB);
-  const [result, setResult] = useState(project.result || "");
+  const [result, setResult] = useState(project.matchResult || "");
   const [matchDate, setMatchDate] = useState<Date | undefined>(
     project.matchDate ? new Date(project.matchDate) : undefined
   );
@@ -821,7 +1069,7 @@ function EditProjectDialog({
     setDescription(project.description || "");
     setTeamA(project.teamA);
     setTeamB(project.teamB);
-    setResult(project.result || "");
+    setResult(project.matchResult || "");
     setMatchDate(project.matchDate ? new Date(project.matchDate) : undefined);
   }, [project]);
 
@@ -833,7 +1081,7 @@ function EditProjectDialog({
         description: description.trim(),
         teamA: teamA.trim(),
         teamB: teamB.trim(),
-        result: result.trim(),
+        matchResult: result.trim(),
         matchDate: matchDate ? matchDate.toISOString() : undefined,
       });
     }

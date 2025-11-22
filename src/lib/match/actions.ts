@@ -64,7 +64,8 @@ export async function fetchMatches(): Promise<Project[]> {
       description: m.description ?? "",
       teamA: m.teamA ?? "Team A",
       teamB: m.teamB ?? "Team B",
-      result: m.result ?? "",
+      matchResult: m.matchResult ?? "",
+      tags: Array.isArray(m.tags) ? m.tags : [],
       matchDate: m.matchDate ?? undefined,
       createdAt: m.createdAt ?? new Date().toISOString(),
     }));
@@ -112,7 +113,7 @@ export async function createMatch(data: {
   teamA: string;
   teamB: string;
   matchDate?: string;
-  result?: string;
+  matchResult?: string;
 }) {
   try {
     const headers = await getAuthHeaders();
@@ -123,7 +124,7 @@ export async function createMatch(data: {
       teamA: data.teamA,
       teamB: data.teamB,
       matchDate: data.matchDate,
-      result: data.result,
+      matchResult: data.matchResult,
     };
 
     const res = await fetch(`${API_URL}/api/match`, {
@@ -139,8 +140,8 @@ export async function createMatch(data: {
     }
 
     const json = await res.json();
-    
-    console.log("📥 Backend response:", json);
+
+    // console.log("📥 Backend response:", json);
 
     revalidatePath("/");
     return { success: true, data: json } as const;
