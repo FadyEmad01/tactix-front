@@ -35,7 +35,9 @@ import {
   Calendar as CalendarIcon,
   Check,
   Edit,
+  FileVideo,
   ImageUpIcon,
+  Loader2,
   Play,
   StopCircle,
   Trash2,
@@ -47,6 +49,10 @@ import { formatTime } from "@/lib/video-utils";
 import { createTag, deleteTag, updateTag, } from "@/lib/match/actions";
 import type { Tag } from "@/types/video-editor";
 import { BackendTag } from "@/types/match";
+import { deleteVideoFromDB, getVideoFromDB, saveVideoToDB } from "@/lib/match/video-db";
+// Import our new DB functions
+
+
 
 const generateId = () => `tag_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
@@ -86,16 +92,67 @@ export default function MatchVideoEditor({
   const [videoUrl, setVideoUrl] = useState<string | null>(initialVideoUrl);
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [isLoadingVideo, setIsLoadingVideo] = useState(true);
 
-  // Sync current time with video
+
+  // 1. Check IndexedDB for existing video on mount
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
+    const loadVideo = async () => {
+      try {
+        const file = await getVideoFromDB(matchId);
+        if (file) {
+          const url = URL.createObjectURL(file);
+          setVideoUrl(url);
+        }
+      } catch (err) {
+        console.error("Error loading video from DB:", err);
+      } finally {
+        setIsLoadingVideo(false);
+      }
+    };
+    loadVideo();
 
-    const updateTime = () => setCurrentTime(video.currentTime);
-    video.addEventListener("timeupdate", updateTime);
-    return () => video.removeEventListener("timeupdate", updateTime);
-  }, []);
+    // Cleanup function to revoke URL to prevent memory leaks
+    return () => {
+      if (videoUrl) URL.revokeObjectURL(videoUrl);
+    };
+  }, [matchId]);
+
+
+  // 2. Handle Video Upload & Persistence
+  const handleVideoSelected = async (file: File) => {
+    setIsLoadingVideo(true);
+    try {
+      // Save to IndexedDB
+      await saveVideoToDB(matchId, file);
+      
+      // Create URL for playback
+      const url = URL.createObjectURL(file);
+      setVideoUrl(url);
+    } catch (err) {
+      console.error("Failed to save video:", err);
+      alert("Failed to save video to browser storage. Storage might be full.");
+    } finally {
+      setIsLoadingVideo(false);
+    }
+  };
+
+  const handleClearVideo = async () => {
+    if (confirm("Are you sure? This will remove the video from your browser cache.")) {
+      await deleteVideoFromDB(matchId);
+      if (videoUrl) URL.revokeObjectURL(videoUrl);
+      setVideoUrl(null);
+    }
+  };
+
+ // Need to duplicate the logic hooks here to make the component work
+ useEffect(() => {
+  const video = videoRef.current;
+  if (!video) return;
+  const updateTime = () => setCurrentTime(video.currentTime);
+  video.addEventListener("timeupdate", updateTime);
+  return () => video.removeEventListener("timeupdate", updateTime);
+}, [videoUrl]); // Added dependency on videoUrl
 
   // Fullscreen listeners
   useEffect(() => {
@@ -215,25 +272,25 @@ export default function MatchVideoEditor({
   //     endTime: updatedTag.endTime !== null ? String(updatedTag.endTime) : "",
   //     notes: updatedTag.notes,
   //   };
-  
+
   //   const res = await updateTag(updatedTag.id, payload);
-  
+
   //   if (!res.success) {
   //     console.error("Update failed:", res.error);
   //     return;
   //   }
-  
+
   //   // Backend returns updated tag as BackendTag, map it to Tag
   //   const backendTag = res.data as BackendTag;
   //   const mappedTag = mapBackendTagToTag(backendTag);
 
   //   console.log(mappedTag)
-  
+
   //   // Update front-end
   //   const newTags = tags
   //     .map((t) => (t.id === mappedTag.id ? mappedTag : t))
   //     .sort((a, b) => a.startTime - b.startTime);
-  
+
   //   setTags(newTags);
   //   addToHistory(newTags);
   //   setEditingTag(null); // close dialog
@@ -261,7 +318,7 @@ export default function MatchVideoEditor({
     // For a true refresh (if your backend does update all fields), use backendTag; otherwise fallback to edited content.
     const newTags = tags.map((t) =>
       (t.tagId && mappedTag.tagId && t.tagId === mappedTag.tagId) ||
-      (!t.tagId && !mappedTag.tagId && t.id === mappedTag.id)
+        (!t.tagId && !mappedTag.tagId && t.id === mappedTag.id)
         ? { ...t, ...mappedTag }
         : t
     );
@@ -291,10 +348,29 @@ export default function MatchVideoEditor({
     }
   };
 
+  // if (!videoUrl) {
+  //   return (
+  //     <Container className="py-20">
+  //       <VideoUploadComponent onVideoSelected={(url) => setVideoUrl(url)} />
+  //     </Container>
+  //   );
+  // }
+
+  if (isLoadingVideo) {
+    return (
+      <div className="h-svh flex items-center justify-center">
+        <div className="flex flex-col items-center gap-2 text-muted-foreground">
+          <Loader2 className="animate-spin h-8 w-8" />
+          <p>Checking local storage for video...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!videoUrl) {
     return (
       <Container className="py-20">
-        <VideoUploadComponent onVideoSelected={(url) => setVideoUrl(url)} />
+        <VideoUploadComponent onVideoConfirmed={handleVideoSelected} />
       </Container>
     );
   }
@@ -568,7 +644,7 @@ function EditTagDialog({
   onCancel: () => void;
 }) {
   // const [editedTag, setEditedTag] = useState(tag);
-  const [editedTag, setEditedTag] = useState({ ...tag }); 
+  const [editedTag, setEditedTag] = useState({ ...tag });
 
   return (
     <Dialog open={true} onOpenChange={onCancel}>
@@ -667,49 +743,219 @@ function EditTagDialog({
   );
 }
 
+// function VideoUploadComponent({
+//   onVideoSelected,
+// }: {
+//   onVideoSelected: (url: string) => void;
+// }) {
+//   const [file, setFile] = useState<File | null>(null);
+//   const [dragging, setDragging] = useState(false);
+//   const [error, setError] = useState<string | null>(null);
+
+//   const maxSizeMB = 50;
+//   const maxSize = maxSizeMB * 1024 * 1024;
+
+//   const handleDrop = (e: React.DragEvent) => {
+//     e.preventDefault();
+//     setDragging(false);
+
+//     const f = e.dataTransfer.files?.[0];
+//     if (!f) return;
+
+//     if (f.size > maxSize) {
+//       setError(`Max allowed size is ${maxSizeMB}MB`);
+//       return;
+//     }
+
+//     const url = URL.createObjectURL(f);
+//     setFile(f);
+//     onVideoSelected(url);
+//   };
+
+//   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+//     const f = e.target.files?.[0];
+//     if (!f) return;
+//     if (f.size > maxSize) {
+//       setError(`Max allowed size is ${maxSizeMB}MB`);
+//       return;
+//     }
+//     const url = URL.createObjectURL(f);
+//     setFile(f);
+//     onVideoSelected(url);
+//   };
+
+//   return (
+//     <div className="flex flex-col gap-2">
+//       <div
+//         onDrop={handleDrop}
+//         onDragOver={(e) => {
+//           e.preventDefault();
+//           setDragging(true);
+//         }}
+//         onDragLeave={() => setDragging(false)}
+//         className={`relative flex min-h-52 flex-col items-center justify-center rounded-xl border border-dashed p-4 ${dragging ? "bg-accent/50" : ""
+//           }`}
+//       >
+//         {!file ? (
+//           <>
+//             <input
+//               type="file"
+//               accept="video/*"
+//               className="absolute inset-0 opacity-0 cursor-pointer"
+//               onChange={handleFile}
+//             />
+//             <div className="flex flex-col items-center">
+//               <div className="mb-2 flex size-11 items-center justify-center rounded-full border bg-background">
+//                 <ImageUpIcon className="size-4 opacity-60" />
+//               </div>
+//               <p className="text-sm font-medium">Drop your video here or click to browse</p>
+//               <p className="text-xs text-muted-foreground">Max size: {maxSizeMB}MB</p>
+//             </div>
+//           </>
+//         ) : (
+//           <div className="text-sm">{file.name}</div>
+//         )}
+//       </div>
+
+//       {file && (
+//         <button
+//           type="button"
+//           onClick={() => {
+//             setFile(null);
+//             onVideoSelected("");
+//           }}
+//           className="flex items-center gap-2 text-xs text-red-600"
+//         >
+//           <X className="size-3" /> Remove video
+//         </button>
+//       )}
+
+//       {error && (
+//         <div className="flex items-center gap-1 text-xs text-destructive">
+//           <AlertCircleIcon className="size-3" />
+//           {error}
+//         </div>
+//       )}
+//     </div>
+//   );
+// }
+
+
 function VideoUploadComponent({
-  onVideoSelected,
+  onVideoConfirmed,
 }: {
-  onVideoSelected: (url: string) => void;
+  onVideoConfirmed: (file: File) => void;
 }) {
-  const [file, setFile] = useState<File | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const maxSizeMB = 50;
-  const maxSize = maxSizeMB * 1024 * 1024;
+  const maxSizeGB = 2; // IndexedDB handles large files well, but let's be reasonable
+  const maxSize = maxSizeGB * 1024 * 1024 * 1024;
+
+  const validateAndSetFile = (file: File) => {
+    if (file.size > maxSize) {
+      setError(`Video is too large. Max size is ${maxSizeGB}GB`);
+      return;
+    }
+    setError(null);
+    setSelectedFile(file);
+    // Create a temporary URL just for the preview/confirmation phase
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+  };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragging(false);
-
     const f = e.dataTransfer.files?.[0];
-    if (!f) return;
-
-    if (f.size > maxSize) {
-      setError(`Max allowed size is ${maxSizeMB}MB`);
-      return;
-    }
-
-    const url = URL.createObjectURL(f);
-    setFile(f);
-    onVideoSelected(url);
+    if (f && f.type.startsWith('video/')) validateAndSetFile(f);
   };
 
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
-    if (!f) return;
-    if (f.size > maxSize) {
-      setError(`Max allowed size is ${maxSizeMB}MB`);
-      return;
-    }
-    const url = URL.createObjectURL(f);
-    setFile(f);
-    onVideoSelected(url);
+    if (f) validateAndSetFile(f);
   };
+
+  const handleCancel = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    setError(null);
+  };
+
+  const handleConfirm = async () => {
+    if (!selectedFile) return;
+    setIsProcessing(true);
+    // We pass the actual File object up, not the string URL
+    await onVideoConfirmed(selectedFile); 
+    // Note: Processing state cleanup is handled by parent unmounting or changing state
+  };
+
+  // Cleanup preview URL on unmount
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
+  if (selectedFile) {
+    return (
+      <Card className="w-full max-w-xl mx-auto">
+        <CardHeader>
+          <CardTitle>Confirm Video Selection</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="rounded-lg border bg-muted p-4 flex items-center gap-4">
+            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <FileVideo className="h-6 w-6 text-primary" />
+            </div>
+            <div className="overflow-hidden">
+                <p className="font-medium truncate">{selectedFile.name}</p>
+                <p className="text-sm text-muted-foreground">
+                    {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                </p>
+            </div>
+          </div>
+
+          {previewUrl && (
+            <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                <video src={previewUrl} className="w-full h-full object-contain" controls />
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-2">
+            <Button 
+                variant="outline" 
+                className="flex-1" 
+                onClick={handleCancel}
+                disabled={isProcessing}
+            >
+                <X className="w-4 h-4 mr-2" />
+                Change Video
+            </Button>
+            <Button 
+                className="flex-1" 
+                onClick={handleConfirm}
+                disabled={isProcessing}
+            >
+                {isProcessing ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                    <Check className="w-4 h-4 mr-2" />
+                )}
+                {isProcessing ? "Saving to Browser..." : "Confirm & Analyze"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2 w-full max-w-2xl mx-auto">
       <div
         onDrop={handleDrop}
         onDragOver={(e) => {
@@ -717,47 +963,32 @@ function VideoUploadComponent({
           setDragging(true);
         }}
         onDragLeave={() => setDragging(false)}
-        className={`relative flex min-h-52 flex-col items-center justify-center rounded-xl border border-dashed p-4 ${
-          dragging ? "bg-accent/50" : ""
+        className={`relative flex min-h-64 flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 transition-colors ${
+          dragging ? "bg-accent/50 border-primary" : "border-muted-foreground/25"
         }`}
       >
-        {!file ? (
-          <>
-            <input
-              type="file"
-              accept="video/*"
-              className="absolute inset-0 opacity-0 cursor-pointer"
-              onChange={handleFile}
-            />
-            <div className="flex flex-col items-center">
-              <div className="mb-2 flex size-11 items-center justify-center rounded-full border bg-background">
-                <ImageUpIcon className="size-4 opacity-60" />
-              </div>
-              <p className="text-sm font-medium">Drop your video here or click to browse</p>
-              <p className="text-xs text-muted-foreground">Max size: {maxSizeMB}MB</p>
+        <input
+            type="file"
+            accept="video/*"
+            className="absolute inset-0 opacity-0 cursor-pointer z-10"
+            onChange={handleFileChange}
+        />
+        <div className="flex flex-col items-center text-center space-y-2">
+            <div className="mb-2 flex size-16 items-center justify-center rounded-full border bg-background shadow-sm">
+            <ImageUpIcon className="size-8 text-muted-foreground" />
             </div>
-          </>
-        ) : (
-          <div className="text-sm">{file.name}</div>
-        )}
+            <h3 className="font-semibold text-lg">Upload Match Video</h3>
+            <p className="text-sm text-muted-foreground max-w-xs">
+                Drag and drop your video file here, or click to browse.
+                <br />
+                <span className="text-xs opacity-70">Video stays in your browser (IndexedDB)</span>
+            </p>
+        </div>
       </div>
 
-      {file && (
-        <button
-          type="button"
-          onClick={() => {
-            setFile(null);
-            onVideoSelected("");
-          }}
-          className="flex items-center gap-2 text-xs text-red-600"
-        >
-          <X className="size-3" /> Remove video
-        </button>
-      )}
-
       {error && (
-        <div className="flex items-center gap-1 text-xs text-destructive">
-          <AlertCircleIcon className="size-3" />
+        <div className="flex items-center justify-center gap-2 p-4 text-sm text-destructive bg-destructive/10 rounded-lg">
+          <AlertCircleIcon className="size-4" />
           {error}
         </div>
       )}
