@@ -21,7 +21,7 @@ export default async function Page({ params }: PageProps) {
   const videoUrl: string | null = match.videoUrl ?? null;
   const tags = match.tags ?? [];
 
-  console.log(tags)
+  // console.log(tags)
   return (
     <MatchVideoEditor
       matchId={matchId} // FIX #2
