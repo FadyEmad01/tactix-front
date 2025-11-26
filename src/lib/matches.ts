@@ -281,7 +281,7 @@ export async function fetchMatchById(matchId: string): Promise<Project | null> {
         //     matchDate: match.matchDate ?? undefined,
         //     createdAt: match.createdAt ?? new Date().toISOString(),
         // };
-        return match
+        return match.match
     } catch (error) {
         console.error(`Error fetching match ${matchId}:`, error);
         return null;
