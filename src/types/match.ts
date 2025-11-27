@@ -3,7 +3,9 @@ export interface Project {
   name: string;
   description?: string;
   teamA: string;
+  teamALogo:string;
   teamB: string;
+  teamBLogo:string;
   matchResult?: string;
   matchDate?: string;
   createdAt: string;

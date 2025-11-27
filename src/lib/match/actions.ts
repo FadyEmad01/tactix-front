@@ -63,7 +63,9 @@ export async function fetchMatches(): Promise<Project[]> {
       name: m.title ?? "Untitled Match",
       description: m.description ?? "",
       teamA: m.teamA ?? "Team A",
+      teamALogo: m.teamALogo ?? "",
       teamB: m.teamB ?? "Team B",
+      teamBLogo: m.teamBLogo ?? "",
       matchResult: m.matchResult ?? "",
       tags: Array.isArray(m.tags) ? m.tags : [],
       matchDate: m.matchDate ?? undefined,
@@ -111,7 +113,9 @@ export async function createMatch(data: {
   title: string;
   description?: string;
   teamA: string;
+  teamALogo:string;
   teamB: string;
+  teamBLogo:string;
   matchDate?: string;
   matchResult?: string;
 }) {
@@ -122,7 +126,9 @@ export async function createMatch(data: {
       title: data.title,
       description: data.description,
       teamA: data.teamA,
+      teamALogo: data.teamALogo,
       teamB: data.teamB,
+      teamBLogo: data.teamBLogo,
       matchDate: data.matchDate,
       matchResult: data.matchResult,
     };

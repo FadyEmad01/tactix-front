@@ -93,10 +93,12 @@ export default function MatchesDashboard({ initialProjects = [] }: MatchesDashbo
   const handleCreateProject = async (projectData: Omit<Project, "id" | "createdAt">) => {
     try {
       const result = await createMatch({
-        title: projectData.name,
+       title: projectData.name,
         description: projectData.description,
         teamA: projectData.teamA,
+        teamALogo: projectData.teamALogo,
         teamB: projectData.teamB,
+        teamBLogo: projectData.teamBLogo,
         matchDate: projectData.matchDate,
         matchResult: projectData.matchResult,
       });
@@ -131,11 +133,13 @@ export default function MatchesDashboard({ initialProjects = [] }: MatchesDashbo
       }
 
       const newProject: Project = {
-        id: m.id ?? m._id ?? String(Date.now()),
+       id: m.id ?? m._id ?? String(Date.now()),
         name: m.title ?? projectData.name,
         description: m.description ?? projectData.description,
         teamA: m.teamA ?? projectData.teamA,
+        teamALogo: m.teamALogo ?? projectData.teamALogo,
         teamB: m.teamB ?? projectData.teamB,
+        teamBLogo: m.teamBLogo ?? projectData.teamBLogo,
         matchResult: m.matchResult ?? projectData.matchResult,
         matchDate: m.matchDate ?? projectData.matchDate,
         createdAt: m.createdAt ?? new Date().toISOString(),
@@ -1148,11 +1152,22 @@ function CreateProjectDialog({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // --- NEW LOGIC TO GET LOGOS ---
+    // 1. Access the teams object from the selected league
+    const teamsMap = (selectedLeagueData?.teams[0] || {}) as Record<string, string>;
+
+    // 2. Get the URL based on the selected team name (which is the ID in your data)
+    const teamALogoUrl = teamsMap[teamA] || "";
+    const teamBLogoUrl = teamsMap[teamB] || "";
+    // ------------------------------
     onConfirm({
       name: name.trim() || "Untitled Match",
       description: description.trim(),
       teamA: teamA.trim(),
       teamB: teamB.trim(),
+      teamALogo: teamALogoUrl,
+      teamBLogo: teamBLogoUrl,
       matchResult: result.trim(),
       matchDate: matchDate ? matchDate.toISOString() : undefined,
     });
