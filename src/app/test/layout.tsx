@@ -1,34 +1,68 @@
-import Container from "@/components/layout/Container";
-import { ResponsiveSettingsNav } from "@/components/settings/ResponsiveSettingsNav";
 
-import { SETTINGS_NAV_ITEMS } from "@/constant/SETTINGS";
+
+import { AppSidebar } from "@/components/ui/sidebar-nav/app-sidebar";
+import BreadcrumbNav from "@/components/ui/sidebar-nav/BreadcrumbNav";
+import { Separator } from "@/components/ui/separator";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
+import { fetchUserProfile } from "@/lib/fetchUserProfile";
 
-export default async function SettingsLayout({ children }: Readonly<{
-    children: React.ReactNode;
+export default async function AppLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
 }>) {
 
+  const cookieStore = await cookies()
+  const defaultOpen = cookieStore.get("sidebar_state")?.value === "true"
 
-    return (
-        <>
-            <Container>
-                <div className="space-y-6 py-10 pb-16">
-                    <div className="space-y-0.5">
-                        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-                        <p className="text-muted-foreground">
-                            {/* Manage your account settings. */}
-                            Update account preferences and manage
-                        </p>
-                    </div>
-                    {/* <Separator className="my-6" /> */}
-                    <div className="flex flex-col space-y-8 lg:flex-row lg:space-x-12 lg:space-y-0">
-                        <aside className="lg:w-1/5">
-                            <ResponsiveSettingsNav items={SETTINGS_NAV_ITEMS} />
-                        </aside>
-                        <div className="flex-1 lg:max-w-2xl">{children}</div>
-                    </div>
+  const user = await fetchUserProfile(); // <-- SERVER-SIDE
+
+  return (
+
+    <>
+
+      <SidebarProvider defaultOpen={defaultOpen}>
+        <AppSidebar user={user} />
+        <SidebarInset className="md:h-[97dvh] overflow-y-scroll w-full scrollbar-hide">
+
+
+          <div className="px-4 md:px-6 lg:px-8 @container ">
+            {/* <div className="w-full max-w-7xl mx-auto"> */}
+            <div className="w-full  mx-auto relative">
+              <header className="bg-background sticky z-50 top-0 w-full flex flex-wrap gap-3 min-h-10 py-4 shrink-0 items-center transition-all ease-linear border-b">
+                {/* Left side */}
+                <div className="flex flex-1 items-center gap-2">
+                  <SidebarTrigger className="-ms-1" />
+                  {/* <div className="max-lg:hidden lg:contents">
+                    <Separator
+                      orientation="vertical"
+                      className="me-2 data-[orientation=vertical]:h-4"
+                    />
+                    <BreadcrumbNav />
+                  </div> */}
+                  <div className="contents">
+                    <Separator
+                      orientation="vertical"
+                      className="me-2 data-[orientation=vertical]:h-4"
+                    />
+                    <BreadcrumbNav />
+                  </div>
                 </div>
-            </Container>
-        </>
-    );
+              </header>
+              {/* pt-8 */}
+              <div className="overflow-y-hidden w-full h-full relative">
+                {children}
+              </div>
+            </div>
+          </div>
+
+
+        </SidebarInset>
+      </SidebarProvider>
+
+    </>
+
+  );
 }

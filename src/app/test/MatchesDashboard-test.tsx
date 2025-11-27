@@ -56,8 +56,10 @@ import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { createMatch, deleteMatch, updateMatch } from "@/lib/match/actions";
 import { Project } from "@/types/match";
-import { Badge } from "../ui/badge";
+import { Badge } from "@/components/ui/badge";
 import { LEAGUES } from "@/constant/leagues";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { SearchableSelect } from "./SearchableSelect";
 import { cn } from "@/lib/utils";
 
@@ -890,8 +892,31 @@ function ProjectCard({
 //   const [description, setDescription] = useState("");
 //   const [teamA, setTeamA] = useState("");
 //   const [teamB, setTeamB] = useState("");
+//   const [teamALogo, setTeamALogo] = useState("");
+//   const [teamBLogo, setTeamBLogo] = useState("");
 //   const [result, setResult] = useState("");
 //   const [matchDate, setMatchDate] = useState<Date | undefined>(undefined);
+//   // Add league useState for selected league
+//   const [league, setLeague] = useState("");
+
+//   // جلب الفرق الخاصة بالدوري المختار
+//   const selectedLeague = LEAGUES.find((l) => l.id === league);
+
+//   // // عند اختيار Team A
+//   // const handleSelectTeamA = (id: string) => {
+//   //   setTeamA(id);
+
+//   //   const t = teams.find((x) => x.id === id);
+//   //   if (t) setTeamALogo(t.logoUrl);
+//   // };
+
+//   // // عند اختيار Team B
+//   // const handleSelectTeamB = (id: string) => {
+//   //   setTeamB(id);
+
+//   //   const t = teams.find((x) => x.id === id);
+//   //   if (t) setTeamBLogo(t.logoUrl);
+//   // };
 
 //   const handleSubmit = (e: React.FormEvent) => {
 //     e.preventDefault();
@@ -916,6 +941,11 @@ function ProjectCard({
 //     send();
 //   };
 
+//   // Get the array of team objects from the league for selection, converting team object (Record<name, logo>) to array
+//   const teamList = selectedLeague ?
+//     Object.entries(selectedLeague.teams[0] || {}).map(([name, logo]) => ({ id: name, name, logo: logo as string})) :
+//     [];
+
 //   return (
 //     <Dialog open={isOpen} onOpenChange={onOpenChange}>
 //       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -927,6 +957,48 @@ function ProjectCard({
 //         </DialogHeader>
 //         <form onSubmit={handleSubmit}>
 //           <div className="space-y-4 py-4">
+
+//             {/*  */}
+//             <div className="space-y-4">
+//               {/* League Select */}
+//               <div>
+//                 <Label>League</Label>
+
+//                 <SearchableSelect
+//                   value={league}
+//                   onChange={(value) => setLeague(value)}
+//                   placeholder="Select league"
+//                   items={LEAGUES} // لازم يكون فيه id, name, logo
+//                 />
+//               </div>
+//               {/* Team A */}
+//               <div>
+//                 <Label>Team A</Label>
+
+//                 <SearchableSelect
+//                   disabled={!selectedLeague}
+//                   value={teamA}
+//                   onChange={(value) => setTeamA(value)}
+//                   placeholder="Select team A"
+//                   items={teamList} // اللي أنت بتجيبه من selectedLeague
+//                 />
+//               </div>
+
+//               {/* Team B */}
+//               <div>
+//                 <Label>Team B</Label>
+
+//                 <SearchableSelect
+//                   disabled={!selectedLeague}
+//                   value={teamB}
+//                   onChange={(value) => setTeamB(value)}
+//                   placeholder="Select team B"
+//                   items={teamList}
+//                 />
+//               </div>
+//             </div>
+//             {/*  */}
+
 //             <div className="space-y-2">
 //               <Label htmlFor="name">
 //                 Title <span className="text-destructive-saturated">*</span>
@@ -1260,7 +1332,7 @@ function CreateProjectDialog({
             </div> */}
 
             <div className="space-y-2">
-              <Label htmlFor="description">Description <span className="opacity-50">(optional)</span></Label>
+              <Label htmlFor="description">Description <span className="text-accent">(optional)</span></Label>
               <Textarea
                 spellCheck="false"
                 id="description"
