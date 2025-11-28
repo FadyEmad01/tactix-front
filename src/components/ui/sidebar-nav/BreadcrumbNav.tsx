@@ -9,7 +9,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { usePathname } from "next/navigation";
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { NAVIGATION_DATA } from "@/constant/SIDEBAR_NAVIGATION_DATA";
 import { SETTINGS_NAV_ITEMS } from "@/constant/SETTINGS"; // <-- import your settings items
@@ -17,15 +17,33 @@ import { SETTINGS_NAV_ITEMS } from "@/constant/SETTINGS"; // <-- import your set
 export default function BreadcrumbNav() {
   const pathname = usePathname();
 
+  const videoEditorMatch = pathname.match(/^\/video-editor\/([^/]+)$/);
+  const matchId = videoEditorMatch ? videoEditorMatch[1] : "";
+
   const breadcrumbItems: { title: string; url?: string }[] = [];
+
+
 
   // Always start with Home
   breadcrumbItems.push({ title: "Home", url: "/" });
 
+ // ================================
+  // 1) VIDEO EDITOR ROUTES (Dynamic)
   // ================================
-  // 1) SETTINGS ROUTES
+  if (videoEditorMatch && matchId) {
+    breadcrumbItems.push({
+      title: "Projects",
+      url: "/projects",
+    });
+    breadcrumbItems.push({
+      title: "Video Tagging",
+    });
+  }
+
   // ================================
-  if (pathname.startsWith("/settings")) {
+  // 2) SETTINGS ROUTES
+  // ================================
+  else if (pathname.startsWith("/settings")) {
     // If NOT on /settings → add parent
     if (pathname !== "/settings") {
       breadcrumbItems.push({
@@ -39,18 +57,8 @@ export default function BreadcrumbNav() {
       (item) => item.href === pathname
     );
 
-    // if (currentSetting) {
-    //   breadcrumbItems.push({ title: currentSetting.title });
-    // } else if (pathname === "/settings") {
-    //   breadcrumbItems.push({ title: "Settings" });
-    //   breadcrumbItems.push({ title: "Edit Profile" }); // default root page
-    // } else {
-    //   breadcrumbItems.push({ title: "Unknown" });
-    // }
     if (pathname === "/settings") {
-      breadcrumbItems.push({ title: "Settings",
-        // url:"/settings"
-       });
+      breadcrumbItems.push({ title: "Settings" });
       breadcrumbItems.push({ title: "Edit Profile" });
     } else if (currentSetting) {
       breadcrumbItems.push({ title: currentSetting.title });
@@ -60,7 +68,7 @@ export default function BreadcrumbNav() {
   }
 
   // ================================
-  // 2) STATIC ROUTES FROM NAVIGATION_DATA
+  // 3) STATIC ROUTES FROM NAVIGATION_DATA
   // ================================
   else {
     const allItems = NAVIGATION_DATA.navMain.flatMap(
@@ -78,6 +86,7 @@ export default function BreadcrumbNav() {
       breadcrumbItems.push({ title: "Unknown" });
     }
   }
+
   // ================================
   // RENDERING
   // ================================
