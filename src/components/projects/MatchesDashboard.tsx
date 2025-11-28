@@ -60,6 +60,7 @@ import { Badge } from "../ui/badge";
 import { LEAGUES } from "@/constant/leagues";
 import { SearchableSelect } from "./SearchableSelect";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 interface MatchesDashboardProps {
   initialProjects?: Project[];
@@ -669,19 +670,18 @@ function ProjectCard({
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   // --- TAGS LOGIC ---
-  const MAX_TAGS = 2; // Number of tags to show before the "+N"
+  const MAX_TAGS = 2;
   const tags = project.tags || [];
   const visibleTags = tags.slice(0, MAX_TAGS);
   const hiddenCount = tags.length - MAX_TAGS;
 
-  console.log(tags)
-
   const formatDate = (dateString: string) => {
-    if (!dateString) return "No Date";
+    if (!dateString) return "TBD";
     try {
       return new Date(dateString).toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
+        year: "numeric",
       });
     } catch (e) {
       return dateString;
@@ -689,6 +689,7 @@ function ProjectCard({
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
+    if (isDropdownOpen) return; // Prevent navigation if dropdown is interacting
     e.preventDefault();
     if (isSelectionMode) {
       onSelect?.(project.id, !isSelected);
@@ -697,139 +698,167 @@ function ProjectCard({
     }
   };
 
+  // Helper component for Team Logo
+  const TeamLogo = ({ name, url }: { name: string; url?: string }) => (
+    <Avatar className="h-12 w-12 border-2 border-background shadow-sm bg-muted">
+      <AvatarImage src={url} alt={name} className="object-contain p-1" />
+      <AvatarFallback className="font-bold text-muted-foreground bg-muted text-xs">
+        {name.substring(0, 2).toUpperCase()}
+      </AvatarFallback>
+    </Avatar>
+  );
+
   const cardContent = (
     <Card
-      className={`
-        group relative h-full flex flex-col justify-between p-0
-        border-border/40 bg-card/50 hover:bg-card/80 hover:border-border
-        transition-all duration-200 ease-in-out shadow-sm hover:shadow-md
-        rounded-xl overflow-hidden
-        ${isSelectionMode && isSelected ? "ring-2 ring-primary bg-primary/5" : ""}
-      `}
+      className={cn(
+        "group min-w-[200px] py-0 relative h-full flex flex-col overflow-hidden transition-all duration-300 ease-in-out",
+        "border-border/50 bg-card hover:border-border hover:shadow-lg ",
+        isSelectionMode && isSelected && "ring-2 ring-primary bg-primary/5 border-primary/50"
+      )}
     >
-      {/* Selection Overlay for better UX */}
+      {/* Header: Date & Actions */}
+      <div className="flex items-start justify-between p-3 py-4 pb-0 z-20">
+        <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground bg-muted/40 px-2 py-1 rounded-full">
+          <CalendarIcon className="size-3" />
+          <span>{formatDate(project.matchDate || project.createdAt)}</span>
+        </div>
+
+        {/* Actions Menu (Only visible if not selecting) */}
+        {!isSelectionMode && (
+          <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity data-[state=open]:opacity-100"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+              >
+                <MoreHorizontal className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsEditDialogOpen(true);
+                  setIsDropdownOpen(false);
+                }}
+              >
+                Edit match details
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsDeleteDialogOpen(true);
+                  setIsDropdownOpen(false);
+                }}
+              >
+                Delete match
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
+
+      {/* Selection Checkbox Overlay */}
       {isSelectionMode && (
-        <div className="absolute top-3 right-3 z-10">
+        <div className="absolute top-3 right-3 z-30">
           <Checkbox
             checked={isSelected}
-            className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+            className="h-5 w-5 rounded-full data-[state=checked]:bg-primary data-[state=checked]:border-primary"
           />
         </div>
       )}
 
-      <CardContent className="p-4 flex flex-col gap-3 h-full">
-        {/* Header: Date & Menu */}
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium bg-muted/50 px-2 py-1 rounded-md">
-            <CalendarIcon className="size-3" />
-            <span>{formatDate(project.matchDate || project.createdAt)}</span>
+      <CardContent className="flex flex-col flex-1 p-0 pt-0 gap-4">
+        {/* MATCH FACE: Logos & Score */}
+        <div className="flex items-center justify-between mt-2">
+          {/* Team A */}
+          <div className="flex flex-col items-center gap-2 flex-1 min-w-0 text-center">
+            <TeamLogo name={project.teamA} url={project.teamALogo} />
+            <span className="text-xs font-medium leading-tight line-clamp-2 w-full break-words">
+              {project.teamA}
+            </span>
           </div>
 
-          {!isSelectionMode && (
-            <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 -mr-2 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}
-                >
-                  <MoreHorizontal className="size-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40">
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setIsEditDialogOpen(true);
-                    setIsDropdownOpen(false);
-                  }}
-                >
-                  Edit details
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="text-destructive focus:text-destructive"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setIsDeleteDialogOpen(true);
-                    setIsDropdownOpen(false);
-                  }}
-                >
-                  Delete match
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+          {/* Score / VS */}
+          <div className="flex flex-col items-center justify-center px-2 shrink-0">
+            {project.matchResult ? (
+              <div className="flex items-center justify-center min-w-[3rem] h-8 bg-primary/10 text-primary font-bold text-lg rounded-md px-2">
+                {project.matchResult}
+              </div>
+            ) : (
+              <span className="text-xs font-light text-muted-foreground/50 bg-muted/30 px-2 py-1 rounded-md">
+                VS
+              </span>
+            )}
+            {/* Optional: Time or Status */}
+            <span className="text-[10px] text-muted-foreground mt-1">FT</span>
+          </div>
+
+          {/* Team B */}
+          <div className="flex flex-col items-center gap-2 flex-1 min-w-0 text-center">
+            <TeamLogo name={project.teamB} url={project.teamBLogo} />
+            <span className="text-xs font-medium leading-tight line-clamp-2 w-full break-words">
+              {project.teamB}
+            </span>
+          </div>
         </div>
 
-        {/* Main Info: Teams & Score */}
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between gap-2">
-            <h3 className="font-semibold text-base text-foreground leading-tight line-clamp-1">
-              {project.teamA} <span className="text-muted-foreground/60 font-normal text-sm">vs</span> {project.teamB}
-            </h3>
-          </div>
+        {/* Description & Title */}
+        <div className="text-center space-y-1 mt-1">
+           {project.name && (
+             <p className="text-sm font-semibold text-foreground/90 line-clamp-1">
+                {project.name}
+             </p>
+           )}
+           {project.description && (
+            <p className="text-xs text-muted-foreground line-clamp-1">
+              {project.description}
+            </p>
+           )}
+        </div>
 
-          {/* Match Result Badge or Project Name */}
-          <div className="flex items-center gap-2">
-            {project.matchResult && (
-              <Badge variant="outline" className="rounded-md px-1.5 py-0 text-[10px] font-bold border-primary/20 text-primary bg-primary/5">
-                {project.matchResult}
+      </CardContent>
+
+      {/* Footer: Tags */}
+      <div className="bg-muted/20 border-t border-border/50 p-3 flex items-center gap-1.5 ">
+        {tags.length > 0 ? (
+          <>
+            {visibleTags.map((tag, index) => (
+              <Badge
+                key={index}
+                variant="secondary"
+                className="h-5 px-2 text-[10px] font-normal bg-background border border-border/50 shadow-sm text-muted-foreground"
+              >
+                {tag.event}
+              </Badge>
+            ))}
+            {hiddenCount > 0 && (
+              <Badge
+                variant="secondary"
+                className="h-5 px-1.5 text-[10px] font-medium bg-background border border-border/50 text-muted-foreground"
+              >
+                +{hiddenCount}
               </Badge>
             )}
-            <p className="text-xs text-muted-foreground line-clamp-1 font-medium">
-              {project.name}
-            </p>
-          </div>
-          {project.description && (
-            <div className="mt-2 text-xs text-muted-foreground italic border-l-2 border-muted-foreground/30 pl-2 line-clamp-1">
-              {project.description}
-            </div>
-          )}
-        </div>
-
-
-        {/* Footer: Tags */}
-        <div className="pt-3 border-t border-border/40 flex items-center flex-wrap gap-1.5 min-h-[2rem]">
-          {tags.length > 0 ? (
-            <>
-              {visibleTags.map((tag, index) => (
-                <Badge
-                  key={index} // Use tag.id if available
-                  variant="secondary"
-                  className="h-5 px-1.5 text-[10px] font-normal bg-muted hover:bg-muted-foreground/20 text-muted-foreground"
-                >
-                  {/* Access tag.name depending on your interface */}
-                  {tag.event}
-                </Badge>
-              ))}
-
-              {hiddenCount > 0 && (
-                <Badge
-                  variant="outline"
-                  className="h-5 px-1.5 text-[10px] font-medium border-dashed text-muted-foreground"
-                >
-                  +{hiddenCount}
-                </Badge>
-              )}
-            </>
-          ) : (
-            <span className="text-[10px] text-muted-foreground/50 italic">
-              No tags
-            </span>
-          )}
-        </div>
-      </CardContent>
+          </>
+        ) : (
+          <span className="text-[10px] text-muted-foreground/40 w-full text-center italic">
+            No analysis tags yet
+          </span>
+        )}
+      </div>
     </Card>
   );
 
-  // ... Rest of the render logic (AlertDialog, Dialogs wrapper) remains exactly the same ...
   return (
     <>
       {isSelectionMode ? (
@@ -837,24 +866,30 @@ function ProjectCard({
           role="button"
           tabIndex={0}
           onClick={handleCardClick}
-          onKeyDown={(e) => e.key === "Enter" && isSelectionMode && onSelect?.(project.id, !isSelected)}
-          className="block h-full w-full text-left cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl"
+          onKeyDown={(e) =>
+            e.key === "Enter" && isSelectionMode && onSelect?.(project.id, !isSelected)
+          }
+          className="block h-full w-full text-left cursor-pointer outline-none rounded-xl"
         >
           {cardContent}
         </div>
       ) : (
-        <div className="block h-full cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl" onClick={handleCardClick}>
+        <div
+          className="block h-full cursor-pointer outline-none rounded-xl"
+          onClick={handleCardClick}
+        >
           {cardContent}
         </div>
       )}
 
-      {/* Keep your existing AlertDialog and EditDialog logic here */}
+      {/* Delete Alert */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete project?</AlertDialogTitle>
+            <AlertDialogTitle>Delete Match?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete "{project.name}".
+              This action cannot be undone. This will permanently delete the analysis for 
+              <span className="font-medium text-foreground"> {project.teamA} vs {project.teamB}</span>.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -864,7 +899,7 @@ function ProjectCard({
                 onDelete(project.id);
                 setIsDeleteDialogOpen(false);
               }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive border-destructive text-white hover:bg-destructive/90"
             >
               Delete
             </AlertDialogAction>
@@ -872,6 +907,7 @@ function ProjectCard({
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Edit Dialog */}
       <EditProjectDialog
         isOpen={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
@@ -884,176 +920,6 @@ function ProjectCard({
     </>
   );
 }
-
-// function CreateProjectDialog({
-//   isOpen,
-//   onOpenChange,
-//   onConfirm,
-// }: {
-//   isOpen: boolean;
-//   onOpenChange: (open: boolean) => void;
-//   onConfirm: (projectData: Omit<Project, "id" | "createdAt">) => void;
-// }) {
-//   const [name, setName] = useState("");
-//   const [description, setDescription] = useState("");
-//   const [teamA, setTeamA] = useState("");
-//   const [teamB, setTeamB] = useState("");
-//   const [result, setResult] = useState("");
-//   const [matchDate, setMatchDate] = useState<Date | undefined>(undefined);
-
-//   const handleSubmit = (e: React.FormEvent) => {
-//     e.preventDefault();
-
-//     const send = () => {
-//       onConfirm({
-//         name: name.trim() || "Untitled Match",
-//         description: description.trim(),
-//         teamA: teamA.trim() || "Team A",
-//         teamB: teamB.trim() || "Team B",
-//         matchResult: result.trim(),
-//         matchDate: matchDate ? matchDate.toISOString() : undefined,
-//       });
-//       // reset
-//       setName("");
-//       setDescription("");
-//       setTeamA("");
-//       setTeamB("");
-//       setResult("");
-//       setMatchDate(undefined);
-//     };
-//     send();
-//   };
-
-//   return (
-//     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-//       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-//         <DialogHeader>
-//           <DialogTitle>Create New Match Analysis</DialogTitle>
-//           <DialogDescription>
-//             Enter the match details to start your analysis.
-//           </DialogDescription>
-//         </DialogHeader>
-//         <form onSubmit={handleSubmit}>
-//           <div className="space-y-4 py-4">
-//             <div className="space-y-2">
-//               <Label htmlFor="name">
-//                 Title <span className="text-destructive-saturated">*</span>
-//               </Label>
-//               <Input
-//                 spellCheck="false"
-//                 id="name"
-//                 value={name}
-//                 onChange={(e) => setName(e.target.value)}
-//                 placeholder="e.g., Champions League Final 2024"
-//                 required
-//               />
-//             </div>
-
-//             <div className="space-y-2">
-//               <Label htmlFor="description">Description</Label>
-//               <Textarea
-//                 spellCheck="false"
-//                 id="description"
-//                 value={description}
-//                 onChange={(e) => setDescription(e.target.value)}
-//                 placeholder="Add notes or context about this match..."
-//                 className="min-h-[80px]"
-//               />
-//             </div>
-
-//             <div className="grid grid-cols-7 gap-4 items-baseline-last justify-items-center">
-//               <div className="space-y-2 col-span-3">
-//                 <Label htmlFor="teamA">
-//                   Team A <span className="text-destructive-saturated">*</span>
-//                 </Label>
-//                 <Input
-//                   spellCheck="false"
-//                   id="teamA"
-//                   value={teamA}
-//                   onChange={(e) => setTeamA(e.target.value)}
-//                   placeholder="Home team"
-//                   required
-//                 />
-//               </div>
-//               <span className="col-span-1 font-mono">VS</span>
-//               <div className="space-y-2 col-span-3">
-//                 <Label htmlFor="teamB">
-//                   Team B <span className="text-destructive-saturated">*</span>
-//                 </Label>
-//                 <Input
-//                   spellCheck="false"
-//                   id="teamB"
-//                   value={teamB}
-//                   onChange={(e) => setTeamB(e.target.value)}
-//                   placeholder="Away team"
-//                   required
-//                 />
-//               </div>
-//             </div>
-
-//             <div className="grid grid-cols-2 gap-4">
-//               <div className="space-y-2">
-//                 <Label htmlFor="result">Result</Label>
-//                 <Input
-//                   spellCheck="false"
-//                   id="result"
-//                   value={result}
-//                   onChange={(e) => setResult(e.target.value)}
-//                   placeholder="e.g., 2-1"
-//                   required
-//                 />
-//               </div>
-//               <div className="space-y-2">
-//                 <Label>Match Date</Label>
-//                 <Popover>
-//                   <PopoverTrigger asChild>
-//                     <Button
-//                       size="lg"
-//                       variant="outline"
-//                       className={`w-full justify-start text-left font-normal ${!matchDate ? "text-muted-foreground" : ""
-//                         }`}
-//                     >
-//                       <CalendarIcon className="mr-2 h-4 w-4" />
-//                       {matchDate ? (
-//                         format(matchDate, "PPP")
-//                       ) : (
-//                         <span>Pick a date</span>
-//                       )}
-//                     </Button>
-//                   </PopoverTrigger>
-//                   <PopoverContent className="w-auto p-0" align="start">
-//                     <Calendar
-//                       mode="single"
-//                       disabled={{ after: new Date() }}
-//                       selected={matchDate}
-//                       onSelect={(d) => setMatchDate(d ?? undefined)}
-//                       captionLayout="dropdown"
-//                       initialFocus
-//                       required
-//                     />
-//                   </PopoverContent>
-//                 </Popover>
-//               </div>
-//             </div>
-//           </div>
-//           <DialogFooter>
-//             <Button
-//               size="sm"
-//               type="button"
-//               variant="outline"
-//               onClick={() => onOpenChange(false)}
-//             >
-//               Cancel
-//             </Button>
-//             <Button size="sm" type="submit">
-//               Create Project
-//             </Button>
-//           </DialogFooter>
-//         </form>
-//       </DialogContent>
-//     </Dialog>
-//   );
-// }
 
 function CreateProjectDialog({
   isOpen,
@@ -1096,21 +962,38 @@ function CreateProjectDialog({
   const relevantMatches = useMemo(() => {
     if (!selectedLeagueData || !teamA || !teamB) return [];
 
-    // Filter for A vs B OR B vs A
-    const matches = (selectedLeagueData.matches || []).filter(m =>
+    // 1. Find matches involving these two teams
+    const rawMatches = (selectedLeagueData.matches || []).filter(m =>
       (m.teamA === teamA && m.teamB === teamB) ||
       (m.teamA === teamB && m.teamB === teamA)
     );
 
-    // MAP TO NEW STRUCTURE
-    return matches.map(m => {
+    // 2. Deduplicate based on Date and Teams
+    const uniqueMatches: typeof rawMatches = [];
+    const seen = new Set<string>();
+
+    rawMatches.forEach((m) => {
+      // Create a unique key: "YYYY-MM-DD-TeamA-TeamB" (teams sorted alphabetically)
+      // Sorting ensures "Elche vs Betis" and "Betis vs Elche" produce the same key
+      const dateStr = m.date_time.$date;
+      const sortedTeams = [m.teamA, m.teamB].sort().join("-"); 
+      const uniqueKey = `${dateStr}-${sortedTeams}`;
+
+      if (!seen.has(uniqueKey)) {
+        seen.add(uniqueKey);
+        uniqueMatches.push(m);
+      }
+    });
+
+    // 3. Map to UI Structure
+    return uniqueMatches.map(m => {
       const dateFormatted = format(new Date(m.date_time.$date), "MMM d, yyyy");
       return {
         id: m._id.$oid,
-        name: `${m.teamA} vs ${m.teamB}`, // Top Line
-        subtitle: `${dateFormatted} • ${m.matchResult}`, // Bottom Line
-        logo: m.teamA_logo, // Left Image
-        secondaryLogo: m.teamB_logo, // Right Image (overlapping)
+        name: `${m.teamA} vs ${m.teamB}`,
+        subtitle: `${dateFormatted} • ${m.matchResult}`,
+        logo: m.teamA_logo,
+        secondaryLogo: m.teamB_logo,
         fullData: m
       };
     });
@@ -1425,24 +1308,63 @@ function EditProjectDialog({
   }, [selectedLeagueData]);
 
   // 4. MATCH FINDER LOGIC (Calculates Relevant Matches)
+  // const relevantMatches = useMemo(() => {
+  //   if (!selectedLeagueData || !teamA || !teamB) return [];
+
+  //   // Filter for A vs B OR B vs A
+  //   const matches = (selectedLeagueData.matches || []).filter(m =>
+  //     (m.teamA === teamA && m.teamB === teamB) ||
+  //     (m.teamA === teamB && m.teamB === teamA)
+  //   );
+
+  //   // Map to UI structure
+  //   return matches.map(m => {
+  //     const dateFormatted = format(new Date(m.date_time.$date), "MMM d, yyyy");
+  //     return {
+  //       id: m._id.$oid,
+  //       name: `${m.teamA} vs ${m.teamB}`, 
+  //       subtitle: `${dateFormatted} • ${m.matchResult}`,
+  //       logo: m.teamA_logo, 
+  //       secondaryLogo: m.teamB_logo, 
+  //       fullData: m
+  //     };
+  //   });
+  // }, [selectedLeagueData, teamA, teamB]);
   const relevantMatches = useMemo(() => {
     if (!selectedLeagueData || !teamA || !teamB) return [];
 
-    // Filter for A vs B OR B vs A
-    const matches = (selectedLeagueData.matches || []).filter(m =>
+    // 1. Find matches involving these two teams
+    const rawMatches = (selectedLeagueData.matches || []).filter(m =>
       (m.teamA === teamA && m.teamB === teamB) ||
       (m.teamA === teamB && m.teamB === teamA)
     );
 
-    // Map to UI structure
-    return matches.map(m => {
+    // 2. Deduplicate based on Date and Teams
+    const uniqueMatches: typeof rawMatches = [];
+    const seen = new Set<string>();
+
+    rawMatches.forEach((m) => {
+      // Create a unique key: "YYYY-MM-DD-TeamA-TeamB" (teams sorted alphabetically)
+      // Sorting ensures "Elche vs Betis" and "Betis vs Elche" produce the same key
+      const dateStr = m.date_time.$date;
+      const sortedTeams = [m.teamA, m.teamB].sort().join("-"); 
+      const uniqueKey = `${dateStr}-${sortedTeams}`;
+
+      if (!seen.has(uniqueKey)) {
+        seen.add(uniqueKey);
+        uniqueMatches.push(m);
+      }
+    });
+
+    // 3. Map to UI Structure
+    return uniqueMatches.map(m => {
       const dateFormatted = format(new Date(m.date_time.$date), "MMM d, yyyy");
       return {
         id: m._id.$oid,
-        name: `${m.teamA} vs ${m.teamB}`, 
+        name: `${m.teamA} vs ${m.teamB}`,
         subtitle: `${dateFormatted} • ${m.matchResult}`,
-        logo: m.teamA_logo, 
-        secondaryLogo: m.teamB_logo, 
+        logo: m.teamA_logo,
+        secondaryLogo: m.teamB_logo,
         fullData: m
       };
     });
