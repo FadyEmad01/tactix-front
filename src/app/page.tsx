@@ -5,9 +5,14 @@ import Link from "next/link";
 import { Settings } from "lucide-react";
 import LogoutButton from "@/components/auth/LogoutButton";
 import { fetchUserProfile } from "@/lib/fetchUserProfile";
+import { redirect } from "next/navigation";
 
 export default async function Home() {
   const user = await fetchUserProfile();
+
+  if (user) {
+    redirect("/projects")
+  }
 
   return (
     <div className="relative w-full h-screen flex justify-center items-center px-4">

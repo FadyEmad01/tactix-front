@@ -1,119 +1,3 @@
-// "use client";
-
-// import { useState } from "react";
-// import { CheckIcon, ChevronDownIcon } from "lucide-react";
-
-// import { cn } from "@/lib/utils";
-
-// import { Button } from "@/components/ui/button";
-// import {
-//   Popover,
-//   PopoverTrigger,
-//   PopoverContent,
-// } from "@/components/ui/popover";
-
-// import {
-//   Command,
-//   CommandInput,
-//   CommandList,
-//   CommandEmpty,
-//   CommandGroup,
-//   CommandItem,
-// } from "@/components/ui/command";
-
-// export function SearchableSelect({
-//   value,
-//   onChange,
-//   placeholder,
-//   items,
-//   disabled = false,
-// }: {
-//   value: string;
-//   onChange: (v: string) => void;
-//   placeholder: string;
-//   items: {
-//     id: string;
-//     name: string;
-//     logo?: string;
-//   }[];
-//   disabled?: boolean;
-// }) {
-//   const [open, setOpen] = useState(false);
-
-//   const selectedItem = items.find((i) => i.id === value);
-
-//   return (
-//     <Popover open={open} onOpenChange={setOpen} modal={true}>
-//       <PopoverTrigger asChild disabled={disabled}>
-//         <Button
-//           variant="outline"
-//           role="combobox"
-//           aria-expanded={open}
-//           disabled={disabled}
-//           className={cn(
-//             "w-full justify-between",
-//             disabled && "opacity-50 cursor-not-allowed"
-//           )}
-//         >
-//           <div className="flex items-center gap-2">
-//             {selectedItem ? (
-//               <>
-//                 {selectedItem.logo && (
-//                   <img
-//                     src={selectedItem.logo}
-//                     alt={selectedItem.name}
-//                     className="size-5 object-scale-down rounded"
-//                   />
-//                 )}
-//                 {selectedItem.name}
-//               </>
-//             ) : (
-//               <span className="text-muted-foreground">{placeholder}</span>
-//             )}
-//           </div>
-
-//           <ChevronDownIcon size={16} />
-//         </Button>
-//       </PopoverTrigger>
-
-//       <PopoverContent align="start" className="w-full p-0 min-w-[var(--radix-popper-anchor-width)]">
-//         <Command>
-//           <CommandInput placeholder={`Search ${placeholder}...`} />
-//           <CommandList>
-//             <CommandEmpty>No results found.</CommandEmpty>
-
-//             <CommandGroup className="">
-//               {items.map((item) => (
-//                 <CommandItem
-//                   key={item.id}
-//                   value={item.id}
-//                   onSelect={() => {
-//                     onChange(item.id);
-//                     setOpen(false);
-//                   }}
-//                 >
-//                   {item.logo && (
-//                     <img
-//                       src={item.logo}
-//                       className="size-5 rounded object-scale-down mr-2"
-//                       alt="item"
-//                     />
-//                   )}
-//                   {item.name}
-
-//                   {value === item.id && (
-//                     <CheckIcon className="ml-auto" size={16} />
-//                   )}
-//                 </CommandItem>
-//               ))}
-//             </CommandGroup>
-//           </CommandList>
-//         </Command>
-//       </PopoverContent>
-//     </Popover>
-//   );
-// }
-
 "use client";
 
 import { useState } from "react";
@@ -168,7 +52,7 @@ export function SearchableSelect({
           aria-expanded={open}
           disabled={disabled}
           className={cn(
-            "w-full justify-between h-auto py-2 px-3", // Adjusted height for multi-line
+            "w-full justify-between h-9 py-2 px-3", // Adjusted height for multi-line
             disabled && "opacity-50 cursor-not-allowed"
           )}
         >
@@ -182,7 +66,7 @@ export function SearchableSelect({
                         src={selectedItem.logo}
                         alt="logo A"
                         // className="size-8 bg-white/20 backdrop-blur-sm p-[1px] border border-border rounded-full object-scale-down"
-                        className="size-8 object-scale-down"
+                        className="size-6 object-scale-down"
                     />
                     )}
                     {selectedItem.secondaryLogo && (

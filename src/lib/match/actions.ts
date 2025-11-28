@@ -165,6 +165,8 @@ export async function updateMatch(
     description?: string;
     teamA: string;
     teamB: string;
+    teamALogo:string;
+    teamBLogo:string;
     matchDate?: string;
     result?: string;
   }>,
