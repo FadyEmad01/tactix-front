@@ -205,6 +205,8 @@ export default function MatchesDashboard({ initialProjects = [] }: MatchesDashbo
         description?: string;
         teamA: string;
         teamB: string;
+        teamALogo?: string;
+        teamBLogo?: string;
         matchDate?: string;
         matchResult?: string;
       }> = {};
@@ -214,6 +216,8 @@ export default function MatchesDashboard({ initialProjects = [] }: MatchesDashbo
       if (updates.description !== undefined) payload.description = updates.description;
       if (updates.teamA !== undefined) payload.teamA = updates.teamA;
       if (updates.teamB !== undefined) payload.teamB = updates.teamB;
+      if (updates.teamALogo !== undefined) payload.teamALogo = updates.teamALogo;
+      if (updates.teamBLogo !== undefined) payload.teamBLogo = updates.teamBLogo;
       if (updates.matchResult !== undefined) payload.matchResult = updates.matchResult;
       if (updates.matchDate !== undefined) payload.matchDate = updates.matchDate;
 
@@ -1437,30 +1441,135 @@ function EditProjectDialog({
 }) {
   const [name, setName] = useState(project.name);
   const [description, setDescription] = useState(project.description || "");
+  const [league, setLeague] = useState("");
   const [teamA, setTeamA] = useState(project.teamA);
   const [teamB, setTeamB] = useState(project.teamB);
+  
+  // New State for Match Finder
+  const [selectedMatchId, setSelectedMatchId] = useState(""); 
+  
   const [result, setResult] = useState(project.matchResult || "");
   const [matchDate, setMatchDate] = useState<Date | undefined>(
     project.matchDate ? new Date(project.matchDate) : undefined
   );
 
+  // 1. Initialization: Detect League based on Team A
   useEffect(() => {
-    setName(project.name);
-    setDescription(project.description || "");
-    setTeamA(project.teamA);
-    setTeamB(project.teamB);
-    setResult(project.matchResult || "");
-    setMatchDate(project.matchDate ? new Date(project.matchDate) : undefined);
-  }, [project]);
+    if (isOpen) {
+      setName(project.name);
+      setDescription(project.description || "");
+      setTeamA(project.teamA);
+      setTeamB(project.teamB);
+      setResult(project.matchResult || "");
+      setMatchDate(project.matchDate ? new Date(project.matchDate) : undefined);
+      setSelectedMatchId(""); // Reset match selection on open
+
+      // Try to find which league Team A belongs to
+      const foundLeague = LEAGUES.find((l) => {
+        const teams = l.teams[0] || {};
+        return Object.prototype.hasOwnProperty.call(teams, project.teamA);
+      });
+
+      if (foundLeague) {
+        setLeague(foundLeague.id);
+      } else {
+        setLeague("");
+      }
+    }
+  }, [project, isOpen]);
+
+  // 2. Get League Data
+  const selectedLeagueData = useMemo(
+    () => LEAGUES.find((l) => l.id === league),
+    [league]
+  );
+
+  // 3. Get Team List
+  const teamList = useMemo(() => {
+    if (!selectedLeagueData) return [];
+    return Object.entries(selectedLeagueData.teams[0] || {}).map(
+      ([name, logo]) => ({
+        id: name,
+        name,
+        logo: logo as string,
+      })
+    );
+  }, [selectedLeagueData]);
+
+  // 4. MATCH FINDER LOGIC (Calculates Relevant Matches)
+  const relevantMatches = useMemo(() => {
+    if (!selectedLeagueData || !teamA || !teamB) return [];
+
+    // Filter for A vs B OR B vs A
+    const matches = (selectedLeagueData.matches || []).filter(m =>
+      (m.teamA === teamA && m.teamB === teamB) ||
+      (m.teamA === teamB && m.teamB === teamA)
+    );
+
+    // Map to UI structure
+    return matches.map(m => {
+      const dateFormatted = format(new Date(m.date_time.$date), "MMM d, yyyy");
+      return {
+        id: m._id.$oid,
+        name: `${m.teamA} vs ${m.teamB}`, 
+        subtitle: `${dateFormatted} • ${m.matchResult}`,
+        logo: m.teamA_logo, 
+        secondaryLogo: m.teamB_logo, 
+        fullData: m
+      };
+    });
+  }, [selectedLeagueData, teamA, teamB]);
+
+  // --- Handlers ---
+
+  const handleLeagueChange = (val: string) => {
+    setLeague(val);
+    setTeamA("");
+    setTeamB("");
+    setSelectedMatchId("");
+  };
+
+  // Helper to update team and reset selected match
+  const handleTeamChange = (isTeamA: boolean, val: string) => {
+    if (isTeamA) setTeamA(val);
+    else setTeamB(val);
+    setSelectedMatchId("");
+  };
+
+  // Handle Selecting a Specific Match (Auto-fill)
+  const handleMatchSelect = (matchId: string) => {
+    setSelectedMatchId(matchId);
+    const match = relevantMatches.find(m => m.id === matchId)?.fullData;
+
+    if (match) {
+      setResult(match.matchResult);
+      setMatchDate(new Date(match.date_time.$date));
+      // Optionally update name if user wants to sync with official title
+      setName(`${match.teamA} vs ${match.teamB}`);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Resolve Logos
+    let teamALogoUrl = project.teamALogo;
+    let teamBLogoUrl = project.teamBLogo;
+
+    if (selectedLeagueData) {
+      const teamsMap = (selectedLeagueData.teams[0] || {}) as Record<string, string>;
+      if (teamsMap[teamA]) teamALogoUrl = teamsMap[teamA];
+      if (teamsMap[teamB]) teamBLogoUrl = teamsMap[teamB];
+    }
+
     if (name.trim() && teamA.trim() && teamB.trim()) {
       onConfirm({
         name: name.trim(),
         description: description.trim(),
         teamA: teamA.trim(),
         teamB: teamB.trim(),
+        teamALogo: teamALogoUrl,
+        teamBLogo: teamBLogoUrl,
         matchResult: result.trim(),
         matchDate: matchDate ? matchDate.toISOString() : undefined,
       });
@@ -1475,20 +1584,90 @@ function EditProjectDialog({
           <DialogDescription>Update the match information.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="space-y-4 py-4">
+          <div className="space-y-5 py-4">
+            {/* League Selection */}
             <div className="space-y-2">
-              <Label htmlFor="edit-name">
-                Title <span className="text-destructive-saturated">*</span>
-              </Label>
-              <Input
-                spellCheck="false"
-                id="edit-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Match title"
-                required
+              <Label>League</Label>
+              <SearchableSelect
+                value={league}
+                onChange={handleLeagueChange}
+                placeholder="Select league (to populate teams)"
+                items={LEAGUES}
               />
             </div>
+
+            {/* Teams Grid */}
+            <div className="grid grid-cols-7 gap-4 items-baseline-last justify-items-center">
+              {/* Team A */}
+              <div className="space-y-2 col-span-3 w-full">
+                <Label htmlFor="edit-teamA">
+                  Team A <span className="text-destructive-saturated">*</span>
+                </Label>
+                {league ? (
+                  <SearchableSelect
+                    value={teamA}
+                    onChange={(val) => handleTeamChange(true, val)}
+                    placeholder="Select Team A"
+                    items={teamList}
+                  />
+                ) : (
+                  <Input
+                    spellCheck="false"
+                    id="edit-teamA"
+                    value={teamA}
+                    onChange={(e) => setTeamA(e.target.value)}
+                    placeholder="Home team"
+                    required
+                  />
+                )}
+              </div>
+
+              <span className="col-span-1 font-mono pt-8">VS</span>
+
+              {/* Team B */}
+              <div className="space-y-2 col-span-3 w-full">
+                <Label htmlFor="edit-teamB">
+                  Team B <span className="text-destructive-saturated">*</span>
+                </Label>
+                {league ? (
+                  <SearchableSelect
+                    value={teamB}
+                    onChange={(val) => handleTeamChange(false, val)}
+                    placeholder="Select Team B"
+                    items={teamList}
+                  />
+                ) : (
+                  <Input
+                    spellCheck="false"
+                    id="edit-teamB"
+                    value={teamB}
+                    onChange={(e) => setTeamB(e.target.value)}
+                    placeholder="Away team"
+                    required
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* MATCH FINDER: The exact block you requested */}
+            {relevantMatches.length > 0 && (
+              <div className="p-4 border rounded-lg bg-muted/20 space-y-2 animate-in fade-in zoom-in-95 duration-300">
+                <Label className="text-primary">Select a played match:</Label>
+
+                <SearchableSelect
+                  value={selectedMatchId}
+                  onChange={handleMatchSelect}
+                  placeholder="Select previous match..."
+                  items={relevantMatches}
+                />
+
+                <p className="text-[0.8rem] text-muted-foreground">
+                  Auto-fills result, date, and title based on selection.
+                </p>
+              </div>
+            )}
+
+            <div className="border-t my-2"></div>
 
             <div className="space-y-2">
               <Label htmlFor="edit-description">Description</Label>
@@ -1500,36 +1679,6 @@ function EditProjectDialog({
                 placeholder="Add notes or context..."
                 className="min-h-[80px]"
               />
-            </div>
-
-            <div className="grid grid-cols-7 gap-4 items-baseline-last justify-items-center">
-              <div className="space-y-2 col-span-3">
-                <Label htmlFor="edit-teamA">
-                  Team A <span className="text-destructive-saturated">*</span>
-                </Label>
-                <Input
-                  spellCheck="false"
-                  id="edit-teamA"
-                  value={teamA}
-                  onChange={(e) => setTeamA(e.target.value)}
-                  placeholder="Home team"
-                  required
-                />
-              </div>
-              <span className="col-span-1 font-mono">VS</span>
-              <div className="space-y-2 col-span-3">
-                <Label htmlFor="edit-teamB">
-                  Team B <span className="text-destructive-saturated">*</span>
-                </Label>
-                <Input
-                  spellCheck="false"
-                  id="edit-teamB"
-                  value={teamB}
-                  onChange={(e) => setTeamB(e.target.value)}
-                  placeholder="Away team"
-                  required
-                />
-              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -1546,13 +1695,15 @@ function EditProjectDialog({
               </div>
               <div className="space-y-2">
                 <Label>Match Date</Label>
-                <Popover>
+                <Popover modal={true}>
                   <PopoverTrigger asChild>
                     <Button
-                      size="lg"
+                      size="default"
                       variant="outline"
-                      className={`w-full justify-start text-left font-normal ${!matchDate ? "text-muted-foreground" : ""
-                        }`}
+                      className={cn(
+                        "w-full justify-start text-left font-normal h-9",
+                        !matchDate && "text-muted-foreground"
+                      )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {matchDate ? (
