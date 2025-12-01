@@ -1,7 +1,9 @@
 import { NavigationData } from "@/types/sidebar";
 import {
   Folders,
-  Settings
+  LandPlot,
+  Settings,
+  Tags
 } from "lucide-react";
 
 export const NAVIGATION_DATA: NavigationData = {
@@ -25,6 +27,16 @@ export const NAVIGATION_DATA: NavigationData = {
           url: "/projects",
           icon: Folders,
         },
+        {
+          title: "Tags",
+          url: "/tags",
+          icon: Tags,
+        },
+        // {
+        //   title: "Tactical Board",
+        //   url: "/tactical-board",
+        //   icon: LandPlot,
+        // },
         {
           title: "Settings",
           url: "/settings",
