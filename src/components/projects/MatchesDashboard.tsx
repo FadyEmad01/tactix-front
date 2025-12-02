@@ -429,7 +429,21 @@ export default function MatchesDashboard({ initialProjects = [] }: MatchesDashbo
         ) : sortedProjects.length === 0 ? (
           <NoResults searchQuery={searchQuery} onClearSearch={() => setSearchQuery("")} />
         ) : (
-          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+          <>
+           {/* <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+            {sortedProjects.map((project) => (
+              <ProjectCard
+                key={project.id}
+                project={project}
+                isSelectionMode={isSelectionMode}
+                isSelected={selectedProjects.has(project.id)}
+                onSelect={handleSelectProject}
+                onDelete={handleDeleteProject}
+                onUpdate={handleUpdateProject}
+              />
+            ))}
+          </div> */}
+           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-col-5 gap-6">
             {sortedProjects.map((project) => (
               <ProjectCard
                 key={project.id}
@@ -442,6 +456,7 @@ export default function MatchesDashboard({ initialProjects = [] }: MatchesDashbo
               />
             ))}
           </div>
+          </>
         )}
       </main>
 
@@ -475,179 +490,6 @@ export default function MatchesDashboard({ initialProjects = [] }: MatchesDashbo
   );
 }
 
-// function ProjectCard({
-//   project,
-//   isSelectionMode = false,
-//   isSelected = false,
-//   onSelect,
-//   onDelete,
-//   onUpdate,
-// }: {
-//   project: Project;
-//   isSelectionMode?: boolean;
-//   isSelected?: boolean;
-//   onSelect?: (projectId: string, checked: boolean) => void;
-//   onDelete: (id: string) => void;
-//   onUpdate: (id: string, updates: Partial<Project>) => void;
-// }) {
-//   const router = useRouter();
-//   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-//   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-//   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-
-//   const formatDate = (dateString: string) => {
-//     if (!dateString) return "No Date";
-//     try {
-//       const date = new Date(dateString);
-//       return date.toLocaleDateString("en-US", {
-//         month: "short",
-//         day: "numeric",
-//         year: "numeric",
-//       });
-//     } catch (e) {
-//       return dateString;
-//     }
-//   };
-
-//   const handleCardClick = (e: React.MouseEvent) => {
-//     e.preventDefault();
-//     if (isSelectionMode) {
-//       onSelect?.(project.id, !isSelected);
-//     } else {
-//       router.push(`/video-editor/${project.id}`);
-//     }
-//   };
-
-//   const cardContent = (
-//     <Card className={`shadow-none overflow-hidden  p-3 rounded-xl transition-all ${isSelectionMode && isSelected ? "p-1.5 rounded-[19px] ring-2 ring-primary" : ""
-//       }`}>
-//       <CardContent className="px-0 pt-0 flex flex-col gap-1">
-//         <div className="flex items-start justify-between">
-//           <div className="flex-1 min-w-0">
-//             <h3 className="font-medium text-sm leading-snug group-hover:text-foreground/90 transition-colors line-clamp-1">
-//               {project.name}
-//             </h3>
-//             <p className="text-sm text-muted-foreground mt-1 font-medium">
-//               {project.teamA} vs {project.teamB}
-//             </p>
-//             <p className="mt-2 text-xs text-muted-foreground italic border-l-2 border-muted-foreground/30 pl-2">
-//               {project.description}
-//             </p>
-//             {project.matchResult && (
-//               <p className="text-xs text-muted-foreground mt-0.5">
-//                 Result: {project.matchResult}
-//               </p>
-//             )}
-//           </div>
-//           {!isSelectionMode && (
-//             <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
-//               <DropdownMenuTrigger asChild>
-//                 <Button
-//                   variant="ghost"
-//                   size="sm"
-//                   className={`size-6 p-0 transition-all shrink-0 ml-2 ${isDropdownOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-//                     }`}
-//                   onClick={(e) => {
-//                     e.preventDefault();
-//                     e.stopPropagation();
-//                   }}
-//                 >
-//                   <MoreHorizontal className="size-4" />
-//                 </Button>
-//               </DropdownMenuTrigger>
-//               <DropdownMenuContent align="end">
-//                 <DropdownMenuItem
-//                   onClick={(e) => {
-//                     e.preventDefault();
-//                     e.stopPropagation();
-//                     setIsEditDialogOpen(true);
-//                     setIsDropdownOpen(false);
-//                   }}
-//                 >
-//                   Edit
-//                 </DropdownMenuItem>
-//                 <DropdownMenuSeparator />
-//                 <DropdownMenuItem
-//                   className="text-destructive focus:text-destructive"
-//                   onClick={(e) => {
-//                     e.preventDefault();
-//                     e.stopPropagation();
-//                     setIsDeleteDialogOpen(true);
-//                     setIsDropdownOpen(false);
-//                   }}
-//                 >
-//                   Delete
-//                 </DropdownMenuItem>
-//               </DropdownMenuContent>
-//             </DropdownMenu>
-//           )}
-//         </div>
-
-//         <div className="space-y-1 mt-1">
-//           <div className="flex gap-1.5 text-xs text-muted-foreground">
-//             <CalendarIcon className="size-3.5" />
-//             <span>{formatDate(project.matchDate || project.createdAt)}</span>
-//           </div>
-//         </div>
-//       </CardContent>
-//     </Card >
-//   );
-
-//   return (
-//     <>
-//       {isSelectionMode ? (
-//         <div
-//           role="button"
-//           tabIndex={0}
-//           onClick={handleCardClick}
-//           onKeyDown={(e) =>
-//             e.key === "Enter" && isSelectionMode && onSelect?.(project.id, !isSelected)
-//           }
-//           className="block group cursor-pointer w-full text-left"
-//         >
-//           {cardContent}
-//         </div>
-//       ) : (
-//         <div className="block group cursor-pointer" onClick={handleCardClick}>
-//           {cardContent}
-//         </div>
-//       )}
-
-//       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-//         <AlertDialogContent>
-//           <AlertDialogHeader>
-//             <AlertDialogTitle>Delete project?</AlertDialogTitle>
-//             <AlertDialogDescription>
-//               This action cannot be undone. This will permanently delete "{project.name}".
-//             </AlertDialogDescription>
-//           </AlertDialogHeader>
-//           <AlertDialogFooter>
-//             <AlertDialogCancel>Cancel</AlertDialogCancel>
-//             <AlertDialogAction
-//               onClick={() => {
-//                 onDelete(project.id);
-//                 setIsDeleteDialogOpen(false);
-//               }}
-//               className="bg-destructive-saturated border-none text-white hover:bg-destructive/90"
-//             >
-//               Delete
-//             </AlertDialogAction>
-//           </AlertDialogFooter>
-//         </AlertDialogContent>
-//       </AlertDialog>
-
-//       <EditProjectDialog
-//         isOpen={isEditDialogOpen}
-//         onOpenChange={setIsEditDialogOpen}
-//         project={project}
-//         onConfirm={(updates) => {
-//           onUpdate(project.id, updates);
-//           setIsEditDialogOpen(false);
-//         }}
-//       />
-//     </>
-//   );
-// }
 
 function ProjectCard({
   project,
