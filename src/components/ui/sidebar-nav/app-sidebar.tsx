@@ -18,6 +18,7 @@ import {
 import { usePathname } from "next/navigation";
 import { NAVIGATION_DATA } from "@/constant/SIDEBAR_NAVIGATION_DATA";
 import { NavUser } from "./nav-user";
+import Image from "next/image";
 
 type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
   user: any | null;
@@ -29,7 +30,7 @@ function SidebarLogo() {
     <div className="flex gap-2 px-2 group-data-[collapsible=icon]:px-0 transition-[padding] duration-200 ease-in-out">
       <Link className="group/logo inline-flex" href="/">
         <span className="sr-only">Logo</span>
-        <svg
+        {/* <svg
           xmlns="http://www.w3.org/2000/svg"
           width="36"
           height="36"
@@ -55,7 +56,8 @@ function SidebarLogo() {
               <stop offset="1" stopColor="#A1A1AA" />
             </linearGradient>
           </defs>
-        </svg>
+        </svg> */}
+        <Image className="w-20 group-data-[collapsible=icon]:w-15 transition-[width,height] duration-200 ease-in-out" src="/svg/app-logo.svg" alt="logo" width={0} height={0}/>
       </Link>
     </div>
   );
