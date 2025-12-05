@@ -21,9 +21,82 @@ const syne = Syne({
   subsets: ["latin"],
 });
 
+
 export const metadata: Metadata = {
-  title: "Tactix",
-  description: "The first software that have all what football analyst need in one",
+  title: {
+    template: '%s - Tactix',
+    default: 'Tactix - Football Analysis Platform',
+  },
+  description:
+    'Advanced football analysis platform for coaches, analysts, and scouts. Visualize tactics, track player performance, and gain deep insights into match statistics with Tactix.',
+  keywords: [
+    'Tactix',
+    'Football Analysis',
+    'Soccer Analytics',
+    'Match Statistics',
+    'Coaching Tools',
+    'Tactical Board',
+    'Player Performance',
+    'Sports Data',
+  ],
+  icons: [
+    {
+      rel: 'icon',
+      type: 'image/svg',
+      sizes: '32x32',
+      url: '/og-images/favicon.svg',
+    },
+    {
+      rel: 'icon',
+      type: 'image/png',
+      sizes: '96x96',
+      url: '/og-images/favicon-96x96.png',
+    },
+    {
+      rel: 'apple-touch-icon',
+      sizes: '180x180',
+      url: '/og-images/apple-touch-icon.png',
+    },
+  ],
+  authors: [
+    {
+      name: 'Fady Emad',
+      url: 'https://github.com/FadyEmad01',
+    },
+  ],
+  publisher: 'Tactix',
+  openGraph: {
+    title: 'Tactix - Football Analysis Platform',
+    description:
+      'Advanced football analysis platform for coaches, analysts, and scouts. Visualize tactics, track player performance, and gain deep insights into match statistics.',
+    url: 'https://tactix-front.vercel.app/',
+    siteName: 'Tactix',
+    images: [
+      {
+        url: '/og-images/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Tactix Dashboard Preview',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    site: '@TactixApp',
+    title: 'Tactix - Football Analysis Platform',
+    description:
+      'Advanced football analysis platform for coaches, analysts, and scouts. Visualize tactics and gain deep insights.',
+    images: [
+      {
+        url: '/og-images/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Tactix Dashboard Preview',
+      },
+    ],
+  },
 };
 
 export default function RootLayout({
