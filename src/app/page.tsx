@@ -12,6 +12,9 @@ import { Header } from "@/components/landing/header";
 import Hero from "@/components/landing/Hero/Hero";
 import Container from "@/components/layout/Container";
 import Image from "next/image";
+import Services from "@/components/landing/Services/Services";
+import Footer from "@/components/landing/footer";
+import Lenis from "@/components/landing/provider/Lenis";
 
 export default async function Home() {
   const user = await fetchUserProfile();
@@ -72,13 +75,21 @@ export default async function Home() {
         </>
       ) : (
         <>
-          <div className="bg-[#e2e7e7]">
-            <IntroAnimation />
-            <Hero />
+          <Lenis>
+            <div className="relative">
+              <div className="bg-white">
+                <div className="w-full overflow-hidden">
+                  <IntroAnimation />
+                  <Hero />
+                </div>
+                <div className="relative z-50">
+                  <Services />
+                  <Footer />
+                </div>
+              </div>
 
-            <div className="h-dvh"></div>
-
-          </div>
+            </div>
+          </Lenis>
         </>
       )}
 

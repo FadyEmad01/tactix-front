@@ -24,14 +24,6 @@ const IntroAnimation: React.FC = () => {
     const INITIAL_ZOOM = 1;
     const TOTAL_IMAGES = 5;
 
-    // const imageSources = [
-    //     '/bg/bg2.jpg',
-    //     '/bg/bg3.jpg',
-    //     '/bg/bg1.jpg',
-    //     '/product/p2.jpg',
-    //     '/bg/bg7.jpg'
-    // ];
-
     // Track image loading with Next.js Image component
     const handleImageLoad = () => {
         setImagesLoaded(prev => prev + 1);

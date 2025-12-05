@@ -389,9 +389,9 @@
  }
 
  .dark {
-  --phosphor: #D2FF00;
+   --phosphor: #D2FF00;
 
-  
+
    --background: #0f172a;
    --foreground: #d1d5db;
    --card: #1e293b;
@@ -559,7 +559,8 @@
    width: 100vw;
    height: 100vh;
    /* background-color: var(--background); */
-   background-color: #e2e7e7;
+   /* background-color: #e2e7e7; */
+   background-color: white;
    z-index: 99999;
    display: flex;
    justify-content: center;

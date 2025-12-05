@@ -84,7 +84,7 @@ export const Header = ({ transition }: { transition: boolean }) => {
               rotateDirection="top"
               staggerFrom="first"
               // {...sharedProps}
-              mainClassName='text-black bg-phosphor min-h-8 px-[calc(--spacing(3)-1px)] py-[calc(--spacing(1.5)-1px)] rounded-lg'
+              mainClassName='text-black mt-2.5 bg-phosphor min-h-8 px-[calc(--spacing(3)-1px)] py-[calc(--spacing(1.5)-1px)] rounded-lg'
             >
               Get Started
             </Letter3DSwap>
