@@ -5,6 +5,7 @@ import { gsap } from "gsap";
 import { CustomEase } from "gsap/CustomEase";
 import { cn } from "@/lib/utils";
 import Container from "@/components/layout/Container";
+import Image from "next/image";
 
 // Register GSAP plugins
 if (typeof window !== "undefined") {
@@ -18,7 +19,7 @@ const services = [
         title: "Product Design",
         category: "PRODUCT DESIGN",
         description:
-            "We begin by understanding your business goals, target audience, and current challenges. This phase involves research, analysis, and strategic planning to identify opportunities.",
+            "Building a brand is more than just visuals. We help define your brand's voice, tone, and positioning to carve out a unique space in the market that drives loyalty.",
         image:
             "/images/hero.jpeg",
     },
@@ -27,7 +28,7 @@ const services = [
         title: "Brand Design",
         category: "BRAND STRATEGY",
         description:
-            "Our brand design process focuses on creating a cohesive visual identity that resonates with your audience. From logo creation to brand guidelines, we ensure consistency across all touchpoints.",
+            "Building a brand is more than just visuals. We help define your brand's voice, tone, and positioning to carve out a unique space in the market that drives loyalty.",
         image:
             "/images/p1.jpeg",
     },
@@ -36,7 +37,7 @@ const services = [
         title: "UI/UX Design",
         category: "USER EXPERIENCE",
         description:
-            "We craft intuitive user interfaces and seamless user experiences. Our design philosophy centers on empathy for the user, ensuring every interaction is meaningful and efficient.",
+            "Building a brand is more than just visuals. We help define your brand's voice, tone, and positioning to carve out a unique space in the market that drives loyalty.",
         image:
             "/images/p2.jpeg",
     },
@@ -112,11 +113,14 @@ const ImageSwitcher = ({ activeIndex }: { activeIndex: number }) => {
     return (
         <div ref={containerRef} className="relative w-full h-full overflow-hidden rounded-sm bg-gray-100">
             {services.map((service, i) => (
-                <img
+                <Image
                     key={service.id}
                     ref={(el) => { imagesRef.current[i] = el; }}
                     src={service.image}
                     alt={service.title}
+                    fill
+                    loading={i === 0 ? "eager" : "lazy"}
+                    quality={85}
                     className="absolute inset-0 h-full w-full object-cover"
                     // Initialize: First image visible, others hidden
                     style={{

@@ -34,6 +34,7 @@ export const Header = ({ transition }: { transition: boolean }) => {
       animate={transition ? 'topLeft' : 'center'}
       transition={{ type: 'spring', stiffness: 200, damping: 30 }}
       className="absolute z-40 flex items-center justify-center"
+      // style={{ willChange: transition ? 'top, left, right, bottom, height' : 'auto' }}
     >
       <div className="relative max-w-7xl size-full">
         {transition ? (
@@ -76,6 +77,7 @@ export const Header = ({ transition }: { transition: boolean }) => {
           }
           transition={{ type: 'spring', stiffness: 200, damping: 30 }}
           className="absolute z-110 flex items-center gap-x-4"
+          // style={{ willChange: transition ? 'top, right, opacity' : 'auto' }}
         >
           <Link
             href="/auth/login"
