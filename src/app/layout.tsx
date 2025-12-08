@@ -74,8 +74,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: '/og-images/og-image.png',
-        width: 1200,
-        height: 630,
+        // width: 1200,
+        // height: 630,
         alt: 'Tactix Dashboard Preview',
       },
     ],
@@ -91,8 +91,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: '/og-images/og-image.png',
-        width: 1200,
-        height: 630,
+        // width: 1200,
+        // height: 630,
         alt: 'Tactix Dashboard Preview',
       },
     ],

@@ -38,7 +38,7 @@ export default function Hero() {
                                     className="w-full h-full absolute -z-10 object-cover object-center brightness-50"
                                     // src="/images/hero.jpeg"
                                     src="/images/soccer.jpg"
-                                    alt=""
+                                    alt="hero image"
                                     priority
                                 />
                             </div>

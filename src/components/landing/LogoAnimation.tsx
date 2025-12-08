@@ -82,6 +82,7 @@ export const LogoAnimation = ({
                 className={cn(sizes[size], 'w-auto', className)}
                 initial={draw ? 'hidden' : 'visible'}
                 animate={draw ? 'visible' : 'visible'}
+                // style={draw ? { willChange: 'opacity, pathLength, fillOpacity' } : undefined}
                 {...props}
             >
                 <motion.path
