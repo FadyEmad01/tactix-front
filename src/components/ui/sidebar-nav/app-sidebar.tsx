@@ -57,7 +57,7 @@ function SidebarLogo() {
             </linearGradient>
           </defs>
         </svg> */}
-        <Image className="w-20 group-data-[collapsible=icon]:w-15 transition-[width,height] duration-200 ease-in-out" src="/og-images/favicon.svg" alt="logo" width={0} height={0}/>
+        <Image className="w-14 group-data-[collapsible=icon]:w-10 transition-[width,height] duration-200 ease-in-out" src="/og-images/favicon.svg" alt="logo" width={0} height={0}/>
       </Link>
     </div>
   );

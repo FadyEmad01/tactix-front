@@ -22,6 +22,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "../avatar";
+import LogoutFunctionWrap from "@/components/auth/LogoutFunctionWrap";
+import Link from "next/link";
 
 export function NavUser({
   user,
@@ -61,23 +63,27 @@ export function NavUser({
             align="end"
             sideOffset={4}
           >
-            <DropdownMenuItem className="gap-3 px-1">
-              <RiTimer2Line
-                size={20}
-                className="text-muted-foreground/70"
-                aria-hidden="true"
-              />
-              <span>Dashboard</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="gap-3 px-1">
-              <RiUserLine
-                size={20}
-                className="text-muted-foreground/70"
-                aria-hidden="true"
-              />
-              <span>Profile</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="gap-3 px-1">
+            <Link className="w-full" href="/projects">
+              <DropdownMenuItem className="gap-3 px-1">
+                <RiTimer2Line
+                  size={20}
+                  className="text-muted-foreground/70"
+                  aria-hidden="true"
+                />
+                <span>Dashboard</span>
+              </DropdownMenuItem>
+            </Link>
+            <Link className="w-full" href="/profile">
+              <DropdownMenuItem className="gap-3 px-1">
+                <RiUserLine
+                  size={20}
+                  className="text-muted-foreground/70"
+                  aria-hidden="true"
+                />
+                <span>Profile</span>
+              </DropdownMenuItem>
+            </Link >
+            {/* <DropdownMenuItem className="gap-3 px-1">
               <RiPulseLine
                 size={20}
                 className="text-muted-foreground/70"
@@ -92,15 +98,17 @@ export function NavUser({
                 aria-hidden="true"
               />
               <span>History</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="gap-3 px-1">
-              <RiLogoutCircleLine
-                size={20}
-                className="text-muted-foreground/70"
-                aria-hidden="true"
-              />
-              <span>Log out</span>
-            </DropdownMenuItem>
+            </DropdownMenuItem> */}
+            <LogoutFunctionWrap className="w-full">
+              <DropdownMenuItem className="gap-3 px-1">
+                <RiLogoutCircleLine
+                  size={20}
+                  className="text-muted-foreground/70"
+                  aria-hidden="true"
+                />
+                <span>Log out</span>
+              </DropdownMenuItem>
+            </LogoutFunctionWrap>
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
