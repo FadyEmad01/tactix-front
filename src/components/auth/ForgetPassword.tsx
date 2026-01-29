@@ -96,7 +96,7 @@ export function ForgotPasswordForm({
           <div className="p-2 relative hidden md:block">
             {/* <div className="relative w-full h-full rounded-2xl overflow-hidden">
               <Image
-                src="/images/placeholder.jpeg"
+                src="/images/placeholder.png"
                 alt="Image"
                 fill
                 priority

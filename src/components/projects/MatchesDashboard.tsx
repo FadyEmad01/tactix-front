@@ -1,0 +1,1494 @@
+"use client";
+
+import {
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  MoreHorizontal,
+  ArrowDown01,
+  Plus,
+  Search,
+  Trash2,
+  Video,
+  X,
+} from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { createMatch, deleteMatch, updateMatch } from "@/lib/match/actions";
+import { Project } from "@/types/match";
+import { Badge } from "../ui/badge";
+import { LEAGUES } from "@/constant/leagues";
+import { SearchableSelect } from "./SearchableSelect";
+import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+
+interface MatchesDashboardProps {
+  initialProjects?: Project[];
+}
+
+interface BackendTag {
+  id: string;
+  name: string;
+  color?: string;
+}
+
+export default function MatchesDashboard({ initialProjects = [] }: MatchesDashboardProps) {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedProjects, setSelectedProjects] = useState<Set<string>>(new Set());
+  const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortOption, setSortOption] = useState("createdAt-desc");
+
+  const [projects, setProjects] = useState<Project[]>(initialProjects);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+
+  // Keep local state in sync if server revalidates and passes new props
+  useEffect(() => {
+    if (initialProjects) {
+      setProjects(initialProjects);
+    }
+  }, [initialProjects]);
+
+  const handleCreateProject = async (projectData: Omit<Project, "id" | "createdAt">) => {
+    try {
+      const result = await createMatch({
+        title: projectData.name,
+        description: projectData.description,
+        teamA: projectData.teamA,
+        teamALogo: projectData.teamALogo,
+        teamB: projectData.teamB,
+        teamBLogo: projectData.teamBLogo,
+        matchDate: projectData.matchDate,
+        matchResult: projectData.matchResult,
+      });
+
+      if (!result || !result.success) {
+        console.error("Failed to create match via server action");
+        return;
+      }
+
+      // --- IMPROVED RESPONSE PARSING ---
+      // This logic finds the actual match object whether it's directly returned,
+      // wrapped in 'data', or inside an array.
+      const rawResponse = result.data;
+      let m: any = rawResponse;
+
+      if (rawResponse) {
+        if (Array.isArray(rawResponse)) {
+          m = rawResponse[0];
+        } else if (rawResponse.data) {
+          m = rawResponse.data;
+          // Handle double nesting { data: { data: ... } }
+          if (m.data) m = m.data;
+        } else if (rawResponse.match) {
+          m = rawResponse.match;
+        }
+      }
+
+      // Ensure we have a valid object before creating the project
+      if (!m) {
+        console.error("Could not extract match data from response:", rawResponse);
+        return;
+      }
+
+      const newProject: Project = {
+        id: m.id ?? m._id ?? String(Date.now()),
+        name: m.title ?? projectData.name,
+        description: m.description ?? projectData.description,
+        teamA: m.teamA ?? projectData.teamA,
+        teamALogo: m.teamALogo ?? projectData.teamALogo,
+        teamB: m.teamB ?? projectData.teamB,
+        teamBLogo: m.teamBLogo ?? projectData.teamBLogo,
+        matchResult: m.matchResult ?? projectData.matchResult,
+        matchDate: m.matchDate ?? projectData.matchDate,
+        createdAt: m.createdAt ?? new Date().toISOString(),
+      };
+
+      setProjects((prev) => [newProject, ...prev]);
+      router.refresh(); // Force Next.js to re-fetch server components to be safe
+    } catch (error) {
+      console.error("Failed to create match:", error);
+    } finally {
+      setIsCreateDialogOpen(false);
+    }
+  };
+
+  const handleSelectProject = (projectId: string, checked: boolean) => {
+    const newSelected = new Set(selectedProjects);
+    if (checked) newSelected.add(projectId);
+    else newSelected.delete(projectId);
+    setSelectedProjects(newSelected);
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) setSelectedProjects(new Set(filteredProjects.map((p) => p.id)));
+    else setSelectedProjects(new Set());
+  };
+
+  const handleCancelSelection = () => {
+    setIsSelectionMode(false);
+    setSelectedProjects(new Set());
+  };
+
+  const handleBulkDelete = async () => {
+    setProjects(projects.filter((p) => !selectedProjects.has(p.id)));
+
+    const idsToDelete = Array.from(selectedProjects);
+    for (const id of idsToDelete) {
+      await deleteMatch(id);
+    }
+
+    setSelectedProjects(new Set());
+    setIsSelectionMode(false);
+    setIsBulkDeleteDialogOpen(false);
+  };
+
+  const handleDeleteProject = async (id: string) => {
+    setProjects(projects.filter((p) => p.id !== id));
+    await deleteMatch(id);
+  };
+
+  // const handleUpdateProject = (id: string, updates: Partial<Project>) => {
+  //   setProjects(projects.map((p) => (p.id === id ? { ...p, ...updates } : p)));
+  // };
+  const handleUpdateProject = async (id: string, updates: Partial<Project>) => {
+    try {
+      // Optimistically update the UI first
+      setProjects(projects.map((p) => (p.id === id ? { ...p, ...updates } : p)));
+
+      // Prepare the payload for the backend
+      const payload: Partial<{
+        title: string;
+        description?: string;
+        teamA: string;
+        teamB: string;
+        teamALogo?: string;
+        teamBLogo?: string;
+        matchDate?: string;
+        matchResult?: string;
+      }> = {};
+
+      // Map frontend field names to backend field names
+      if (updates.name !== undefined) payload.title = updates.name;
+      if (updates.description !== undefined) payload.description = updates.description;
+      if (updates.teamA !== undefined) payload.teamA = updates.teamA;
+      if (updates.teamB !== undefined) payload.teamB = updates.teamB;
+      if (updates.teamALogo !== undefined) payload.teamALogo = updates.teamALogo;
+      if (updates.teamBLogo !== undefined) payload.teamBLogo = updates.teamBLogo;
+      if (updates.matchResult !== undefined) payload.matchResult = updates.matchResult;
+      if (updates.matchDate !== undefined) payload.matchDate = updates.matchDate;
+
+      // Send to backend
+      const result = await updateMatch(id, payload);
+
+      if (!result.success) {
+        console.error("Failed to update match:", result.error);
+        // Optionally: revert the optimistic update or show an error message
+        return;
+      }
+
+      router.refresh(); // Refresh server components
+    } catch (error) {
+      console.error("Error updating match:", error);
+      // Optionally: revert the optimistic update or show an error message
+    }
+  };
+
+  const filteredProjects = projects.filter(
+    (p) =>
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.teamA.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.teamB.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const sortedProjects = [...filteredProjects].sort((a, b) => {
+    if (sortOption === "createdAt-desc")
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    if (sortOption === "createdAt-asc")
+      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    if (sortOption === "name-asc") return a.name.localeCompare(b.name);
+    if (sortOption === "name-desc") return b.name.localeCompare(a.name);
+    return 0;
+  });
+
+  const allSelected = sortedProjects.length > 0 && selectedProjects.size === sortedProjects.length;
+  const someSelected = selectedProjects.size > 0 && selectedProjects.size < sortedProjects.length;
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="block md:hidden">
+        {isSelectionMode ? (
+          <div className="pt-6 px-6 flex items-center justify-between w-full h-16">
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={handleCancelSelection}>
+                <X className="size-4" />
+                Cancel
+              </Button>
+
+              {selectedProjects.size > 0 && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setIsBulkDeleteDialogOpen(true)}
+                >
+                  <Trash2 className="size-4" />
+                  Delete ({selectedProjects.size})
+                </Button>
+              )}
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="pt-6 px-6 flex items-center justify-between w-full h-16">
+              <div className="flex flex-wrap gap-2 md:hidden">
+                <Button size="icon-sm" className="flex" onClick={() => setIsCreateDialogOpen(true)}>
+                  <Plus className="size-4" />
+                </Button>
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setIsSelectionMode(true)}
+                  disabled={projects.length === 0}
+                >
+                  Select Projects
+                </Button>
+              </div>
+            </div>
+          </>
+
+        )}
+      </div>
+
+
+
+      <main className="max-w-7xl mx-auto px-6 pt-10 pb-6">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex flex-col gap-3">
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Match Analysis</h1>
+            <p className="text-muted-foreground">
+              {projects.length} {projects.length === 1 ? "match" : "matches"}
+              {isSelectionMode && selectedProjects.size > 0 && (
+                <span className="ml-2 text-primary">• {selectedProjects.size} selected</span>
+              )}
+            </p>
+          </div>
+          <div className="hidden md:block">
+            {isSelectionMode ? (
+              <div className="flex items-center gap-2">
+                <Button variant="outline" onClick={handleCancelSelection}>
+                  <X className="size-4" />
+                  Cancel
+                </Button>
+                {selectedProjects.size > 0 && (
+                  <Button
+                    variant="destructive-outline"
+                    onClick={() => setIsBulkDeleteDialogOpen(true)}
+                  >
+                    <Trash2 className="size-4" />
+                    Delete Selected ({selectedProjects.size})
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setIsSelectionMode(true)}
+                  disabled={projects.length === 0}
+                >
+                  Select Projects
+                </Button>
+                <CreateButton onClick={() => setIsCreateDialogOpen(true)} />
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="mb-12 flex items-center justify-between gap-4">
+          <div className="flex-1 max-w-72">
+            <Input
+              spellCheck="false"
+              placeholder="Search matches..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <div className="flex items-center gap-0">
+            <TooltipProvider>
+              <Tooltip>
+                <DropdownMenu>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="icon" variant="secondary" className="w-9 h-9">
+                        <ArrowDown01 strokeWidth={1.5} className="size-[1.05rem]" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setSortOption("createdAt-desc")}>
+                      Created {sortOption === "createdAt-desc" && "↓"}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSortOption("createdAt-asc")}>
+                      Created {sortOption === "createdAt-asc" && "↑"}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSortOption("name-asc")}>
+                      Name {sortOption === "name-asc" && "↑"}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSortOption("name-desc")}>
+                      Name {sortOption === "name-desc" && "↓"}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <TooltipContent>
+                  <p>Sort projects</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </div>
+
+        {isSelectionMode && sortedProjects.length > 0 && (
+          <div
+            onClick={() => handleSelectAll(!allSelected)}
+            className="w-full hover:cursor-pointer gap-2 mb-6 p-4 bg-muted/30 rounded-lg border items-center flex"
+          >
+            <Checkbox
+              checked={someSelected ? "indeterminate" : allSelected}
+              onCheckedChange={(checked) => handleSelectAll(checked === true)}
+            />
+            <span className="text-sm font-medium">
+              {allSelected ? "Deselect All" : "Select All"}
+            </span>
+            <span className="text-sm text-muted-foreground">
+              ({selectedProjects.size} of {sortedProjects.length} selected)
+            </span>
+          </div>
+        )}
+
+        {isLoading ? (
+          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="overflow-hidden bg-background border-none p-0">
+                <Skeleton className="aspect-square w-full bg-muted/50" />
+                <div className="px-0 pt-5 flex flex-col gap-1">
+                  <Skeleton className="h-4 w-3/4 bg-muted/50" />
+                  <div className="flex items-center gap-1.5">
+                    <Skeleton className="h-4 w-4 bg-muted/50" />
+                    <Skeleton className="h-4 w-24 bg-muted/50" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : projects.length === 0 ? (
+          <NoProjects onCreateProject={() => setIsCreateDialogOpen(true)} />
+        ) : sortedProjects.length === 0 ? (
+          <NoResults searchQuery={searchQuery} onClearSearch={() => setSearchQuery("")} />
+        ) : (
+          <>
+           {/* <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+            {sortedProjects.map((project) => (
+              <ProjectCard
+                key={project.id}
+                project={project}
+                isSelectionMode={isSelectionMode}
+                isSelected={selectedProjects.has(project.id)}
+                onSelect={handleSelectProject}
+                onDelete={handleDeleteProject}
+                onUpdate={handleUpdateProject}
+              />
+            ))}
+          </div> */}
+           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-col-5 gap-6">
+            {sortedProjects.map((project) => (
+              <ProjectCard
+                key={project.id}
+                project={project}
+                isSelectionMode={isSelectionMode}
+                isSelected={selectedProjects.has(project.id)}
+                onSelect={handleSelectProject}
+                onDelete={handleDeleteProject}
+                onUpdate={handleUpdateProject}
+              />
+            ))}
+          </div>
+          </>
+        )}
+      </main>
+
+      <AlertDialog open={isBulkDeleteDialogOpen} onOpenChange={setIsBulkDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {selectedProjects.size} projects?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the selected
+              projects.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBulkDelete}
+              className="bg-destructive-saturated border-none text-white hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <CreateProjectDialog
+        isOpen={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+        onConfirm={handleCreateProject}
+      />
+    </div>
+  );
+}
+
+
+function ProjectCard({
+  project,
+  isSelectionMode = false,
+  isSelected = false,
+  onSelect,
+  onDelete,
+  onUpdate,
+}: {
+  project: Project;
+  isSelectionMode?: boolean;
+  isSelected?: boolean;
+  onSelect?: (projectId: string, checked: boolean) => void;
+  onDelete: (id: string) => void;
+  onUpdate: (id: string, updates: Partial<Project>) => void;
+}) {
+  const router = useRouter();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  // --- TAGS LOGIC ---
+  const MAX_TAGS = 2;
+  const tags = project.tags || [];
+  const visibleTags = tags.slice(0, MAX_TAGS);
+  const hiddenCount = tags.length - MAX_TAGS;
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "TBD";
+    try {
+      return new Date(dateString).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    } catch (e) {
+      return dateString;
+    }
+  };
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    if (isDropdownOpen) return; // Prevent navigation if dropdown is interacting
+    e.preventDefault();
+    if (isSelectionMode) {
+      onSelect?.(project.id, !isSelected);
+    } else {
+      router.push(`/video-editor/${project.id}`);
+    }
+  };
+
+  // Helper component for Team Logo
+  const TeamLogo = ({ name, url }: { name: string; url?: string }) => (
+    <Avatar className="h-12 w-12 border-2 border-background shadow-sm bg-muted">
+      <AvatarImage src={url} alt={name} className="object-contain p-1" />
+      <AvatarFallback className="font-bold text-muted-foreground bg-muted text-xs">
+        {name.substring(0, 2).toUpperCase()}
+      </AvatarFallback>
+    </Avatar>
+  );
+
+  const cardContent = (
+    <Card
+      className={cn(
+        "group min-w-[200px] py-0 relative h-full flex flex-col overflow-hidden transition-all duration-300 ease-in-out",
+        "border-border/50 bg-card hover:border-border hover:shadow-lg ",
+        isSelectionMode && isSelected && "ring-2 ring-primary bg-primary/5 border-primary/50"
+      )}
+    >
+      {/* Header: Date & Actions */}
+      <div className="flex items-start justify-between p-3 py-4 pb-0 z-20">
+        <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground bg-muted/40 px-2 py-1 rounded-full">
+          <CalendarIcon className="size-3" />
+          <span>{formatDate(project.matchDate || project.createdAt)}</span>
+        </div>
+
+        {/* Actions Menu (Only visible if not selecting) */}
+        {!isSelectionMode && (
+          <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity data-[state=open]:opacity-100"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+              >
+                <MoreHorizontal className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsEditDialogOpen(true);
+                  setIsDropdownOpen(false);
+                }}
+              >
+                Edit match details
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsDeleteDialogOpen(true);
+                  setIsDropdownOpen(false);
+                }}
+              >
+                Delete match
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
+
+      {/* Selection Checkbox Overlay */}
+      {isSelectionMode && (
+        <div className="absolute top-3 right-3 z-30">
+          <Checkbox
+            checked={isSelected}
+            className="h-5 w-5 rounded-full data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+          />
+        </div>
+      )}
+
+      <CardContent className="flex flex-col flex-1 p-0 pt-0 gap-4">
+        {/* MATCH FACE: Logos & Score */}
+        <div className="flex items-center justify-between mt-2">
+          {/* Team A */}
+          <div className="flex flex-col items-center gap-2 flex-1 min-w-0 text-center">
+            <TeamLogo name={project.teamA} url={project.teamALogo} />
+            <span className="text-xs font-medium leading-tight line-clamp-2 w-full break-words">
+              {project.teamA}
+            </span>
+          </div>
+
+          {/* Score / VS */}
+          <div className="flex flex-col items-center justify-center px-2 shrink-0">
+            {project.matchResult ? (
+              <div className="flex items-center justify-center min-w-[3rem] h-8 bg-primary/10 text-primary font-bold text-lg rounded-md px-2">
+                {project.matchResult}
+              </div>
+            ) : (
+              <span className="text-xs font-light text-muted-foreground/50 bg-muted/30 px-2 py-1 rounded-md">
+                VS
+              </span>
+            )}
+            {/* Optional: Time or Status */}
+            <span className="text-[10px] text-muted-foreground mt-1">FT</span>
+          </div>
+
+          {/* Team B */}
+          <div className="flex flex-col items-center gap-2 flex-1 min-w-0 text-center">
+            <TeamLogo name={project.teamB} url={project.teamBLogo} />
+            <span className="text-xs font-medium leading-tight line-clamp-2 w-full break-words">
+              {project.teamB}
+            </span>
+          </div>
+        </div>
+
+        {/* Description & Title */}
+        <div className="text-center space-y-1 mt-1">
+           {project.name && (
+             <p className="text-sm font-semibold text-foreground/90 line-clamp-1">
+                {project.name}
+             </p>
+           )}
+           {project.description && (
+            <p className="text-xs text-muted-foreground line-clamp-1">
+              {project.description}
+            </p>
+           )}
+        </div>
+
+      </CardContent>
+
+      {/* Footer: Tags */}
+      <div className="bg-muted/20 border-t border-border/50 p-3 flex items-center gap-1.5 ">
+        {tags.length > 0 ? (
+          <>
+            {visibleTags.map((tag, index) => (
+              <Badge
+                key={index}
+                variant="secondary"
+                className="h-5 px-2 text-[10px] font-normal bg-background border border-border/50 shadow-sm text-muted-foreground"
+              >
+                {tag.event}
+              </Badge>
+            ))}
+            {hiddenCount > 0 && (
+              <Badge
+                variant="secondary"
+                className="h-5 px-1.5 text-[10px] font-medium bg-background border border-border/50 text-muted-foreground"
+              >
+                +{hiddenCount}
+              </Badge>
+            )}
+          </>
+        ) : (
+          <span className="text-[10px] text-muted-foreground/40 w-full text-center italic">
+            No analysis tags yet
+          </span>
+        )}
+      </div>
+    </Card>
+  );
+
+  return (
+    <>
+      {isSelectionMode ? (
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleCardClick}
+          onKeyDown={(e) =>
+            e.key === "Enter" && isSelectionMode && onSelect?.(project.id, !isSelected)
+          }
+          className="block h-full w-full text-left cursor-pointer outline-none rounded-xl"
+        >
+          {cardContent}
+        </div>
+      ) : (
+        <div
+          className="block h-full cursor-pointer outline-none rounded-xl"
+          onClick={handleCardClick}
+        >
+          {cardContent}
+        </div>
+      )}
+
+      {/* Delete Alert */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Match?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the analysis for 
+              <span className="font-medium text-foreground"> {project.teamA} vs {project.teamB}</span>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                onDelete(project.id);
+                setIsDeleteDialogOpen(false);
+              }}
+              className="bg-destructive border-destructive text-white hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Edit Dialog */}
+      <EditProjectDialog
+        isOpen={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        project={project}
+        onConfirm={(updates) => {
+          onUpdate(project.id, updates);
+          setIsEditDialogOpen(false);
+        }}
+      />
+    </>
+  );
+}
+
+function CreateProjectDialog({
+  isOpen,
+  onOpenChange,
+  onConfirm,
+}: {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  // Adjust type as per your real Project interface
+  onConfirm: (projectData: any) => void;
+}) {
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+
+  const [league, setLeague] = useState("");
+  const [teamA, setTeamA] = useState("");
+  const [teamB, setTeamB] = useState("");
+
+  const [selectedMatchId, setSelectedMatchId] = useState(""); // To track which match ID was picked
+
+  const [result, setResult] = useState("");
+  const [matchDate, setMatchDate] = useState<Date | undefined>(undefined);
+
+  // 1. Get Selected League Data
+  const selectedLeagueData = useMemo(() =>
+    LEAGUES.find((l) => l.id === league),
+    [league]);
+
+  // 2. Prepare Team List for Dropdown
+  const teamList = useMemo(() => {
+    if (!selectedLeagueData) return [];
+    return Object.entries(selectedLeagueData.teams[0] || {}).map(([name, logo]) => ({
+      id: name,
+      name,
+      logo: logo as string,
+    }));
+  }, [selectedLeagueData]);
+
+  // 3. Find Relevant Matches (If both teams selected)
+  const relevantMatches = useMemo(() => {
+    if (!selectedLeagueData || !teamA || !teamB) return [];
+
+    // 1. Find matches involving these two teams
+    const rawMatches = (selectedLeagueData.matches || []).filter(m =>
+      (m.teamA === teamA && m.teamB === teamB) ||
+      (m.teamA === teamB && m.teamB === teamA)
+    );
+
+    // 2. Deduplicate based on Date and Teams
+    const uniqueMatches: typeof rawMatches = [];
+    const seen = new Set<string>();
+
+    rawMatches.forEach((m) => {
+      // Create a unique key: "YYYY-MM-DD-TeamA-TeamB" (teams sorted alphabetically)
+      // Sorting ensures "Elche vs Betis" and "Betis vs Elche" produce the same key
+      const dateStr = m.date_time.$date;
+      const sortedTeams = [m.teamA, m.teamB].sort().join("-"); 
+      const uniqueKey = `${dateStr}-${sortedTeams}`;
+
+      if (!seen.has(uniqueKey)) {
+        seen.add(uniqueKey);
+        uniqueMatches.push(m);
+      }
+    });
+
+    // 3. Map to UI Structure
+    return uniqueMatches.map(m => {
+      const dateFormatted = format(new Date(m.date_time.$date), "MMM d, yyyy");
+      return {
+        id: m._id.$oid,
+        name: `${m.teamA} vs ${m.teamB}`,
+        subtitle: `${dateFormatted} • ${m.matchResult}`,
+        logo: m.teamA_logo,
+        secondaryLogo: m.teamB_logo,
+        fullData: m
+      };
+    });
+  }, [selectedLeagueData, teamA, teamB]);
+
+  // --- Handlers ---
+
+  // Handle League Change: CLEAR everything else
+  const handleLeagueChange = (val: string) => {
+    setLeague(val);
+    setTeamA("");
+    setTeamB("");
+    setSelectedMatchId("");
+    setResult("");
+    setMatchDate(undefined);
+  };
+
+  // Handle Team Changes: If teams change, clear the specific match selection
+  const handleTeamChange = (isTeamA: boolean, val: string) => {
+    if (isTeamA) setTeamA(val);
+    else setTeamB(val);
+
+    // Reset match specific details if teams change
+    setSelectedMatchId("");
+    setResult("");
+    setMatchDate(undefined);
+  };
+
+  // Handle Selecting a Specific Match (Auto-fill)
+  const handleMatchSelect = (matchId: string) => {
+    setSelectedMatchId(matchId);
+
+    const match = relevantMatches.find(m => m.id === matchId)?.fullData;
+
+    if (match) {
+      setResult(match.matchResult);
+      setMatchDate(new Date(match.date_time.$date));
+
+      // Optional: Auto-set name
+      if (!name) setName(`${match.teamA} vs ${match.teamB}`);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // --- NEW LOGIC TO GET LOGOS ---
+    // 1. Access the teams object from the selected league
+    const teamsMap = (selectedLeagueData?.teams[0] || {}) as Record<string, string>;
+
+    // 2. Get the URL based on the selected team name (which is the ID in your data)
+    const teamALogoUrl = teamsMap[teamA] || "";
+    const teamBLogoUrl = teamsMap[teamB] || "";
+    // ------------------------------
+    onConfirm({
+      name: name.trim() || "Untitled Match",
+      description: description.trim(),
+      teamA: teamA.trim(),
+      teamB: teamB.trim(),
+      teamALogo: teamALogoUrl,
+      teamBLogo: teamBLogoUrl,
+      matchResult: result.trim(),
+      matchDate: matchDate ? matchDate.toISOString() : undefined,
+    });
+
+    // Reset form
+    setLeague("");
+    setName("");
+    setDescription("");
+    setTeamA("");
+    setTeamB("");
+    setResult("");
+    setMatchDate(undefined);
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Create New Match Analysis</DialogTitle>
+          <DialogDescription>
+            Select league and teams to find past matches, or enter details manually.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-5 py-4">
+
+            {/* League & Teams Section */}
+            <div className="space-y-2">
+              {/* League Select */}
+
+              <Label>League <span className="text-red-500">*</span></Label>
+              <SearchableSelect
+                value={league}
+                onChange={handleLeagueChange}
+                placeholder="Select league"
+                items={LEAGUES}
+              />
+
+            </div>
+
+            {/* Teams */}
+            <div className="grid grid-cols-7 gap-4 items-center justify-between">
+              {/* Team A */}
+              <div className="space-y-2 col-span-3">
+                <Label>Team A</Label>
+                <SearchableSelect
+                  disabled={!league}
+                  value={teamA}
+                  onChange={(val) => handleTeamChange(true, val)}
+                  placeholder="Select Team A"
+                  items={teamList}
+                />
+              </div>
+
+              <span className="col-span-1 font-mono text-center mt-5">VS</span>
+
+              {/* Team B */}
+              <div className="space-y-2 col-span-3">
+                <Label>Team B</Label>
+                <SearchableSelect
+                  disabled={!league}
+                  value={teamB}
+                  onChange={(val) => handleTeamChange(false, val)}
+                  placeholder="Select Team B"
+                  items={teamList}
+                />
+              </div>
+            </div>
+
+            {/* MATCH FINDER: Only shows if teams are selected and match exists */}
+            {relevantMatches.length > 0 && (
+              <div className="p-4 border rounded-lg bg-muted/20 space-y-2 animate-in fade-in zoom-in-95 duration-300">
+                <Label className="text-primary">Select a played match:</Label>
+
+                {/* Using the updated SearchableSelect */}
+                <SearchableSelect
+                  value={selectedMatchId}
+                  onChange={handleMatchSelect}
+                  placeholder="Select previous match..."
+                  items={relevantMatches}
+                />
+
+                <p className="text-[0.8rem] text-muted-foreground">
+                  Auto-fills result and date based on selection.
+                </p>
+              </div>
+            )}
+
+            <div className="border-t my-4"></div>
+
+            {/* Standard Inputs */}
+            {/* <div className="space-y-2">
+              <Label htmlFor="name">
+                Title <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                spellCheck="false"
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g., El Clásico"
+                required
+              />
+            </div> */}
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Description <span className="opacity-50">(optional)</span></Label>
+              <Textarea
+                spellCheck="false"
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Add notes or context about this match..."
+                className="min-h-[80px]"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="result">Result</Label>
+                <Input
+                  spellCheck="false"
+                  id="result"
+                  value={result}
+                  onChange={(e) => setResult(e.target.value)}
+                  placeholder="e.g., 2-1"
+                  required
+                // Optional: make readOnly if match selected to prevent tampering
+                // readOnly={!!selectedMatchId} 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Match Date</Label>
+                <Popover modal={true}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      size="default"
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal h-9",
+                        !matchDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {matchDate ? (
+                        format(matchDate, "PPP")
+                      ) : (
+                        <span>Pick a date</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={matchDate}
+                      onSelect={(d) => setMatchDate(d ?? undefined)}
+                      initialFocus
+                      required
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              size="sm"
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              Cancel
+            </Button>
+            <Button size="sm" type="submit">
+              Create Project
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function EditProjectDialog({
+  isOpen,
+  onOpenChange,
+  project,
+  onConfirm,
+}: {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  project: Project;
+  onConfirm: (updates: Partial<Project>) => void;
+}) {
+  const [name, setName] = useState(project.name);
+  const [description, setDescription] = useState(project.description || "");
+  const [league, setLeague] = useState("");
+  const [teamA, setTeamA] = useState(project.teamA);
+  const [teamB, setTeamB] = useState(project.teamB);
+  
+  // New State for Match Finder
+  const [selectedMatchId, setSelectedMatchId] = useState(""); 
+  
+  const [result, setResult] = useState(project.matchResult || "");
+  const [matchDate, setMatchDate] = useState<Date | undefined>(
+    project.matchDate ? new Date(project.matchDate) : undefined
+  );
+
+  // 1. Initialization: Detect League based on Team A
+  useEffect(() => {
+    if (isOpen) {
+      setName(project.name);
+      setDescription(project.description || "");
+      setTeamA(project.teamA);
+      setTeamB(project.teamB);
+      setResult(project.matchResult || "");
+      setMatchDate(project.matchDate ? new Date(project.matchDate) : undefined);
+      setSelectedMatchId(""); // Reset match selection on open
+
+      // Try to find which league Team A belongs to
+      const foundLeague = LEAGUES.find((l) => {
+        const teams = l.teams[0] || {};
+        return Object.prototype.hasOwnProperty.call(teams, project.teamA);
+      });
+
+      if (foundLeague) {
+        setLeague(foundLeague.id);
+      } else {
+        setLeague("");
+      }
+    }
+  }, [project, isOpen]);
+
+  // 2. Get League Data
+  const selectedLeagueData = useMemo(
+    () => LEAGUES.find((l) => l.id === league),
+    [league]
+  );
+
+  // 3. Get Team List
+  const teamList = useMemo(() => {
+    if (!selectedLeagueData) return [];
+    return Object.entries(selectedLeagueData.teams[0] || {}).map(
+      ([name, logo]) => ({
+        id: name,
+        name,
+        logo: logo as string,
+      })
+    );
+  }, [selectedLeagueData]);
+
+  // 4. MATCH FINDER LOGIC (Calculates Relevant Matches)
+  // const relevantMatches = useMemo(() => {
+  //   if (!selectedLeagueData || !teamA || !teamB) return [];
+
+  //   // Filter for A vs B OR B vs A
+  //   const matches = (selectedLeagueData.matches || []).filter(m =>
+  //     (m.teamA === teamA && m.teamB === teamB) ||
+  //     (m.teamA === teamB && m.teamB === teamA)
+  //   );
+
+  //   // Map to UI structure
+  //   return matches.map(m => {
+  //     const dateFormatted = format(new Date(m.date_time.$date), "MMM d, yyyy");
+  //     return {
+  //       id: m._id.$oid,
+  //       name: `${m.teamA} vs ${m.teamB}`, 
+  //       subtitle: `${dateFormatted} • ${m.matchResult}`,
+  //       logo: m.teamA_logo, 
+  //       secondaryLogo: m.teamB_logo, 
+  //       fullData: m
+  //     };
+  //   });
+  // }, [selectedLeagueData, teamA, teamB]);
+  const relevantMatches = useMemo(() => {
+    if (!selectedLeagueData || !teamA || !teamB) return [];
+
+    // 1. Find matches involving these two teams
+    const rawMatches = (selectedLeagueData.matches || []).filter(m =>
+      (m.teamA === teamA && m.teamB === teamB) ||
+      (m.teamA === teamB && m.teamB === teamA)
+    );
+
+    // 2. Deduplicate based on Date and Teams
+    const uniqueMatches: typeof rawMatches = [];
+    const seen = new Set<string>();
+
+    rawMatches.forEach((m) => {
+      // Create a unique key: "YYYY-MM-DD-TeamA-TeamB" (teams sorted alphabetically)
+      // Sorting ensures "Elche vs Betis" and "Betis vs Elche" produce the same key
+      const dateStr = m.date_time.$date;
+      const sortedTeams = [m.teamA, m.teamB].sort().join("-"); 
+      const uniqueKey = `${dateStr}-${sortedTeams}`;
+
+      if (!seen.has(uniqueKey)) {
+        seen.add(uniqueKey);
+        uniqueMatches.push(m);
+      }
+    });
+
+    // 3. Map to UI Structure
+    return uniqueMatches.map(m => {
+      const dateFormatted = format(new Date(m.date_time.$date), "MMM d, yyyy");
+      return {
+        id: m._id.$oid,
+        name: `${m.teamA} vs ${m.teamB}`,
+        subtitle: `${dateFormatted} • ${m.matchResult}`,
+        logo: m.teamA_logo,
+        secondaryLogo: m.teamB_logo,
+        fullData: m
+      };
+    });
+  }, [selectedLeagueData, teamA, teamB]);
+
+  // --- Handlers ---
+
+  const handleLeagueChange = (val: string) => {
+    setLeague(val);
+    setTeamA("");
+    setTeamB("");
+    setSelectedMatchId("");
+  };
+
+  // Helper to update team and reset selected match
+  const handleTeamChange = (isTeamA: boolean, val: string) => {
+    if (isTeamA) setTeamA(val);
+    else setTeamB(val);
+    setSelectedMatchId("");
+  };
+
+  // Handle Selecting a Specific Match (Auto-fill)
+  const handleMatchSelect = (matchId: string) => {
+    setSelectedMatchId(matchId);
+    const match = relevantMatches.find(m => m.id === matchId)?.fullData;
+
+    if (match) {
+      setResult(match.matchResult);
+      setMatchDate(new Date(match.date_time.$date));
+      // Optionally update name if user wants to sync with official title
+      setName(`${match.teamA} vs ${match.teamB}`);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Resolve Logos
+    let teamALogoUrl = project.teamALogo;
+    let teamBLogoUrl = project.teamBLogo;
+
+    if (selectedLeagueData) {
+      const teamsMap = (selectedLeagueData.teams[0] || {}) as Record<string, string>;
+      if (teamsMap[teamA]) teamALogoUrl = teamsMap[teamA];
+      if (teamsMap[teamB]) teamBLogoUrl = teamsMap[teamB];
+    }
+
+    if (name.trim() && teamA.trim() && teamB.trim()) {
+      onConfirm({
+        name: name.trim(),
+        description: description.trim(),
+        teamA: teamA.trim(),
+        teamB: teamB.trim(),
+        teamALogo: teamALogoUrl,
+        teamBLogo: teamBLogoUrl,
+        matchResult: result.trim(),
+        matchDate: matchDate ? matchDate.toISOString() : undefined,
+      });
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Edit Match Details</DialogTitle>
+          <DialogDescription>Update the match information.</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-5 py-4">
+            {/* League Selection */}
+            <div className="space-y-2">
+              <Label>League</Label>
+              <SearchableSelect
+                value={league}
+                onChange={handleLeagueChange}
+                placeholder="Select league (to populate teams)"
+                items={LEAGUES}
+              />
+            </div>
+
+            {/* Teams Grid */}
+            <div className="grid grid-cols-7 gap-4 items-center justify-items-center">
+              {/* Team A */}
+              <div className="space-y-2 col-span-3 w-full">
+                <Label htmlFor="edit-teamA">
+                  Team A <span className="text-destructive-saturated">*</span>
+                </Label>
+                {league ? (
+                  <SearchableSelect
+                    value={teamA}
+                    onChange={(val) => handleTeamChange(true, val)}
+                    placeholder="Select Team A"
+                    items={teamList}
+                  />
+                ) : (
+                  <Input
+                    spellCheck="false"
+                    id="edit-teamA"
+                    value={teamA}
+                    onChange={(e) => setTeamA(e.target.value)}
+                    placeholder="Home team"
+                    required
+                  />
+                )}
+              </div>
+
+              <span className="col-span-1 font-mono text-center mt-5">VS</span>
+
+              {/* Team B */}
+              <div className="space-y-2 col-span-3 w-full">
+                <Label htmlFor="edit-teamB">
+                  Team B <span className="text-destructive-saturated">*</span>
+                </Label>
+                {league ? (
+                  <SearchableSelect
+                    value={teamB}
+                    onChange={(val) => handleTeamChange(false, val)}
+                    placeholder="Select Team B"
+                    items={teamList}
+                  />
+                ) : (
+                  <Input
+                    spellCheck="false"
+                    id="edit-teamB"
+                    value={teamB}
+                    onChange={(e) => setTeamB(e.target.value)}
+                    placeholder="Away team"
+                    required
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* MATCH FINDER: The exact block you requested */}
+            {relevantMatches.length > 0 && (
+              <div className="p-4 border rounded-lg bg-muted/20 space-y-2 animate-in fade-in zoom-in-95 duration-300">
+                <Label className="text-primary">Select a played match:</Label>
+
+                <SearchableSelect
+                  value={selectedMatchId}
+                  onChange={handleMatchSelect}
+                  placeholder="Select previous match..."
+                  items={relevantMatches}
+                />
+
+                <p className="text-[0.8rem] text-muted-foreground">
+                  Auto-fills result, date, and title based on selection.
+                </p>
+              </div>
+            )}
+
+            <div className="border-t my-2"></div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-description">Description</Label>
+              <Textarea
+                spellCheck="false"
+                id="edit-description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Add notes or context..."
+                className="min-h-[80px]"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-result">Result</Label>
+                <Input
+                  spellCheck="false"
+                  id="edit-result"
+                  value={result}
+                  onChange={(e) => setResult(e.target.value)}
+                  placeholder="e.g., 2-1"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Match Date</Label>
+                <Popover modal={true}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      size="default"
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal h-9",
+                        !matchDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {matchDate ? (
+                        format(matchDate, "PPP")
+                      ) : (
+                        <span>Pick a date</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={matchDate}
+                      onSelect={(d) => setMatchDate(d ?? undefined)}
+                      captionLayout="dropdown"
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              size="sm"
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              type="submit"
+              disabled={!name?.trim() || !teamA?.trim() || !teamB?.trim()}
+            >
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
+function CreateButton({ onClick }: { onClick?: () => void }) {
+  return (
+    <Button size="sm" className="flex" onClick={onClick}>
+      <Plus className="size-4" />
+      <span className="text-sm font-medium">New Match</span>
+    </Button>
+  );
+}
+
+function NoProjects({ onCreateProject }: { onCreateProject: () => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+      <div className="w-16 h-16 rounded-full bg-muted/30 flex items-center justify-center mb-4">
+        <Video className="h-8 w-8 text-muted-foreground" />
+      </div>
+      <h3 className="text-lg font-medium mb-2">No matches yet</h3>
+      <p className="text-muted-foreground mb-6 max-w-md">
+        Start analyzing your first football match. Import videos and create detailed analysis
+        reports.
+      </p>
+      <Button size="default" className="gap-2" onClick={onCreateProject}>
+        <Plus className="h-4 w-4" />
+        Create Your First Match
+      </Button>
+    </div>
+  );
+}
+
+function NoResults({
+  searchQuery,
+  onClearSearch,
+}: {
+  searchQuery: string;
+  onClearSearch: () => void;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+      <div className="w-16 h-16 rounded-full bg-muted/30 flex items-center justify-center mb-4">
+        <Search className="h-8 w-8 text-muted-foreground" />
+      </div>
+      <h3 className="text-lg font-medium mb-2">No results found</h3>
+      <p className="text-muted-foreground mb-6 max-w-md">
+        Your search for "{searchQuery}" did not return any results.
+      </p>
+      <Button size="default" onClick={onClearSearch} variant="outline">
+        Clear Search
+      </Button>
+    </div>
+  );
+}
