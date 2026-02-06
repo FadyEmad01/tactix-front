@@ -607,6 +607,21 @@
   --neon-yellow: #D2FF00;
   --neon-yellow-dark: #B8E000;
   
+  /* Extended Color Palette */
+  --electric-green: #00FF87;
+  --cool-blue: #00D4FF;
+  --vibrant-red: #FF3B5C;
+  --purple-accent: #8B5CF6;
+  --energy-orange: #FF8A00;
+  
+  /* Gradients */
+  --gradient-neon: linear-gradient(135deg, #D2FF00 0%, #B8E000 100%);
+  --gradient-green: linear-gradient(135deg, #00FF87 0%, #00D4A0 100%);
+  --gradient-blue: linear-gradient(135deg, #00D4FF 0%, #0099CC 100%);
+  --gradient-purple: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%);
+  --gradient-dark: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+  --gradient-light: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+  
   /* Light Theme Colors */
   --background: #ffffff;
   --foreground: #0a0a0a;
@@ -636,12 +651,12 @@
   --input: #e5e5e5;
   --ring: #D2FF00;
   
-  /* Chart Colors - Neon Yellow variations */
-  --chart-1: #D2FF00;
-  --chart-2: #B8E000;
-  --chart-3: #9EC400;
-  --chart-4: #84AA00;
-  --chart-5: #6A9000;
+  /* Chart Colors - Vibrant Sports Theme */
+  --chart-1: #D2FF00;        /* Neon Yellow */
+  --chart-2: #00FF87;        /* Electric Green */
+  --chart-3: #00D4FF;        /* Cool Blue */
+  --chart-4: #8B5CF6;        /* Purple */
+  --chart-5: #FF8A00;        /* Energy Orange */
   
   /* Sidebar Colors */
   --sidebar: #fafafa;
@@ -681,14 +696,16 @@
   --spacing: 0.25rem;
 
   /* Semantic State Colors (Light) */
-  --destructive-saturated: oklch(0.637 0.237 25.331);
-  --destructive-foreground-saturated: oklch(0.505 0.213 27.518);
-  --info: oklch(0.623 0.214 259.815);
-  --info-foreground: oklch(0.488 0.243 264.376);
-  --success: oklch(0.696 0.17 162.48);
-  --success-foreground: oklch(0.508 0.118 165.612);
-  --warning: oklch(0.769 0.188 70.08);
-  --warning-foreground: oklch(0.555 0.163 48.998);
+  --success: #00FF87;                    /* Electric Green */
+  --success-foreground: #0a0a0a;
+  --info: #00D4FF;                       /* Cool Blue */
+  --info-foreground: #0a0a0a;
+  --warning: #FF8A00;                    /* Energy Orange */
+  --warning-foreground: #0a0a0a;
+  --error: #FF3B5C;                      /* Vibrant Red */
+  --error-foreground: #ffffff;
+  --premium: #8B5CF6;                    /* Purple Accent */
+  --premium-foreground: #ffffff;
 }
 
 .dark {
@@ -696,6 +713,21 @@
   --phosphor: #D2FF00;
   --neon-yellow: #D2FF00;
   --neon-yellow-dark: #B8E000;
+  
+  /* Extended Color Palette - Same vibrant colors */
+  --electric-green: #00FF87;
+  --cool-blue: #00D4FF;
+  --vibrant-red: #FF3B5C;
+  --purple-accent: #8B5CF6;
+  --energy-orange: #FF8A00;
+  
+  /* Gradients - Same */
+  --gradient-neon: linear-gradient(135deg, #D2FF00 0%, #B8E000 100%);
+  --gradient-green: linear-gradient(135deg, #00FF87 0%, #00D4A0 100%);
+  --gradient-blue: linear-gradient(135deg, #00D4FF 0%, #0099CC 100%);
+  --gradient-purple: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%);
+  --gradient-dark: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+  --gradient-light: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
   
   /* Dark Theme Colors */
   --background: #0a0a0a;
@@ -726,12 +758,12 @@
   --input: #2a2a2a;
   --ring: #D2FF00;
   
-  /* Chart Colors - Same Neon Yellow variations */
-  --chart-1: #D2FF00;
-  --chart-2: #B8E000;
-  --chart-3: #9EC400;
-  --chart-4: #84AA00;
-  --chart-5: #6A9000;
+  /* Chart Colors - Same Vibrant Sports Theme */
+  --chart-1: #D2FF00;        /* Neon Yellow */
+  --chart-2: #00FF87;        /* Electric Green */
+  --chart-3: #00D4FF;        /* Cool Blue */
+  --chart-4: #8B5CF6;        /* Purple */
+  --chart-5: #FF8A00;        /* Energy Orange */
   
   /* Sidebar Colors */
   --sidebar: #141414;
@@ -768,20 +800,38 @@
   --shadow-2xl: 0px 25px 40px -8px hsl(0 0% 0% / 0.5);
 
   /* Semantic State Colors (Dark) */
-  --destructive-saturated: oklch(0.637 0.237 25.331);
-  --destructive-foreground-saturated: oklch(0.704 0.191 22.216);
-  --info: oklch(0.623 0.214 259.815);
-  --info-foreground: oklch(0.707 0.165 254.624);
-  --success: oklch(0.696 0.17 162.48);
-  --success-foreground: oklch(0.765 0.177 163.223);
-  --warning: oklch(0.769 0.188 70.08);
-  --warning-foreground: oklch(0.828 0.189 84.429);
+  --success: #00FF87;                    /* Electric Green */
+  --success-foreground: #0a0a0a;
+  --info: #00D4FF;                       /* Cool Blue */
+  --info-foreground: #0a0a0a;
+  --warning: #FF8A00;                    /* Energy Orange */
+  --warning-foreground: #0a0a0a;
+  --error: #FF3B5C;                      /* Vibrant Red */
+  --error-foreground: #fafafa;
+  --premium: #8B5CF6;                    /* Purple Accent */
+  --premium-foreground: #fafafa;
 }
 
 @theme inline {
   --color-phosphor: var(--phosphor);
   --color-neon-yellow: var(--neon-yellow);
   --color-neon-yellow-dark: var(--neon-yellow-dark);
+  
+  /* Extended Palette */
+  --color-electric-green: var(--electric-green);
+  --color-cool-blue: var(--cool-blue);
+  --color-vibrant-red: var(--vibrant-red);
+  --color-purple-accent: var(--purple-accent);
+  --color-energy-orange: var(--energy-orange);
+  
+  /* Gradients */
+  --gradient-neon: var(--gradient-neon);
+  --gradient-green: var(--gradient-green);
+  --gradient-blue: var(--gradient-blue);
+  --gradient-purple: var(--gradient-purple);
+  --gradient-dark: var(--gradient-dark);
+  --gradient-light: var(--gradient-light);
+  
   --font-syne: var(--font-syne-sans);
 
   --color-background: var(--background);
@@ -835,14 +885,17 @@
   --shadow-xl: var(--shadow-xl);
   --shadow-2xl: var(--shadow-2xl);
 
-  --color-destructive-saturated: var(--destructive-saturated);
-  --color-destructive-foreground-saturated: var(--destructive-foreground-saturated);
-  --color-warning-foreground: var(--warning-foreground);
-  --color-warning: var(--warning);
-  --color-success-foreground: var(--success-foreground);
+  /* Semantic State Colors */
   --color-success: var(--success);
-  --color-info-foreground: var(--info-foreground);
+  --color-success-foreground: var(--success-foreground);
   --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-error: var(--error);
+  --color-error-foreground: var(--error-foreground);
+  --color-premium: var(--premium);
+  --color-premium-foreground: var(--premium-foreground);
 }
 
 @layer base {
@@ -926,12 +979,129 @@
     transition-duration: 150ms;
   }
   
-  /* Neon Yellow Glow Effect - Optional for buttons/accents */
+  /* Neon Yellow Glow Effects */
   .glow-yellow {
     box-shadow: 0 0 20px rgba(210, 255, 0, 0.3);
   }
   
   .glow-yellow-strong {
-    box-shadow: 0 0 30px rgba(210, 255, 0, 0.5);
+    box-shadow: 0 0 30px rgba(210, 255, 0, 0.5), 0 0 60px rgba(210, 255, 0, 0.2);
+  }
+  
+  /* Electric Green Glow */
+  .glow-green {
+    box-shadow: 0 0 20px rgba(0, 255, 135, 0.3);
+  }
+  
+  .glow-green-strong {
+    box-shadow: 0 0 30px rgba(0, 255, 135, 0.5), 0 0 60px rgba(0, 255, 135, 0.2);
+  }
+  
+  /* Cool Blue Glow */
+  .glow-blue {
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+  }
+  
+  /* Purple Glow */
+  .glow-purple {
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+  }
+  
+  /* Vibrant Background Utilities */
+  .bg-gradient-neon {
+    background: var(--gradient-neon);
+  }
+  
+  .bg-gradient-green {
+    background: var(--gradient-green);
+  }
+  
+  .bg-gradient-blue {
+    background: var(--gradient-blue);
+  }
+  
+  .bg-gradient-purple {
+    background: var(--gradient-purple);
+  }
+  
+  .bg-gradient-dark {
+    background: var(--gradient-dark);
+  }
+  
+  .bg-gradient-light {
+    background: var(--gradient-light);
+  }
+  
+  /* Hover Lift Effect */
+  .hover-lift {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+  }
+  
+  /* Text Color Utilities */
+  .text-neon-yellow {
+    color: var(--neon-yellow);
+  }
+  
+  .text-electric-green {
+    color: var(--electric-green);
+  }
+  
+  .text-cool-blue {
+    color: var(--cool-blue);
+  }
+  
+  .text-vibrant-red {
+    color: var(--vibrant-red);
+  }
+  
+  .text-purple-accent {
+    color: var(--purple-accent);
+  }
+  
+  .text-energy-orange {
+    color: var(--energy-orange);
+  }
+  
+  /* Background Color Utilities */
+  .bg-neon-yellow {
+    background-color: var(--neon-yellow);
+  }
+  
+  .bg-electric-green {
+    background-color: var(--electric-green);
+  }
+  
+  .bg-cool-blue {
+    background-color: var(--cool-blue);
+  }
+  
+  .bg-vibrant-red {
+    background-color: var(--vibrant-red);
+  }
+  
+  .bg-purple-accent {
+    background-color: var(--purple-accent);
+  }
+  
+  .bg-energy-orange {
+    background-color: var(--energy-orange);
+  }
+  
+  /* Border Utilities */
+  .border-neon-yellow {
+    border-color: var(--neon-yellow);
+  }
+  
+  .border-electric-green {
+    border-color: var(--electric-green);
+  }
+  
+  .border-cool-blue {
+    border-color: var(--cool-blue);
   }
 }
