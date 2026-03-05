@@ -6,7 +6,6 @@ import MatchesDashboard from "@/components/projects/MatchesDashboard";
 export default async function ProjectsPage() {
   const matches = (await fetchMatches().catch(() => [])) || [];
 
-  console.log(matches)
   return <MatchesDashboard initialProjects={matches} />;
 }
     
