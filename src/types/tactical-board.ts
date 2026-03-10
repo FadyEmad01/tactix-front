@@ -37,7 +37,7 @@ export interface DrawingPath {
     color: string;
     thickness: number;
     opacity: number;
-    tool: 'pen' | 'eraser';
+    tool?: 'pen' | 'eraser';
 }
 
 export interface Arrow {
