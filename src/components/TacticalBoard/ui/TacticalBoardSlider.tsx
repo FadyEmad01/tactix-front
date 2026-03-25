@@ -24,7 +24,7 @@ export default function Slider({ value, min, max, onChange, step = 1 }: SliderPr
         onChange={(e) => onChange(parseFloat(e.target.value))}
         className="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer slider"
         style={{
-          background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${percentage}%, #4b5563 ${percentage}%, #4b5563 100%)`,
+          background: `linear-gradient(to right, hsl(var(--primary)) 0%, hsl(var(--primary)) ${percentage}%, #4b5563 ${percentage}%, #4b5563 100%)`,
         }}
       />
       <style jsx>{`

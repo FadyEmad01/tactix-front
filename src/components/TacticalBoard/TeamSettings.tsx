@@ -3,6 +3,8 @@
 import React, { memo, useCallback } from 'react';
 import { useTacticalStore } from '@/stores/tacticalStore';
 import { FieldRotation } from '@/types/tactical-board';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 interface TeamSettingsProps {
   onClose: () => void;
@@ -43,11 +45,11 @@ const TeamSettings = memo<TeamSettingsProps>(({ onClose }) => {
       <div className="bg-gray-800 rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div className="p-4 sm:p-6 border-b border-gray-700 flex justify-between items-center">
           <h2 className="text-lg sm:text-xl font-bold text-white">Settings</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">
+          <Button variant="ghost" size="icon" onClick={onClose} className="text-gray-400 hover:text-white rounded-full">
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
-          </button>
+          </Button>
         </div>
 
         <div className="p-4 sm:p-6 space-y-6">
@@ -57,11 +59,11 @@ const TeamSettings = memo<TeamSettingsProps>(({ onClose }) => {
             <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2">
                 <label className="text-xs text-gray-400 mb-1 block">Name</label>
-                <input
+                <Input
                   type="text"
                   value={currentProject.homeTeam.name}
                   onChange={(e) => updateHomeTeam({ name: e.target.value })}
-                  className="w-full bg-gray-700 text-white px-3 py-2 rounded border border-gray-600 focus:outline-none focus:border-blue-500 text-sm"
+                  className="w-full bg-gray-700 text-white h-9 border-gray-600 focus-visible:ring-primary"
                 />
               </div>
               <div>
@@ -91,11 +93,11 @@ const TeamSettings = memo<TeamSettingsProps>(({ onClose }) => {
             <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2">
                 <label className="text-xs text-gray-400 mb-1 block">Name</label>
-                <input
+                <Input
                   type="text"
                   value={currentProject.awayTeam.name}
                   onChange={(e) => updateAwayTeam({ name: e.target.value })}
-                  className="w-full bg-gray-700 text-white px-3 py-2 rounded border border-gray-600 focus:outline-none focus:border-blue-500 text-sm"
+                  className="w-full bg-gray-700 text-white h-9 border-gray-600 focus-visible:ring-primary"
                 />
               </div>
               <div>
@@ -129,7 +131,7 @@ const TeamSettings = memo<TeamSettingsProps>(({ onClose }) => {
                   onClick={() => setFieldType(field.type)}
                   className={`p-2 rounded-lg border-2 transition text-xs sm:text-sm ${
                     currentProject.fieldType === field.type
-                      ? 'border-blue-500 bg-blue-500/20 text-white'
+                      ? 'border-primary bg-primary/20 text-white'
                       : 'border-gray-600 text-gray-400 hover:border-gray-500'
                   }`}
                 >
@@ -149,7 +151,7 @@ const TeamSettings = memo<TeamSettingsProps>(({ onClose }) => {
                   onClick={() => setFieldRotation(rot.value)}
                   className={`p-2 rounded-lg border-2 transition text-xs sm:text-sm ${
                     currentProject.fieldRotation === rot.value
-                      ? 'border-blue-500 bg-blue-500/20 text-white'
+                      ? 'border-primary bg-primary/20 text-white'
                       : 'border-gray-600 text-gray-400 hover:border-gray-500'
                   }`}
                 >
@@ -161,12 +163,12 @@ const TeamSettings = memo<TeamSettingsProps>(({ onClose }) => {
         </div>
 
         <div className="p-4 sm:p-6 border-t border-gray-700">
-          <button
+          <Button
             onClick={onClose}
-            className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition"
+            className="w-full"
           >
             Done
-          </button>
+          </Button>
         </div>
       </div>
     </div>

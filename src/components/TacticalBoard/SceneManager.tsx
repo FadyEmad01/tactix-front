@@ -2,6 +2,8 @@
 
 import React, { useState, useCallback, memo } from 'react';
 import { useTacticalStore } from '@/stores/tacticalStore';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 const SceneManager = memo(() => {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -30,7 +32,7 @@ const SceneManager = memo(() => {
 
   const handleRemoveScene = useCallback((e: React.MouseEvent, index: number) => {
     e.stopPropagation();
-    if (currentProject && currentProject.scenes.length > 1) {
+    if (currentProject && currentProject.scenes?.length > 1) {
       removeScene(index);
     }
   }, [currentProject, removeScene]);
@@ -46,20 +48,20 @@ const SceneManager = memo(() => {
     <div className="bg-gray-800 border-t border-gray-700 p-2 flex-shrink-0">
       <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
         {/* Scene tabs */}
-        {currentProject.scenes.map((scene, index) => (
+        {currentProject.scenes?.map((scene, index) => (
           <div
             key={scene.id}
             className={`
               group flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-lg cursor-pointer transition-colors flex-shrink-0
               ${index === currentSceneIndex
-                ? 'bg-blue-600 text-white'
+                ? 'bg-primary text-primary-foreground'
                 : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
               }
             `}
             onClick={() => setCurrentScene(index)}
           >
             {editingIndex === index ? (
-              <input
+              <Input
                 type="text"
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
@@ -68,7 +70,7 @@ const SceneManager = memo(() => {
                   if (e.key === 'Enter') handleFinishEdit();
                   if (e.key === 'Escape') setEditingIndex(null);
                 }}
-                className="bg-transparent border-none outline-none text-xs sm:text-sm w-16 sm:w-24"
+                className="bg-transparent border-none focus-visible:ring-0 shadow-none outline-none text-xs sm:text-sm w-16 sm:w-24 h-6 px-1"
                 autoFocus
                 onClick={(e) => e.stopPropagation()}
               />
@@ -96,7 +98,7 @@ const SceneManager = memo(() => {
                   <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
                 </svg>
               </button>
-              {currentProject.scenes.length > 1 && (
+              {currentProject.scenes?.length > 1 && (
                 <button
                   onClick={(e) => handleRemoveScene(e, index)}
                   className="p-0.5 hover:bg-red-500/50 rounded"
@@ -112,7 +114,9 @@ const SceneManager = memo(() => {
         ))}
 
         {/* Add scene button */}
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={addScene}
           className="flex items-center gap-1 px-2 sm:px-3 py-1.5 text-xs sm:text-sm text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition flex-shrink-0"
         >
@@ -120,7 +124,7 @@ const SceneManager = memo(() => {
             <path d="M12 5v14M5 12h14" />
           </svg>
           <span className="hidden sm:inline">Add Scene</span>
-        </button>
+        </Button>
       </div>
     </div>
   );

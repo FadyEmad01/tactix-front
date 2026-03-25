@@ -10,7 +10,7 @@ import { Point } from '@/types/tactical-board';
 const Canvas = memo(() => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
-  
+
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentPath, setCurrentPath] = useState<Point[]>([]);
   const [lineStart, setLineStart] = useState<Point | null>(null);
@@ -28,7 +28,7 @@ const Canvas = memo(() => {
   const panX = useTacticalStore((s) => s.panX);
   const panY = useTacticalStore((s) => s.panY);
   const isPanning = useTacticalStore((s) => s.isPanning);
-  
+
   const setZoom = useTacticalStore((s) => s.setZoom);
   const setPan = useTacticalStore((s) => s.setPan);
   const setIsPanning = useTacticalStore((s) => s.setIsPanning);
@@ -41,7 +41,7 @@ const Canvas = memo(() => {
   const saveToHistory = useTacticalStore((s) => s.saveToHistory);
   const eraseAtPosition = useTacticalStore((s) => s.eraseAtPosition);
 
-  const currentScene = currentProject?.scenes[currentSceneIndex];
+  const currentScene = currentProject?.scenes?.[currentSceneIndex];
   const fieldRotation = currentProject?.fieldRotation || 0;
 
   // Measure canvas size for responsive scaling
@@ -52,7 +52,7 @@ const Canvas = memo(() => {
         setCanvasSize({ width: rect.width, height: rect.height });
       }
     };
-    
+
     updateSize();
     window.addEventListener('resize', updateSize);
     return () => window.removeEventListener('resize', updateSize);
@@ -69,14 +69,14 @@ const Canvas = memo(() => {
   const screenToCanvas = useCallback((clientX: number, clientY: number): Point => {
     if (!canvasRef.current) return { x: 0, y: 0 };
     const rect = canvasRef.current.getBoundingClientRect();
-    
+
     let x = ((clientX - rect.left) / rect.width) * 100;
     let y = ((clientY - rect.top) / rect.height) * 100;
-    
+
     // Clamp values
     x = Math.max(0, Math.min(100, x));
     y = Math.max(0, Math.min(100, y));
-    
+
     return { x, y };
   }, []);
 
@@ -166,7 +166,7 @@ const Canvas = memo(() => {
   // Handle pointer move
   const handlePointerMove = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     const { clientX, clientY } = getEventCoords(e);
-    
+
     // Handle panning
     if (isPanning && panStart) {
       const newPanX = clientX - panStart.x;
@@ -187,7 +187,7 @@ const Canvas = memo(() => {
 
     if (lineStart && activeTool === 'line') {
       setLineEnd(point);
-      
+
       if (toolSettings.lineType === 'curved') {
         const midX = (lineStart.x + point.x) / 2;
         const midY = (lineStart.y + point.y) / 2;
@@ -286,21 +286,21 @@ const Canvas = memo(() => {
   // Render arrow head
   const renderArrowHead = (end: Point, start: Point, control: Point | undefined, type: string, color: string, thickness: number) => {
     if (type === 'none') return null;
-    
+
     let angle: number;
     if (control) {
       angle = Math.atan2(end.y - control.y, end.x - control.x);
     } else {
       angle = Math.atan2(end.y - start.y, end.x - start.x);
     }
-    
+
     const size = thickness * 3;
     const angleDeg = angle * (180 / Math.PI);
-    
+
     if (type === 'arrow') {
       return (
         <path
-          d={`M ${-size} ${-size/2} L 0 0 L ${-size} ${size/2}`}
+          d={`M ${-size} ${-size / 2} L 0 0 L ${-size} ${size / 2}`}
           fill="none"
           stroke={color}
           strokeWidth={thickness}
@@ -313,7 +313,7 @@ const Canvas = memo(() => {
     if (type === 'triangle') {
       return (
         <polygon
-          points={`0,0 ${-size},${-size/2} ${-size},${size/2}`}
+          points={`0,0 ${-size},${-size / 2} ${-size},${size / 2}`}
           fill={color}
           transform={`translate(${end.x}, ${end.y}) rotate(${angleDeg})`}
         />
@@ -322,20 +322,20 @@ const Canvas = memo(() => {
     if (type === 'x') {
       return (
         <g transform={`translate(${end.x}, ${end.y}) rotate(${angleDeg})`}>
-          <line x1={-size/2} y1={-size/2} x2={size/2} y2={size/2} stroke={color} strokeWidth={thickness} />
-          <line x1={size/2} y1={-size/2} x2={-size/2} y2={size/2} stroke={color} strokeWidth={thickness} />
+          <line x1={-size / 2} y1={-size / 2} x2={size / 2} y2={size / 2} stroke={color} strokeWidth={thickness} />
+          <line x1={size / 2} y1={-size / 2} x2={-size / 2} y2={size / 2} stroke={color} strokeWidth={thickness} />
         </g>
       );
     }
     return null;
   };
 
-  const cursor = isPanning ? 'grabbing' : 
-    activeTool === 'select' ? 'default' : 
-    activeTool === 'eraser' ? 'crosshair' : 'crosshair';
+  const cursor = isPanning ? 'grabbing' :
+    activeTool === 'select' ? 'default' :
+      activeTool === 'eraser' ? 'crosshair' : 'crosshair';
 
   return (
-    <div 
+    <div
       ref={containerRef}
       className="w-full h-full flex items-center justify-center p-2 sm:p-4 md:p-8 bg-gray-900 overflow-hidden"
       onWheel={handleWheel}
@@ -344,7 +344,7 @@ const Canvas = memo(() => {
       <div className="absolute bottom-4 left-4 z-10 flex items-center gap-2 bg-gray-800 rounded-lg px-2 py-1 sm:px-3 sm:py-2">
         <button
           onClick={() => setZoom(zoom - 0.1)}
-          className="text-white hover:text-blue-400 transition p-1"
+          className="text-white hover:text-primary transition p-1"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
@@ -355,7 +355,7 @@ const Canvas = memo(() => {
         </span>
         <button
           onClick={() => setZoom(zoom + 0.1)}
-          className="text-white hover:text-blue-400 transition p-1"
+          className="text-white hover:text-primary transition p-1"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -363,7 +363,7 @@ const Canvas = memo(() => {
         </button>
         <button
           onClick={resetView}
-          className="text-white text-xs hover:text-blue-400 transition ml-1 sm:ml-2 p-1"
+          className="text-white text-xs hover:text-primary transition ml-1 sm:ml-2 p-1"
         >
           ⟲
         </button>
@@ -392,8 +392,8 @@ const Canvas = memo(() => {
         onTouchEnd={handlePointerUp}
       >
         {/* Field Background */}
-        <FieldBackground 
-          type={currentProject?.fieldType || 'full'} 
+        <FieldBackground
+          type={currentProject?.fieldType || 'full'}
           rotation={fieldRotation}
         />
 
@@ -431,8 +431,8 @@ const Canvas = memo(() => {
           )}
 
           {/* Saved Arrows */}
-          {currentScene.arrows.map((arrow) => (
-            <g key={arrow.id} opacity={arrow.opacity}>
+          {currentScene.arrows.map((arrow, i) => (
+            <g key={arrow.id || crypto.randomUUID() || i} opacity={arrow.opacity}>
               <path
                 d={renderArrowPath(arrow.startPoint, arrow.endPoint, arrow.controlPoint, arrow.lineType)}
                 stroke={arrow.color}
@@ -476,18 +476,18 @@ const Canvas = memo(() => {
         </svg>
 
         {/* Balls */}
-        {currentScene.balls.map((ball) => (
-          <BallElement 
-            key={ball.id} 
-            ball={ball} 
+        {currentScene.balls.map((ball, i) => (
+          <BallElement
+            key={ball.id || crypto.randomUUID() || i}
+            ball={ball}
             scale={objectScale}
           />
         ))}
 
         {/* Players */}
-        {currentScene.players.map((player) => (
-          <PlayerElement 
-            key={player.id} 
+        {currentScene.players.map((player,i) => (
+          <PlayerElement
+            key={player.id || crypto.randomUUID() || i}
             player={player}
             scale={objectScale}
           />

@@ -3,6 +3,7 @@
 
 import React, { useState, memo, useCallback } from 'react';
 import { useTacticalStore } from '@/stores/tacticalStore';
+import { Button } from '@/components/ui/button';
 
 interface ExportModalProps {
   onClose: () => void;
@@ -57,28 +58,31 @@ const ExportModal = memo<ExportModalProps>(({ onClose }) => {
       <div className="bg-gray-800 rounded-xl shadow-xl w-full max-w-sm">
         <div className="p-4 border-b border-gray-700 flex justify-between items-center">
           <h2 className="text-lg font-bold text-white">Export</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">
+          <Button variant="ghost" size="icon" onClick={onClose} className="text-gray-400 hover:text-white rounded-full">
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
-          </button>
+          </Button>
         </div>
 
         <div className="p-4 space-y-3">
-          <button
+          <Button
+            size="lg"
             onClick={handleExportImage}
             disabled={exporting}
-            className="w-full py-3 bg-green-600 text-white rounded-lg hover:bg-green-500 transition disabled:opacity-50"
+            className="w-full bg-green-600 text-white hover:bg-green-500 transition disabled:opacity-50"
           >
             {exporting ? 'Exporting...' : 'Download as PNG'}
-          </button>
+          </Button>
           
-          <button
+          <Button
+            size="lg"
+            variant="secondary"
             onClick={handleExportJSON}
-            className="w-full py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition"
+            className="w-full bg-gray-700 text-white hover:bg-gray-600 transition"
           >
             Download as JSON
-          </button>
+          </Button>
         </div>
       </div>
     </div>

@@ -3,6 +3,7 @@
 import React, { useState, useCallback, memo } from 'react';
 import { useTacticalStore } from '@/stores/tacticalStore';
 import { Tool, LineType, ArrowHead } from '@/types/tactical-board';
+import { Button } from '@/components/ui/button';
 
 interface ToolButtonProps {
   tool: Tool;
@@ -14,19 +15,21 @@ interface ToolButtonProps {
 }
 
 const ToolButton = memo<ToolButtonProps>(({ icon, label, shortcut, isActive, onClick }) => (
-  <button
+  <Button
+    variant={isActive ? "default" : "ghost"}
+    size="icon"
     onClick={onClick}
     title={`${label}${shortcut ? ` (${shortcut})` : ''}`}
     className={`
-      relative w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-lg transition-all
+      w-9 h-9 sm:w-10 sm:h-10 rounded-lg transition-all
       ${isActive 
-        ? 'bg-blue-600 text-white' 
+        ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
         : 'text-gray-400 hover:bg-gray-700 hover:text-white'
       }
     `}
   >
     {icon}
-  </button>
+  </Button>
 ));
 
 ToolButton.displayName = 'ToolButton';
@@ -207,7 +210,7 @@ const Toolbar = memo(() => {
                           key={lt}
                           onClick={() => updateToolSettings({ lineType: lt })}
                           className={`flex-1 p-2 rounded text-xs ${
-                            toolSettings.lineType === lt ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'
+                            toolSettings.lineType === lt ? 'bg-primary text-primary-foreground' : 'bg-gray-700 text-gray-300'
                           }`}
                         >
                           {lt[0].toUpperCase()}
@@ -223,7 +226,7 @@ const Toolbar = memo(() => {
                           key={ah}
                           onClick={() => updateToolSettings({ arrowHeadEnd: ah })}
                           className={`flex-1 p-2 rounded text-xs ${
-                            toolSettings.arrowHeadEnd === ah ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'
+                            toolSettings.arrowHeadEnd === ah ? 'bg-primary text-primary-foreground' : 'bg-gray-700 text-gray-300'
                           }`}
                         >
                           {ah === 'none' ? '○' : ah === 'arrow' ? '→' : ah === 'triangle' ? '▶' : '✕'}
@@ -264,20 +267,22 @@ const Toolbar = memo(() => {
 
       {/* Formation Quick Apply */}
       <div className="relative">
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={() => setShowFormationMenu(!showFormationMenu)}
           title="Apply Formation"
-          className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white transition"
+          className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white transition"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
             <circle cx="12" cy="4" r="2" />
             <circle cx="6" cy="10" r="2" />
             <circle cx="18" cy="10" r="2" />
             <circle cx="4" cy="18" r="2" />
-            <circle cx="12" cy="16" r="2" />
+             <circle cx="12" cy="16" r="2" />
             <circle cx="20" cy="18" r="2" />
           </svg>
-        </button>
+        </Button>
         
         {showFormationMenu && (
           <div
@@ -318,44 +323,50 @@ const Toolbar = memo(() => {
       </div>
 
       {/* Clear Canvas */}
-      <button
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={clearCanvas}
         title="Clear Canvas"
-        className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-lg text-gray-400 hover:bg-red-600 hover:text-white transition"
+        className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg text-gray-400 hover:bg-red-600 hover:text-white transition"
       >
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
         </svg>
-      </button>
+      </Button>
 
       <div className="flex-1" />
 
       {/* Undo/Redo */}
-      <button
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={undo}
         disabled={historyIndex <= 0}
         title="Undo (Ctrl+Z)"
-        className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-lg transition ${
+        className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg transition ${
           historyIndex <= 0 ? 'text-gray-600 cursor-not-allowed' : 'text-gray-400 hover:bg-gray-700 hover:text-white'
         }`}
       >
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M3 10h10a5 5 0 015 5v2M3 10l5-5M3 10l5 5" />
         </svg>
-      </button>
+      </Button>
       
-      <button
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={redo}
         disabled={historyIndex >= historyLength - 1}
         title="Redo (Ctrl+Shift+Z)"
-        className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-lg transition ${
+        className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg transition ${
           historyIndex >= historyLength - 1 ? 'text-gray-600 cursor-not-allowed' : 'text-gray-400 hover:bg-gray-700 hover:text-white'
         }`}
       >
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M21 10H11a5 5 0 00-5 5v2M21 10l-5-5M21 10l-5 5" />
         </svg>
-      </button>
+      </Button>
     </div>
   );
 });
