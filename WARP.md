@@ -32,7 +32,7 @@ There are currently no explicit linting or test scripts defined in `package.json
   - `src/app/(dashboard)/video-editor/page.tsx`: Client-side page that hosts the `VideoEditor` component.
 - Auth routes live under `src/app/auth/*` (login, sign-up, OTP, email verification states, password reset, etc.). These wire into shared auth components in `src/components/auth/*`.
 - API routes used by the frontend live under `src/app/api/`:
-  - `src/app/api/auth/login/route.ts`: Forwards login credentials to the external backend (`NEXT_PUBLIC_API_URL`), then sets an HTTP-only `token` cookie on success.
+  - `src/app/api/auth/login/route.ts`: Forwards login credentials to the external backend (`API_URL`), then sets an HTTP-only `token` cookie on success.
   - `src/app/api/auth/logout/route.ts`: Clears `token` and `user` cookies.
 
 ### Auth, session, and middleware flow
@@ -47,7 +47,7 @@ Core auth/session flow involves **cookies**, **middleware**, and **server utilit
   - Client forms in `src/components/auth/login-form.tsx` call `src/lib/auth/login.ts`.
   - `src/lib/auth/login.ts` calls the internal `/api/auth/login` route, which then calls the external backend and sets the `token` cookie. The client keeps a `user` object in `sessionStorage` for UI convenience.
 - Sign-up and profile APIs:
-  - `src/lib/auth/signup.ts` posts a multipart `FormData` directly to `${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`.
+  - `src/lib/auth/signup.ts` posts a multipart `FormData` directly to `${process.env.API_URL}/api/auth/register`.
   - `src/lib/auth/profile.ts` provides browser-side helpers `getProfile` and `updateProfile` that talk to `/api/profile` (an external or separate route) using `credentials: 'include'`.
 - Server-side user fetching:
   - `src/lib/fetchUserProfile.ts` is a **server utility** that reads the `token` cookie via `next/headers`, calls `${API_URL}/api/profile` with `Authorization: Bearer <token>`, and normalizes the response (supports `{ data: user }`, `{ user }`, or raw user objects).
@@ -107,7 +107,7 @@ There are two related but distinct concepts: **local projects** and **backend ma
 
 ### Environment and configuration
 
-- The app relies on **`NEXT_PUBLIC_API_URL`** to reach the backend for auth, profile, and match APIs. If unset, some helpers default to `http://localhost:3000`, which assumes the backend is running on the same origin.
+- The app relies on **`API_URL`** to reach the backend for auth, profile, and match APIs. If unset, some helpers default to `http://localhost:3000`, which assumes the backend is running on the same origin.
 - When adding new server actions or backend calls, prefer the existing patterns:
   - Use `cookies()` to read the `token` and attach it as `Authorization: Bearer ...`.
   - Use `revalidatePath` after mutating operations to keep server-rendered lists up-to-date.

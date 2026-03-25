@@ -1,5 +1,5 @@
 // export async function login(data: { email: string; password: string }) {
-//     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
+//     const res = await fetch(`${process.env.API_URL}/api/auth/login`, {
 //       method: "POST",
 //       headers: {
 //         "Content-Type": "application/json",

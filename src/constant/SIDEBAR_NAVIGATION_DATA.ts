@@ -32,11 +32,11 @@ export const NAVIGATION_DATA: NavigationData = {
           url: "/tags",
           icon: Tags,
         },
-        // {
-        //   title: "Tactical Board",
-        //   url: "/tactical-board",
-        //   icon: LandPlot,
-        // },
+        {
+          title: "Tactical Board",
+          url: "/board",
+          icon: LandPlot,
+        },
         {
           title: "Settings",
           url: "/settings",

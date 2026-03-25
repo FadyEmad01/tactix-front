@@ -3,7 +3,7 @@
 // import { cookies } from "next/headers";
 // import { revalidatePath } from "next/cache";
 
-// const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+// const API_URL = process.env.API_URL || "http://localhost:3000";
 
 // export interface Project {
 //   id: string;
@@ -146,7 +146,7 @@
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+const API_URL = process.env.API_URL || "http://localhost:3000";
 
 export interface Project {
   id: string;
