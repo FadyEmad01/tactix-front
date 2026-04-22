@@ -416,6 +416,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { createBoardAction, updateBoardAction } from '@/app/(dashboard)/board/actions';
 import { Project } from '@/types/tactical-board';
+import { BoardBreadcrumb } from './BoardBreadcrumb';
+import { LinkBoardModal } from './LinkBoardModal';
+import { getBoardLink, isBoardLinked, saveBoardLink } from '@/lib/board-link/local-storage';
+import { Link2, ArrowLeft } from 'lucide-react';
 
 // Lazy load modals
 const PropertiesPanel = dynamic(() => import('./PropertiesPanel'), { ssr: false });
@@ -441,6 +445,8 @@ export default function TacticalBoard({ initialBoards }: { initialBoards?: Proje
     const [showSaveMenu, setShowSaveMenu] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
     const [isAutoSave, setIsAutoSave] = useState(false);
+    const [showLinkModal, setShowLinkModal] = useState(false);
+    const [isLinked, setIsLinked] = useState(false);
 
     useKeyboardShortcuts();
 
@@ -458,6 +464,13 @@ export default function TacticalBoard({ initialBoards }: { initialBoards?: Proje
             createProject("Untitled Board");
         }
     }, [initialBoards]);
+
+    // Check if board is linked
+    useEffect(() => {
+        if (currentProject?.id) {
+            setIsLinked(!!getBoardLink(currentProject.id));
+        }
+    }, [currentProject?.id]);
 
     const handleProjectNameChange = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -486,6 +499,15 @@ export default function TacticalBoard({ initialBoards }: { initialBoards?: Proje
                     useTacticalStore.setState((s) => ({
                         currentProject: { ...s.currentProject, id: newId, _id: newId } as any,
                     }));
+
+                    // Check for pending link from tag creation
+                    const pendingLink = sessionStorage.getItem('pendingBoardLink');
+                    if (pendingLink) {
+                        const { projectId, tagId } = JSON.parse(pendingLink);
+                        saveBoardLink(newId, projectId, tagId);
+                        setIsLinked(true);
+                        sessionStorage.removeItem('pendingBoardLink');
+                    }
 
                     router.replace(`/board/${newId}`);
                 }
@@ -533,15 +555,27 @@ export default function TacticalBoard({ initialBoards }: { initialBoards?: Proje
         <div className="flex flex-col h-screen bg-gray-900 overflow-hidden touch-none">
             {/* Top Bar */}
             <header className="flex items-center justify-between px-2 sm:px-4 py-2 bg-gray-800 border-b border-gray-700 flex-shrink-0">
-                <div className="flex items-center gap-2 sm:gap-4">
-                    <h1 className="text-lg sm:text-xl font-bold text-white hidden sm:block">⚽ TACTICALista</h1>
-                    <h1 className="text-lg font-bold text-white sm:hidden">⚽</h1>
-                    <Input
-                        type="text"
-                        value={currentProject.name}
-                        onChange={handleProjectNameChange}
-                        className="bg-gray-700 text-white h-8 border-gray-600 focus-visible:ring-primary w-32 sm:w-48"
-                    />
+                <div className="flex items-center gap-4">
+                    {/* Back button */}
+                    {isLinked ? (
+                        <Button variant="ghost" size="sm" onClick={() => router.push('/projects')} className="text-white hover:text-white hover:bg-gray-700">
+                            <ArrowLeft className="size-4 mr-2" />
+                            Back to Projects
+                        </Button>
+                    ) : (
+                        <Button variant="ghost" size="sm" onClick={() => router.push('/board')} className="text-white hover:text-white hover:bg-gray-700">
+                            <ArrowLeft className="size-4 mr-2" />
+                            Back to Boards
+                        </Button>
+                    )}
+                    
+                    {/* Breadcrumb */}
+                    {currentProject && (
+                        <BoardBreadcrumb 
+                            boardId={currentProject.id} 
+                            boardName={currentProject.name} 
+                        />
+                    )}
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -606,6 +640,20 @@ export default function TacticalBoard({ initialBoards }: { initialBoards?: Proje
                         <span className="hidden sm:inline">Team Settings</span>
                         <span className="sm:hidden">Teams</span>
                     </Button>
+                    {/* Make Linked Board button - only for individual boards */}
+                    {!isLinked && (
+                        <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => setShowLinkModal(true)}
+                            className="bg-gray-700 text-white hover:bg-gray-600 border-gray-600"
+                        >
+                            <Link2 className="size-4 mr-2" />
+                            <span className="hidden sm:inline">Make Linked Board</span>
+                            <span className="sm:hidden">Link</span>
+                        </Button>
+                    )}
+                    
                     <Button
                         onClick={() => setShowExportModal(true)}
                         size="sm"
@@ -634,6 +682,15 @@ export default function TacticalBoard({ initialBoards }: { initialBoards?: Proje
             {/* Modals */}
             {showTeamSettings && <TeamSettings onClose={() => setShowTeamSettings(false)} />}
             {showExportModal && <ExportModal onClose={() => setShowExportModal(false)} />}
+            {currentProject && (
+                <LinkBoardModal
+                    boardId={currentProject.id}
+                    boardName={currentProject.name}
+                    isOpen={showLinkModal}
+                    onClose={() => setShowLinkModal(false)}
+                    onLinked={() => setIsLinked(true)}
+                />
+            )}
         </div>
     );
 }

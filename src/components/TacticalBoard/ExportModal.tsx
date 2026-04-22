@@ -11,7 +11,9 @@ interface ExportModalProps {
 
 const ExportModal = memo<ExportModalProps>(({ onClose }) => {
   const [exporting, setExporting] = useState(false);
+  const [quality, setQuality] = useState<1 | 2 | 3>(2);
   const currentProject = useTacticalStore((s) => s.currentProject);
+  const fieldRotation = currentProject?.fieldRotation || 0;
 
   const handleBackdropClick = useCallback((e: React.MouseEvent) => {
     if (e.target === e.currentTarget) onClose();
@@ -20,25 +22,71 @@ const ExportModal = memo<ExportModalProps>(({ onClose }) => {
   const handleExportImage = useCallback(async () => {
     setExporting(true);
     try {
-      const canvas = document.querySelector('[data-canvas-bg]')?.parentElement;
-      if (!canvas) return;
+      // Find the actual canvas element
+      const canvasElement = document.querySelector('[data-canvas-bg]') as HTMLElement;
+      if (!canvasElement) {
+        console.error('Canvas element not found');
+        return;
+      }
 
-      const html2canvas = (await import('html2canvas')).default;
-      const canvasElement = await html2canvas(canvas as HTMLElement, {
-        scale: 2,
-        backgroundColor: '#1f2937',
-        useCORS: true,
+      // Calculate dimensions based on field rotation
+      const isPortrait = fieldRotation === 90 || fieldRotation === 270;
+      const width = 1000;
+      const height = isPortrait ? 1600 : 625;
+
+      // Save original styles to restore later
+      const originalTransform = canvasElement.style.transform;
+      const originalWidth = canvasElement.style.width;
+      const originalMaxWidth = canvasElement.style.maxWidth;
+      const originalHeight = canvasElement.style.height;
+
+      // Temporarily modify the canvas for clean export
+      // We modify the actual element in-place, capture, then restore
+      canvasElement.style.transform = 'none';
+      canvasElement.style.width = `${width}px`;
+      canvasElement.style.maxWidth = `${width}px`;
+      canvasElement.style.height = `${height}px`;
+
+      // Use html-to-image on the actual element (not a clone)
+      // This preserves all the React-rendered content
+      const { toPng } = await import('html-to-image');
+      
+      // Small delay to ensure DOM updates
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Capture the actual canvas with all its content
+      const dataUrl = await toPng(canvasElement, {
+        quality: quality === 1 ? 0.9 : quality === 2 ? 0.95 : 1,
+        pixelRatio: quality,
+        backgroundColor: '#15803d',
+        width,
+        height,
+        cacheBust: true,
+        // Skip the eraser cursor
+        filter: (node) => {
+          if (node.tagName === 'circle' && node.getAttribute('stroke') === 'rgba(255,255,255,0.5)') {
+            return false;
+          }
+          return true;
+        },
       });
 
+      // Restore original styles
+      canvasElement.style.transform = originalTransform;
+      canvasElement.style.width = originalWidth;
+      canvasElement.style.maxWidth = originalMaxWidth;
+      canvasElement.style.height = originalHeight;
+
+      // Download
       const link = document.createElement('a');
       link.download = `${currentProject?.name || 'tactical'}-${Date.now()}.png`;
-      link.href = canvasElement.toDataURL('image/png');
+      link.href = dataUrl;
       link.click();
     } catch (error) {
       console.error('Export failed:', error);
     }
     setExporting(false);
-  }, [currentProject?.name]);
+  }, [currentProject?.name, quality, fieldRotation]);
 
   const handleExportJSON = useCallback(() => {
     if (!currentProject) return;
@@ -65,7 +113,32 @@ const ExportModal = memo<ExportModalProps>(({ onClose }) => {
           </Button>
         </div>
 
-        <div className="p-4 space-y-3">
+        <div className="p-4 space-y-4">
+          {/* Quality Selector */}
+          <div className="space-y-2">
+            <label className="text-sm text-gray-400">Export Quality</label>
+            <div className="flex gap-2">
+              {([1, 2, 3] as const).map((q) => (
+                <button
+                  key={q}
+                  onClick={() => setQuality(q)}
+                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition ${
+                    quality === q
+                      ? 'bg-green-600 text-white'
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  }`}
+                >
+                  {q}x
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500">
+              {quality === 1 && 'Standard quality (1000px wide)'}
+              {quality === 2 && 'High quality (2000px wide) - Recommended'}
+              {quality === 3 && 'Ultra quality (3000px wide)'}
+            </p>
+          </div>
+
           <Button
             size="lg"
             onClick={handleExportImage}
@@ -74,7 +147,7 @@ const ExportModal = memo<ExportModalProps>(({ onClose }) => {
           >
             {exporting ? 'Exporting...' : 'Download as PNG'}
           </Button>
-          
+
           <Button
             size="lg"
             variant="secondary"
