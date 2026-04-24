@@ -1040,6 +1040,7 @@ import {
   ImageUpIcon,
   Loader2,
   Play,
+  Scissors,
   ShieldCheck,
   StopCircle,
   Tag,
@@ -1051,6 +1052,7 @@ import { Categories } from "@/constant/EVENTS";
 import { formatTime } from "@/lib/video-utils";
 import { createTag, deleteTag, updateTag } from "@/lib/match/actions";
 import type { Tag as VideoTag } from "@/types/video-editor";
+import ClipPreviewModal from "@/components/video-editor/ClipPreviewModal";
 import { BackendTag } from "@/types/match";
 import { Panel } from "@/lib/panel/panel-actions";
 import {
@@ -1104,6 +1106,7 @@ export default function MatchVideoEditor({
     initialTagModels.length ? 0 : -1
   );
   const [videoUrl, setVideoUrl] = useState<string | null>(initialVideoUrl);
+  const [clipTag, setClipTag] = useState<VideoTag | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isLoadingVideo, setIsLoadingVideo] = useState(true);
@@ -1381,6 +1384,7 @@ export default function MatchVideoEditor({
                   onPlayClip={playClip}
                   onDeleteTag={deleteTagHandler}
                   onEditTag={setEditingTag}
+                  onCutTag={setClipTag}
                 />
               </ResizablePanel>
             </ResizablePanelGroup>
@@ -1408,6 +1412,15 @@ export default function MatchVideoEditor({
           onSave={updateTagFunc}
           onCancel={() => setEditingTag(null)}
           customPanels={customPanels}
+        />
+      )}
+
+      {clipTag && (
+        <ClipPreviewModal
+          open={!!clipTag}
+          tag={clipTag}
+          matchId={matchId}
+          onClose={() => setClipTag(null)}
         />
       )}
     </main>
@@ -1624,12 +1637,14 @@ function TagsPanel({
   onPlayClip,
   onDeleteTag,
   onEditTag,
+  onCutTag,
 }: {
   tags: VideoTag[];
   activeTag: VideoTag | null;
   onPlayClip: (tag: VideoTag) => void;
   onDeleteTag: (id: string) => void;
   onEditTag: (tag: VideoTag) => void;
+  onCutTag: (tag: VideoTag) => void;
 }) {
   return (
     <div className="bg-card h-full flex flex-col rounded-3xl border overflow-hidden shadow-sm">
@@ -1659,6 +1674,7 @@ function TagsPanel({
               onPlay={() => onPlayClip(tag)}
               onDelete={() => onDeleteTag(tag.id)}
               onEdit={() => onEditTag(tag)}
+              onCut={() => onCutTag(tag)}
             />
           ))}
         </div>
@@ -1672,11 +1688,13 @@ function TagItem({
   onPlay,
   onDelete,
   onEdit,
+  onCut,
 }: {
   tag: VideoTag;
   onPlay: () => void;
   onDelete: () => void;
   onEdit: () => void;
+  onCut: () => void;
 }) {
   const duration = tag.endTime ? tag.endTime - tag.startTime : 0;
 
@@ -1708,6 +1726,17 @@ function TagItem({
           >
             <Play className="w-4 h-4" />
           </Button>
+          {tag.endTime !== null && (
+            <Button
+              onClick={onCut}
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0 text-blue-500 hover:text-blue-400"
+              title="Cut to clip"
+            >
+              <Scissors className="w-4 h-4" />
+            </Button>
+          )}
           <Button
             onClick={onEdit}
             size="sm"

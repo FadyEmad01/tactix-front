@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState, memo, useCallback } from 'react';
+import { toast } from 'sonner';
 import { useTacticalStore } from '@/stores/tacticalStore';
 import { Button } from '@/components/ui/button';
 
@@ -20,14 +21,27 @@ const ExportModal = memo<ExportModalProps>(({ onClose }) => {
   const handleExportImage = useCallback(async () => {
     setExporting(true);
     try {
-      const canvas = document.querySelector('[data-canvas-bg]')?.parentElement;
-      if (!canvas) return;
+      const canvas = document.querySelector<HTMLElement>('[data-canvas-bg]');
+      if (!canvas) {
+        toast.error('Canvas not found');
+        return;
+      }
 
       const html2canvas = (await import('html2canvas')).default;
-      const canvasElement = await html2canvas(canvas as HTMLElement, {
+      const canvasElement = await html2canvas(canvas, {
         scale: 2,
-        backgroundColor: '#1f2937',
+        backgroundColor: null,
         useCORS: true,
+        logging: false,
+        onclone: (doc) => {
+          const cloned = doc.querySelector<HTMLElement>('[data-canvas-bg]');
+          if (cloned) {
+            cloned.style.transform = 'none';
+            cloned.style.transformOrigin = 'initial';
+          }
+          doc.querySelectorAll<HTMLElement>('[data-export-hide]')
+            .forEach((el) => { el.style.display = 'none'; });
+        },
       });
 
       const link = document.createElement('a');
@@ -36,8 +50,10 @@ const ExportModal = memo<ExportModalProps>(({ onClose }) => {
       link.click();
     } catch (error) {
       console.error('Export failed:', error);
+      toast.error('Failed to export image');
+    } finally {
+      setExporting(false);
     }
-    setExporting(false);
   }, [currentProject?.name]);
 
   const handleExportJSON = useCallback(() => {

@@ -9,6 +9,8 @@
   },
   "dependencies": {
     "@base-ui-components/react": "^1.0.0-beta.4",
+    "@ffmpeg/ffmpeg": "^0.12.15",
+    "@ffmpeg/util": "^0.12.2",
     "@gsap/react": "^2.1.2",
     "@hookform/resolvers": "^5.2.2",
     "@origin-space/image-cropper": "^0.1.9",
