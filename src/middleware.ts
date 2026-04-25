@@ -28,6 +28,7 @@ export const config = {
     "/settings/:path*",
     "/profile/:path*",
     "/video-editor/:path*",
+    "/ai/:path*",
     "/auth/:path*",
   ],
 };

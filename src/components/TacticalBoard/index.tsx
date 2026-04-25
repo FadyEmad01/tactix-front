@@ -421,6 +421,7 @@ import { Project } from '@/types/tactical-board';
 const PropertiesPanel = dynamic(() => import('./PropertiesPanel'), { ssr: false });
 const TeamSettings = dynamic(() => import('./TeamSettings'), { ssr: false });
 const ExportModal = dynamic(() => import('./ExportModal'), { ssr: false });
+const BoardAiPanel = dynamic(() => import('@/components/ai/BoardAiPanel'), { ssr: false });
 
 // ✅ Helper to get ID safely from any API response
 function getIdFromResponse(res: any) {
@@ -627,6 +628,10 @@ export default function TacticalBoard({ initialBoards }: { initialBoards?: Proje
                         <PropertiesPanel />
                     </div>
                 )}
+                <BoardAiPanel
+                    boardId={currentProject.id || "draft"}
+                    project={currentProject}
+                />
             </div>
 
             <SceneManager />

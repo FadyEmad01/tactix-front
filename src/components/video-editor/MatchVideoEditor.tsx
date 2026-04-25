@@ -1055,12 +1055,11 @@ import { toast } from "sonner";
 import {
   createTag,
   deleteTag,
-  getTagBoard,
-  linkTagToBoard,
   updateTag,
 } from "@/lib/match/actions";
 import type { Tag as VideoTag } from "@/types/video-editor";
 import ClipPreviewModal from "@/components/video-editor/ClipPreviewModal";
+import CreateBoardModal from "@/components/video-editor/CreateBoardModal";
 import { BackendTag } from "@/types/match";
 import { Panel } from "@/lib/panel/panel-actions";
 import {
@@ -1116,47 +1115,24 @@ export default function MatchVideoEditor({
   );
   const [videoUrl, setVideoUrl] = useState<string | null>(initialVideoUrl);
   const [clipTag, setClipTag] = useState<VideoTag | null>(null);
-  const [openingBoardTagId, setOpeningBoardTagId] = useState<string | null>(null);
+  const [boardCreateTag, setBoardCreateTag] = useState<VideoTag | null>(null);
+  const boardTabRef = useRef<Window | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isLoadingVideo, setIsLoadingVideo] = useState(true);
 
-  const handleOpenTacticalBoard = async (tag: VideoTag) => {
-    if (openingBoardTagId) return;
-
+  const handleOpenTacticalBoard = (tag: VideoTag) => {
     if (!tag.tagId) {
-      toast.error("Tag is not synced to backend yet. Please refresh and try again.");
+      toast.error(
+        "Tag is not synced to backend yet. Please refresh and try again.",
+      );
       return;
     }
-
-    setOpeningBoardTagId(tag.id);
-
-    try {
-      // Try to fetch existing board
-      const existing = await getTagBoard(tag.tagId);
-      if (existing.success) {
-        window.open(`/board/${existing.boardId}`, "_blank");
-        return;
-      }
-
-      // No board → create one via link, then navigate
-      const linked = await linkTagToBoard(tag.tagId);
-      if (linked.success) {
-        window.open(`/board/${linked.boardId}`, "_blank");
-        return;
-      }
-
-      throw new Error(
-        typeof linked.error === "string"
-          ? linked.error
-          : "Failed to create tactical board",
-      );
-    } catch (err) {
-      console.error("Failed to open tactical board for tag:", err);
-      toast.error(err instanceof Error ? err.message : "Failed to open board");
-    } finally {
-      setOpeningBoardTagId(null);
-    }
+    // Open placeholder tab synchronously while we still have the user gesture.
+    // We'll redirect it to the board URL when the flow completes. This avoids
+    // popup blockers triggering on async window.open() after upload finishes.
+    boardTabRef.current = window.open("about:blank", "_blank");
+    setBoardCreateTag(tag);
   };
 
   // Check IndexedDB for existing video on mount
@@ -1451,7 +1427,6 @@ export default function MatchVideoEditor({
                   onEditTag={setEditingTag}
                   onCutTag={setClipTag}
                   onOpenBoard={handleOpenTacticalBoard}
-                  openingBoardTagId={openingBoardTagId}
                 />
               </ResizablePanel>
             </ResizablePanelGroup>
@@ -1499,6 +1474,28 @@ export default function MatchVideoEditor({
                 ? { ...prev, clipUrl }
                 : prev,
             );
+          }}
+        />
+      )}
+
+      {boardCreateTag && (
+        <CreateBoardModal
+          open={!!boardCreateTag}
+          tag={boardCreateTag}
+          matchId={matchId}
+          targetWindow={boardTabRef.current}
+          onClose={() => {
+            setBoardCreateTag(null);
+            boardTabRef.current = null;
+          }}
+          onCreated={(uploadedTagId, clipUrl) => {
+            if (clipUrl) {
+              setTags((prev) =>
+                prev.map((t) =>
+                  t.tagId === uploadedTagId ? { ...t, clipUrl } : t,
+                ),
+              );
+            }
           }}
         />
       )}
@@ -1718,7 +1715,6 @@ function TagsPanel({
   onEditTag,
   onCutTag,
   onOpenBoard,
-  openingBoardTagId,
 }: {
   tags: VideoTag[];
   activeTag: VideoTag | null;
@@ -1727,7 +1723,6 @@ function TagsPanel({
   onEditTag: (tag: VideoTag) => void;
   onCutTag: (tag: VideoTag) => void;
   onOpenBoard: (tag: VideoTag) => void;
-  openingBoardTagId: string | null;
 }) {
   return (
     <div className="bg-card h-full flex flex-col rounded-3xl border overflow-hidden shadow-sm">
@@ -1759,7 +1754,6 @@ function TagsPanel({
               onEdit={() => onEditTag(tag)}
               onCut={() => onCutTag(tag)}
               onOpenBoard={() => onOpenBoard(tag)}
-              isOpeningBoard={openingBoardTagId === tag.id}
             />
           ))}
         </div>
@@ -1775,7 +1769,6 @@ function TagItem({
   onEdit,
   onCut,
   onOpenBoard,
-  isOpeningBoard,
 }: {
   tag: VideoTag;
   onPlay: () => void;
@@ -1783,7 +1776,6 @@ function TagItem({
   onEdit: () => void;
   onCut: () => void;
   onOpenBoard: () => void;
-  isOpeningBoard: boolean;
 }) {
   const duration = tag.endTime ? tag.endTime - tag.startTime : 0;
 
@@ -1828,17 +1820,12 @@ function TagItem({
           )}
           <Button
             onClick={onOpenBoard}
-            disabled={isOpeningBoard}
             size="sm"
             variant="ghost"
             className="h-8 w-8 p-0 text-emerald-500 hover:text-emerald-400"
             title="Open tactical board"
           >
-            {isOpeningBoard ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <LayoutDashboard className="w-4 h-4" />
-            )}
+            <LayoutDashboard className="w-4 h-4" />
           </Button>
           <Button
             onClick={onEdit}
