@@ -1038,6 +1038,7 @@ import {
   Edit,
   FileVideo,
   ImageUpIcon,
+  LayoutDashboard,
   Loader2,
   Play,
   Scissors,
@@ -1050,7 +1051,14 @@ import {
 
 import { Categories } from "@/constant/EVENTS";
 import { formatTime } from "@/lib/video-utils";
-import { createTag, deleteTag, updateTag } from "@/lib/match/actions";
+import { toast } from "sonner";
+import {
+  createTag,
+  deleteTag,
+  getTagBoard,
+  linkTagToBoard,
+  updateTag,
+} from "@/lib/match/actions";
 import type { Tag as VideoTag } from "@/types/video-editor";
 import ClipPreviewModal from "@/components/video-editor/ClipPreviewModal";
 import { BackendTag } from "@/types/match";
@@ -1077,6 +1085,7 @@ const mapBackendTagToTag = (backend: BackendTag) => ({
   createdAt: backend.createdAt
     ? new Date(backend.createdAt).getTime()
     : Date.now(),
+  clipUrl: backend.clipURL,
 });
 
 interface MatchVideoEditorProps {
@@ -1107,9 +1116,48 @@ export default function MatchVideoEditor({
   );
   const [videoUrl, setVideoUrl] = useState<string | null>(initialVideoUrl);
   const [clipTag, setClipTag] = useState<VideoTag | null>(null);
+  const [openingBoardTagId, setOpeningBoardTagId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isLoadingVideo, setIsLoadingVideo] = useState(true);
+
+  const handleOpenTacticalBoard = async (tag: VideoTag) => {
+    if (openingBoardTagId) return;
+
+    if (!tag.tagId) {
+      toast.error("Tag is not synced to backend yet. Please refresh and try again.");
+      return;
+    }
+
+    setOpeningBoardTagId(tag.id);
+
+    try {
+      // Try to fetch existing board
+      const existing = await getTagBoard(tag.tagId);
+      if (existing.success) {
+        window.open(`/board/${existing.boardId}`, "_blank");
+        return;
+      }
+
+      // No board → create one via link, then navigate
+      const linked = await linkTagToBoard(tag.tagId);
+      if (linked.success) {
+        window.open(`/board/${linked.boardId}`, "_blank");
+        return;
+      }
+
+      throw new Error(
+        typeof linked.error === "string"
+          ? linked.error
+          : "Failed to create tactical board",
+      );
+    } catch (err) {
+      console.error("Failed to open tactical board for tag:", err);
+      toast.error(err instanceof Error ? err.message : "Failed to open board");
+    } finally {
+      setOpeningBoardTagId(null);
+    }
+  };
 
   // Check IndexedDB for existing video on mount
   useEffect(() => {
@@ -1235,6 +1283,23 @@ export default function MatchVideoEditor({
       const result = await createTag(matchId, payload);
       if (!result.success) {
         console.error("Failed to create tag via server action:", result.error);
+        return;
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const data: any = (result as any).data;
+      const newTagId: string | undefined =
+        data?.data?._id ||
+        data?.data?.id ||
+        data?._id ||
+        data?.id;
+      if (newTagId) {
+        setTags((prev) =>
+          prev.map((t) =>
+            t.id === completedTag.id ? { ...t, tagId: newTagId } : t,
+          ),
+        );
+      } else {
+        console.warn("createTag succeeded but no tagId in response:", data);
       }
     } catch (err) {
       console.error("Failed to create tag:", err);
@@ -1385,6 +1450,8 @@ export default function MatchVideoEditor({
                   onDeleteTag={deleteTagHandler}
                   onEditTag={setEditingTag}
                   onCutTag={setClipTag}
+                  onOpenBoard={handleOpenTacticalBoard}
+                  openingBoardTagId={openingBoardTagId}
                 />
               </ResizablePanel>
             </ResizablePanelGroup>
@@ -1421,6 +1488,18 @@ export default function MatchVideoEditor({
           tag={clipTag}
           matchId={matchId}
           onClose={() => setClipTag(null)}
+          onUploaded={(uploadedTagId, clipUrl) => {
+            setTags((prev) =>
+              prev.map((t) =>
+                t.tagId === uploadedTagId ? { ...t, clipUrl } : t,
+              ),
+            );
+            setClipTag((prev) =>
+              prev && prev.tagId === uploadedTagId
+                ? { ...prev, clipUrl }
+                : prev,
+            );
+          }}
         />
       )}
     </main>
@@ -1638,6 +1717,8 @@ function TagsPanel({
   onDeleteTag,
   onEditTag,
   onCutTag,
+  onOpenBoard,
+  openingBoardTagId,
 }: {
   tags: VideoTag[];
   activeTag: VideoTag | null;
@@ -1645,6 +1726,8 @@ function TagsPanel({
   onDeleteTag: (id: string) => void;
   onEditTag: (tag: VideoTag) => void;
   onCutTag: (tag: VideoTag) => void;
+  onOpenBoard: (tag: VideoTag) => void;
+  openingBoardTagId: string | null;
 }) {
   return (
     <div className="bg-card h-full flex flex-col rounded-3xl border overflow-hidden shadow-sm">
@@ -1675,6 +1758,8 @@ function TagsPanel({
               onDelete={() => onDeleteTag(tag.id)}
               onEdit={() => onEditTag(tag)}
               onCut={() => onCutTag(tag)}
+              onOpenBoard={() => onOpenBoard(tag)}
+              isOpeningBoard={openingBoardTagId === tag.id}
             />
           ))}
         </div>
@@ -1689,12 +1774,16 @@ function TagItem({
   onDelete,
   onEdit,
   onCut,
+  onOpenBoard,
+  isOpeningBoard,
 }: {
   tag: VideoTag;
   onPlay: () => void;
   onDelete: () => void;
   onEdit: () => void;
   onCut: () => void;
+  onOpenBoard: () => void;
+  isOpeningBoard: boolean;
 }) {
   const duration = tag.endTime ? tag.endTime - tag.startTime : 0;
 
@@ -1737,6 +1826,20 @@ function TagItem({
               <Scissors className="w-4 h-4" />
             </Button>
           )}
+          <Button
+            onClick={onOpenBoard}
+            disabled={isOpeningBoard}
+            size="sm"
+            variant="ghost"
+            className="h-8 w-8 p-0 text-emerald-500 hover:text-emerald-400"
+            title="Open tactical board"
+          >
+            {isOpeningBoard ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <LayoutDashboard className="w-4 h-4" />
+            )}
+          </Button>
           <Button
             onClick={onEdit}
             size="sm"

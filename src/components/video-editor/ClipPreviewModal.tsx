@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Download, Loader2, X } from 'lucide-react';
+import { Check, Cloud, Download, Loader2, X } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -11,7 +12,9 @@ import {
 } from '@/components/ui/dialog';
 import { formatTime } from '@/lib/video-utils';
 import { clipVideo } from '@/lib/video-clip';
+import { uploadToS3 } from '@/lib/s3-upload';
 import { getVideoFromDB } from '@/lib/match/video-db';
+import { getTagUploadUrl, verifyTagUpload } from '@/lib/match/actions';
 import type { Tag as VideoTag } from '@/types/video-editor';
 
 interface ClipPreviewModalProps {
@@ -19,21 +22,31 @@ interface ClipPreviewModalProps {
   onClose: () => void;
   tag: VideoTag;
   matchId: string;
+  onUploaded?: (tagId: string, clipUrl: string) => void;
 }
 
 type ClipState = 'loading' | 'processing' | 'ready' | 'error';
+type UploadState = 'idle' | 'uploading' | 'uploaded' | 'error';
 
 export default function ClipPreviewModal({
   open,
   onClose,
   tag,
   matchId,
+  onUploaded,
 }: ClipPreviewModalProps) {
   const [state, setState] = useState<ClipState>('loading');
   const [progress, setProgress] = useState(0);
   const [clipUrl, setClipUrl] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
   const clipUrlRef = useRef<string | null>(null);
+  const clipBlobRef = useRef<Blob | null>(null);
+
+  const alreadyUploaded = !!tag.clipUrl;
+  const [uploadState, setUploadState] = useState<UploadState>(
+    alreadyUploaded ? 'uploaded' : 'idle',
+  );
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const processClip = useCallback(async () => {
     setState('loading');
@@ -53,6 +66,7 @@ export default function ClipPreviewModal({
         (pct) => setProgress(pct),
       );
 
+      clipBlobRef.current = blob;
       const url = URL.createObjectURL(blob);
       clipUrlRef.current = url;
       setClipUrl(url);
@@ -65,17 +79,14 @@ export default function ClipPreviewModal({
   }, [matchId, tag.startTime, tag.endTime]);
 
   useEffect(() => {
-    if (open) {
-      processClip();
-    }
+    if (!open) return;
+    processClip();
     return () => {
       if (clipUrlRef.current) {
         URL.revokeObjectURL(clipUrlRef.current);
         clipUrlRef.current = null;
       }
-      setClipUrl(null);
-      setState('loading');
-      setProgress(0);
+      clipBlobRef.current = null;
     };
   }, [open, processClip]);
 
@@ -88,7 +99,48 @@ export default function ClipPreviewModal({
     a.click();
   }, [clipUrl, tag.eventName, tag.startTime, tag.endTime]);
 
+  const handleUpload = useCallback(async () => {
+    if (!clipBlobRef.current) return;
+
+    const tagId = tag.tagId;
+    if (!tagId) {
+      toast.error('Tag is not synced to backend yet. Please refresh and try again.');
+      return;
+    }
+
+    setUploadState('uploading');
+    setUploadProgress(0);
+
+    try {
+      // Step 1: presigned URL
+      const urlRes = await getTagUploadUrl(tagId);
+      if (!urlRes.success || !urlRes.data?.url) {
+        throw new Error(
+          typeof urlRes.error === 'string'
+            ? urlRes.error
+            : 'Failed to get upload URL',
+        );
+      }
+
+      // Step 2: PUT to S3 (with progress)
+      await uploadToS3(urlRes.data.url, clipBlobRef.current, setUploadProgress);
+
+      // Step 3: verify
+      const verify = await verifyTagUpload(tagId);
+      if (!verify.success) throw new Error('Failed to verify upload');
+
+      setUploadState('uploaded');
+      onUploaded?.(tagId, verify.url ?? '');
+      toast.success('Clip uploaded successfully');
+    } catch (err) {
+      console.error('Upload error:', err);
+      setUploadState('idle');
+      toast.error(err instanceof Error ? err.message : 'Failed to upload clip');
+    }
+  }, [tag, onUploaded]);
+
   const duration = tag.endTime! - tag.startTime;
+  const canUpload = state === 'ready' && uploadState !== 'uploading' && uploadState !== 'uploaded';
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -141,30 +193,75 @@ export default function ClipPreviewModal({
 
           {/* Ready — video preview */}
           {state === 'ready' && clipUrl && (
-            <div className="rounded-lg overflow-hidden bg-black aspect-video">
-              <video
-                src={clipUrl}
-                controls
-                autoPlay
-                className="w-full h-full object-contain"
-              />
+            <div className="space-y-3">
+              <div className="rounded-lg overflow-hidden bg-black aspect-video">
+                <video
+                  src={clipUrl}
+                  controls
+                  autoPlay
+                  className="w-full h-full object-contain"
+                />
+              </div>
+
+              {uploadState === 'uploading' && (
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>Uploading to S3…</span>
+                    <span>{uploadProgress}%</span>
+                  </div>
+                  <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                    <div
+                      className="h-full bg-emerald-500 transition-all duration-200"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-2 pt-2">
+        <div className="flex justify-end gap-2 pt-2 flex-wrap">
           <Button variant="outline" onClick={onClose}>
             Close
           </Button>
           <Button
             onClick={handleDownload}
             disabled={state !== 'ready'}
+            variant="secondary"
             className="gap-2"
           >
             <Download className="w-4 h-4" />
             Download MP4
           </Button>
+          {uploadState === 'uploaded' ? (
+            <Button
+              disabled
+              className="gap-2 bg-emerald-600 hover:bg-emerald-600 text-white"
+            >
+              <Check className="w-4 h-4" />
+              Uploaded
+            </Button>
+          ) : (
+            <Button
+              onClick={handleUpload}
+              disabled={!canUpload}
+              className="gap-2"
+            >
+              {uploadState === 'uploading' ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  {uploadProgress}%
+                </>
+              ) : (
+                <>
+                  <Cloud className="w-4 h-4" />
+                  Upload to S3
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>
