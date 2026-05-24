@@ -321,60 +321,62 @@
    }
  } */
 
- :root {
-   --phosphor: #D2FF00;
 
-   --background: #f0f8ff;
-   --foreground: #374151;
+ :root {
+   /* --phosphor: #D2FF00; */
+   --phosphor: #aff33e;
+
+   --background: #fbfcf8;
+   --foreground: #0f172a;
    --card: #ffffff;
-   --card-foreground: #374151;
+   --card-foreground: #0f172a;
    --popover: #ffffff;
-   --popover-foreground: #374151;
-   --primary: #22c55e;
-   --primary-foreground: #ffffff;
-   --secondary: #e0f2fe;
-   --secondary-foreground: #4b5563;
-   --muted: #f3f4f6;
-   --muted-foreground: #6b7280;
-   --accent: #d1fae5;
-   --accent-foreground: #374151;
+   --popover-foreground: #0f172a;
+   --primary: #aff33e;
+   --primary-foreground: #000000;
+   --secondary: #334155;
+   --secondary-foreground: #f8fafc;
+   --muted: #f1f5f9;
+   --muted-foreground: #64748b;
+   --accent: #f0fdf4;
+   --accent-foreground: #166534;
    --destructive: #ef4444;
    --destructive-foreground: #ffffff;
-   --border: #e5e7eb;
-   --input: #e5e7eb;
-   --ring: #22c55e;
-   --chart-1: #22c55e;
-   --chart-2: #10b981;
-   --chart-3: #059669;
-   --chart-4: #047857;
-   --chart-5: #065f46;
-   --sidebar: #e0f2fe;
-   --sidebar-foreground: #374151;
-   --sidebar-primary: #22c55e;
-   --sidebar-primary-foreground: #ffffff;
-   --sidebar-accent: #d1fae5;
-   --sidebar-accent-foreground: #374151;
-   --sidebar-border: #e5e7eb;
-   --sidebar-ring: #22c55e;
-   --font-sans: DM Sans, sans-serif;
-   --font-serif: Lora, serif;
-   --font-mono: IBM Plex Mono, monospace;
-   --radius: 0.5rem;
+   --border: #e2e8f0;
+   --input: #e2e8f0;
+   --ring: #aff33e;
+   --chart-1: #aff33e;
+   --chart-2: #334155;
+   --chart-3: #22c55e;
+   --chart-4: #64748b;
+   --chart-5: #94a3b8;
+   --sidebar: #ffffff;
+   --sidebar-foreground: #0f172a;
+   --sidebar-primary: #aff33e;
+   --sidebar-primary-foreground: #000000;
+   --sidebar-accent: #f8fafc;
+   --sidebar-accent-foreground: #0f172a;
+   --sidebar-border: #f1f5f9;
+   --sidebar-ring: #aff33e;
+   --font-sans: Inter, system-ui, sans-serif;
+   --font-serif: Georgia, serif;
+   --font-mono: JetBrains Mono, monospace;
+   /* --radius: 1rem; */
    --shadow-x: 0px;
-   --shadow-y: 2px;
-   --shadow-blur: 8px;
-   --shadow-spread: -1px;
-   --shadow-opacity: 0.1;
-   --shadow-color: hsl(0 0% 0%);
-   --shadow-2xs: 0px 2px 8px -1px hsl(0 0% 0% / 0.05);
-   --shadow-xs: 0px 2px 8px -1px hsl(0 0% 0% / 0.05);
-   --shadow-sm: 0px 2px 8px -1px hsl(0 0% 0% / 0.10), 0px 1px 2px -2px hsl(0 0% 0% / 0.10);
-   --shadow: 0px 2px 8px -1px hsl(0 0% 0% / 0.10), 0px 1px 2px -2px hsl(0 0% 0% / 0.10);
-   --shadow-md: 0px 2px 8px -1px hsl(0 0% 0% / 0.10), 0px 2px 4px -2px hsl(0 0% 0% / 0.10);
-   --shadow-lg: 0px 2px 8px -1px hsl(0 0% 0% / 0.10), 0px 4px 6px -2px hsl(0 0% 0% / 0.10);
-   --shadow-xl: 0px 2px 8px -1px hsl(0 0% 0% / 0.10), 0px 8px 10px -2px hsl(0 0% 0% / 0.10);
-   --shadow-2xl: 0px 2px 8px -1px hsl(0 0% 0% / 0.25);
-   --tracking-normal: 0em;
+   --shadow-y: 8px;
+   --shadow-blur: 20px;
+   --shadow-spread: 0px;
+   --shadow-opacity: 0.05;
+   --shadow-color: #000000;
+   --shadow-2xs: 0px 8px 20px 0px hsl(0 0% 0% / 0.03);
+   --shadow-xs: 0px 8px 20px 0px hsl(0 0% 0% / 0.03);
+   --shadow-sm: 0px 8px 20px 0px hsl(0 0% 0% / 0.05), 0px 1px 2px -1px hsl(0 0% 0% / 0.05);
+   --shadow: 0px 8px 20px 0px hsl(0 0% 0% / 0.05), 0px 1px 2px -1px hsl(0 0% 0% / 0.05);
+   --shadow-md: 0px 8px 20px 0px hsl(0 0% 0% / 0.05), 0px 2px 4px -1px hsl(0 0% 0% / 0.05);
+   --shadow-lg: 0px 8px 20px 0px hsl(0 0% 0% / 0.05), 0px 4px 6px -1px hsl(0 0% 0% / 0.05);
+   --shadow-xl: 0px 8px 20px 0px hsl(0 0% 0% / 0.05), 0px 8px 10px -1px hsl(0 0% 0% / 0.05);
+   --shadow-2xl: 0px 8px 20px 0px hsl(0 0% 0% / 0.13);
+   --tracking-normal: -0.01em;
    --spacing: 0.25rem;
 
    /* semantic state colors (light) */
@@ -386,72 +388,106 @@
    --success-foreground: oklch(0.508 0.118 165.612);
    --warning: oklch(0.769 0.188 70.08);
    --warning-foreground: oklch(0.555 0.163 48.998);
+
+
+   /* 1. Individual Utility Presets */
+  --radius-none: 0rem;
+  --radius-normal: 0.325rem;
+  --radius-medium: 0.5rem;
+  --radius-high: 0.625rem;
+  --radius-full: 9999px;
+
+  /* 2. Global Active Radius (Uncomment the one you want to use) */
+  /* --radius: var(--radius-none);   */
+  --radius: var(--radius-high);
+  /* Default */
+  /* --radius: var(--radius-medium); */
+  /* --radius: var(--radius-high);   */
+  /* --radius: var(--radius-full);   */
  }
 
  .dark {
-   --phosphor: #D2FF00;
+   /* --phosphor: #D2FF00; */
+   --phosphor: #aff33e;
 
-
-   --background: #0f172a;
-   --foreground: #d1d5db;
-   --card: #1e293b;
-   --card-foreground: #d1d5db;
-   --popover: #1e293b;
-   --popover-foreground: #d1d5db;
-   --primary: #34d399;
-   --primary-foreground: #0f172a;
-   --secondary: #2d3748;
-   --secondary-foreground: #a1a1aa;
-   --muted: #19212e;
-   --muted-foreground: #6b7280;
-   --accent: #374151;
-   --accent-foreground: #a1a1aa;
-   --destructive: #ef4444;
-   --destructive-foreground: #0f172a;
-   --border: #4b5563;
-   --input: #4b5563;
-   --ring: #34d399;
-   --chart-1: #34d399;
-   --chart-2: #2dd4bf;
+   --background: #020617;
+   --foreground: #f8fafc;
+   --card: #0f172a;
+   --card-foreground: #f8fafc;
+   --popover: #0f172a;
+   --popover-foreground: #f8fafc;
+   --primary: #aff33e;
+   --primary-foreground: #000000;
+   --secondary: #1e293b;
+   --secondary-foreground: #f8fafc;
+   --muted: #1e293b;
+   --muted-foreground: #94a3b8;
+   --accent: #14532d;
+   --accent-foreground: #aff33e;
+   --destructive: #991b1b;
+   --destructive-foreground: #ffffff;
+   --border: #1e293b;
+   --input: #1e293b;
+   --ring: #aff33e;
+   --chart-1: #aff33e;
+   --chart-2: #3b82f6;
    --chart-3: #22c55e;
-   --chart-4: #10b981;
-   --chart-5: #059669;
-   --sidebar: #1e293b;
-   --sidebar-foreground: #d1d5db;
-   --sidebar-primary: #34d399;
-   --sidebar-primary-foreground: #0f172a;
-   --sidebar-accent: #374151;
-   --sidebar-accent-foreground: #a1a1aa;
-   --sidebar-border: #4b5563;
-   --sidebar-ring: #34d399;
-   --font-sans: DM Sans, sans-serif;
-   --font-serif: Lora, serif;
-   --font-mono: IBM Plex Mono, monospace;
-   --radius: 0.5rem;
+   --chart-4: #a855f7;
+   --chart-5: #f59e0b;
+   --sidebar: #020617;
+   --sidebar-foreground: #f8fafc;
+   --sidebar-primary: #aff33e;
+   --sidebar-primary-foreground: #000000;
+   --sidebar-accent: #1e293b;
+   --sidebar-accent-foreground: #f8fafc;
+   --sidebar-border: #1e293b;
+   --sidebar-ring: #aff33e;
+   --font-sans: Inter, system-ui, sans-serif;
+   --font-serif: Georgia, serif;
+   --font-mono: JetBrains Mono, monospace;
+   /* --radius: 1rem; */
    --shadow-x: 0px;
-   --shadow-y: 2px;
-   --shadow-blur: 8px;
-   --shadow-spread: -1px;
-   --shadow-opacity: 0.1;
-   --shadow-color: hsl(0 0% 0%);
-   --shadow-2xs: 0px 2px 8px -1px hsl(0 0% 0% / 0.05);
-   --shadow-xs: 0px 2px 8px -1px hsl(0 0% 0% / 0.05);
-   --shadow-sm: 0px 2px 8px -1px hsl(0 0% 0% / 0.10), 0px 1px 2px -2px hsl(0 0% 0% / 0.10);
-   --shadow: 0px 2px 8px -1px hsl(0 0% 0% / 0.10), 0px 1px 2px -2px hsl(0 0% 0% / 0.10);
-   --shadow-md: 0px 2px 8px -1px hsl(0 0% 0% / 0.10), 0px 2px 4px -2px hsl(0 0% 0% / 0.10);
-   --shadow-lg: 0px 2px 8px -1px hsl(0 0% 0% / 0.10), 0px 4px 6px -2px hsl(0 0% 0% / 0.10);
-   --shadow-xl: 0px 2px 8px -1px hsl(0 0% 0% / 0.10), 0px 8px 10px -2px hsl(0 0% 0% / 0.10);
-   --shadow-2xl: 0px 2px 8px -1px hsl(0 0% 0% / 0.25);
+   --shadow-y: 10px;
+   --shadow-blur: 25px;
+   --shadow-spread: 0px;
+   --shadow-opacity: 0.4;
+   --shadow-color: #000000;
+   --shadow-2xs: 0px 10px 25px 0px hsl(0 0% 0% / 0.20);
+   --shadow-xs: 0px 10px 25px 0px hsl(0 0% 0% / 0.20);
+   --shadow-sm: 0px 10px 25px 0px hsl(0 0% 0% / 0.40), 0px 1px 2px -1px hsl(0 0% 0% / 0.40);
+   --shadow: 0px 10px 25px 0px hsl(0 0% 0% / 0.40), 0px 1px 2px -1px hsl(0 0% 0% / 0.40);
+   --shadow-md: 0px 10px 25px 0px hsl(0 0% 0% / 0.40), 0px 2px 4px -1px hsl(0 0% 0% / 0.40);
+   --shadow-lg: 0px 10px 25px 0px hsl(0 0% 0% / 0.40), 0px 4px 6px -1px hsl(0 0% 0% / 0.40);
+   --shadow-xl: 0px 10px 25px 0px hsl(0 0% 0% / 0.40), 0px 8px 10px -1px hsl(0 0% 0% / 0.40);
+   --shadow-2xl: 0px 10px 25px 0px hsl(0 0% 0% / 1.00);
 
-   /* semantic state colors (dark) */
-   --destructive-saturated: oklch(0.637 0.237 25.331);
-   --destructive-foreground-saturated: oklch(0.704 0.191 22.216);
-   --info: oklch(0.623 0.214 259.815);
-   --info-foreground: oklch(0.707 0.165 254.624);
-   --success: oklch(0.696 0.17 162.48);
-   --success-foreground: oklch(0.765 0.177 163.223);
-   --warning: oklch(0.769 0.188 70.08);
-   --warning-foreground: oklch(0.828 0.189 84.429);
+
+   /* 1. Individual Utility Presets */
+  --radius-none: 0rem;
+  --radius-normal: 0.325rem;
+  --radius-medium: 0.5rem;
+  --radius-high: 0.625rem;
+  --radius-full: 9999px;
+
+  /* 2. Global Active Radius (Uncomment the one you want to use) */
+  /* --radius: var(--radius-none);   */
+  --radius: var(--radius-high);
+  /* Default */
+  /* --radius: var(--radius-medium); */
+  /* --radius: var(--radius-high);   */
+  /* --radius: var(--radius-full);   */
+ }
+
+
+ @layer base {
+   * {
+     @apply border-border outline-ring/50;
+   }
+
+   body {
+     @apply bg-background text-foreground;
+     letter-spacing: var(--tracking-normal);
+   }
  }
 
  @theme inline {
@@ -495,10 +531,10 @@
    --font-mono: var(--font-mono);
    --font-serif: var(--font-serif);
 
-   --radius-sm: calc(var(--radius) - 4px);
+   /* --radius-sm: calc(var(--radius) - 4px);
    --radius-md: calc(var(--radius) - 2px);
    --radius-lg: var(--radius);
-   --radius-xl: calc(var(--radius) + 4px);
+   --radius-xl: calc(var(--radius) + 4px); */
 
    --shadow-2xs: var(--shadow-2xs);
    --shadow-xs: var(--shadow-xs);
@@ -517,6 +553,22 @@
    --color-success: var(--success);
    --color-info-foreground: var(--info-foreground);
    --color-info: var(--info);
+
+    /* Mapping the variables to Tailwind utilities */
+  --radius-none: var(--radius-none);
+  --radius-normal: var(--radius-normal);
+  --radius-medium: var(--radius-medium);
+  --radius-high: var(--radius-high);
+  --radius-full: var(--radius-full);
+
+  /* This keeps your existing Shadcn components working based on the active --radius */
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
  }
 
  @layer base {

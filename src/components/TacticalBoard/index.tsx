@@ -587,7 +587,7 @@ export default function TacticalBoard({ initialBoards }: { initialBoards?: Proje
                             }}
                             disabled={isSyncing}
                             size="sm"
-                            className={`flex items-center gap-1 ${isSyncing ? 'bg-gray-600' : 'bg-green-600 hover:bg-green-500 text-white'}`}
+                            className={`flex items-center gap-1 ${isSyncing ? 'bg-gray-600' : 'bg-primary'}`}
                             title="Save Configuration"
                         >
                             {isSyncing ? (
