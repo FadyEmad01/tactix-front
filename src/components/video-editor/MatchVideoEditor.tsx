@@ -1038,16 +1038,17 @@ import {
   Edit,
   FileVideo,
   ImageUpIcon,
-  LayoutDashboard,
+  LayoutGrid,
   Loader2,
   Play,
-  Scissors,
+  Plus,
   ShieldCheck,
   StopCircle,
   Tag,
   Trash2,
   X,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { Categories } from "@/constant/EVENTS";
 import { formatTime } from "@/lib/video-utils";
@@ -1062,6 +1063,7 @@ import ClipPreviewModal from "@/components/video-editor/ClipPreviewModal";
 import CreateBoardModal from "@/components/video-editor/CreateBoardModal";
 import { BackendTag } from "@/types/match";
 import { Panel } from "@/lib/panel/panel-actions";
+import { LinkedBoardsSection } from "./LinkedBoardsSection";
 import {
   deleteVideoFromDB,
   getVideoFromDB,
@@ -1425,8 +1427,7 @@ export default function MatchVideoEditor({
                   onPlayClip={playClip}
                   onDeleteTag={deleteTagHandler}
                   onEditTag={setEditingTag}
-                  onCutTag={setClipTag}
-                  onOpenBoard={handleOpenTacticalBoard}
+                  matchId={matchId}
                 />
               </ResizablePanel>
             </ResizablePanelGroup>
@@ -1443,6 +1444,7 @@ export default function MatchVideoEditor({
               onStartTag={startTag}
               onEndTag={endActiveTag}
               customPanels={customPanels}
+              matchId={matchId}
             />
           </ResizablePanel>
         </ResizablePanelGroup>
@@ -1540,11 +1542,13 @@ function EventPanel({
   onStartTag,
   onEndTag,
   customPanels,
+  matchId,
 }: {
   activeTag: VideoTag | null;
   onStartTag: (category: string, event: string) => void;
   onEndTag: () => void;
   customPanels: Panel[];
+  matchId: string;
 }) {
   return (
     <div className="bg-card h-full flex flex-col rounded-3xl border overflow-hidden shadow-sm">
@@ -1694,6 +1698,10 @@ function EventPanel({
                           </span>
                         )}
                       </CardContent>
+                      <LinkedBoardsSection
+                        projectId={matchId}
+                        tagId={panel.id}
+                      />
                     </Card>
                   ))}
                 </div>
@@ -1713,16 +1721,14 @@ function TagsPanel({
   onPlayClip,
   onDeleteTag,
   onEditTag,
-  onCutTag,
-  onOpenBoard,
+  matchId,
 }: {
   tags: VideoTag[];
   activeTag: VideoTag | null;
   onPlayClip: (tag: VideoTag) => void;
   onDeleteTag: (id: string) => void;
   onEditTag: (tag: VideoTag) => void;
-  onCutTag: (tag: VideoTag) => void;
-  onOpenBoard: (tag: VideoTag) => void;
+  matchId: string;
 }) {
   return (
     <div className="bg-card h-full flex flex-col rounded-3xl border overflow-hidden shadow-sm">
@@ -1752,8 +1758,7 @@ function TagsPanel({
               onPlay={() => onPlayClip(tag)}
               onDelete={() => onDeleteTag(tag.id)}
               onEdit={() => onEditTag(tag)}
-              onCut={() => onCutTag(tag)}
-              onOpenBoard={() => onOpenBoard(tag)}
+              matchId={matchId}
             />
           ))}
         </div>
@@ -1767,22 +1772,38 @@ function TagItem({
   onPlay,
   onDelete,
   onEdit,
-  onCut,
-  onOpenBoard,
+  matchId,
 }: {
   tag: VideoTag;
   onPlay: () => void;
   onDelete: () => void;
   onEdit: () => void;
-  onCut: () => void;
-  onOpenBoard: () => void;
+  matchId: string;
 }) {
+  const router = useRouter();
   const duration = tag.endTime ? tag.endTime - tag.startTime : 0;
 
   // Check if it's a custom tag (not in core Categories)
   const isCustomTag = !Categories.some((cat) =>
     cat.events.includes(tag.eventName)
   );
+
+  const handleCreateBoard = () => {
+    // Get the panel ID from the tag's categoryName (for custom tags)
+    // For core tags, we'll need to find or create a panel
+    const panelId = tag.tagId || `panel-${tag.categoryName}`;
+    
+    // Store the pending link info in sessionStorage
+    sessionStorage.setItem('pendingBoardLink', JSON.stringify({
+      projectId: matchId,
+      tagId: panelId,
+      tagName: tag.categoryName,
+      eventName: tag.eventName
+    }));
+    
+    // Navigate to board creation
+    router.push('/board/new?linked=true');
+  };
 
   return (
     <div className="bg-muted rounded-lg p-3 border hover:border-primary/50 transition-colors">
@@ -1804,6 +1825,7 @@ function TagItem({
             size="sm"
             variant="ghost"
             className="h-8 w-8 p-0"
+            title="Play clip"
           >
             <Play className="w-4 h-4" />
           </Button>
@@ -1828,10 +1850,20 @@ function TagItem({
             <LayoutDashboard className="w-4 h-4" />
           </Button>
           <Button
+            onClick={handleCreateBoard}
+            size="sm"
+            variant="ghost"
+            className="h-8 w-8 p-0 text-primary hover:text-primary"
+            title="Create linked board"
+          >
+            <LayoutGrid className="w-4 h-4" />
+          </Button>
+          <Button
             onClick={onEdit}
             size="sm"
             variant="ghost"
             className="h-8 w-8 p-0"
+            title="Edit tag"
           >
             <Edit className="w-4 h-4" />
           </Button>
@@ -1840,6 +1872,7 @@ function TagItem({
             size="sm"
             variant="ghost"
             className="h-8 w-8 p-0 text-destructive"
+            title="Delete tag"
           >
             <Trash2 className="w-4 h-4" />
           </Button>

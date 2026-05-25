@@ -41,16 +41,20 @@ const ExportModal = memo<ExportModalProps>(({ onClose }) => {
       const originalHeight = canvasElement.style.height;
 
       // Temporarily modify the canvas for clean export
+      // We modify the actual element in-place, capture, then restore
       canvasElement.style.transform = 'none';
       canvasElement.style.width = `${width}px`;
       canvasElement.style.maxWidth = `${width}px`;
       canvasElement.style.height = `${height}px`;
 
+      // Use html-to-image on the actual element (not a clone)
+      // This preserves all the React-rendered content
       const { toPng } = await import('html-to-image');
-
+      
       // Small delay to ensure DOM updates
       await new Promise(resolve => setTimeout(resolve, 100));
 
+      // Capture the actual canvas with all its content
       const dataUrl = await toPng(canvasElement, {
         quality: quality === 1 ? 0.9 : quality === 2 ? 0.95 : 1,
         pixelRatio: quality,
@@ -58,6 +62,7 @@ const ExportModal = memo<ExportModalProps>(({ onClose }) => {
         width,
         height,
         cacheBust: true,
+        // Skip the eraser cursor
         filter: (node) => {
           if (node.tagName === 'circle' && node.getAttribute('stroke') === 'rgba(255,255,255,0.5)') {
             return false;
@@ -72,6 +77,7 @@ const ExportModal = memo<ExportModalProps>(({ onClose }) => {
       canvasElement.style.maxWidth = originalMaxWidth;
       canvasElement.style.height = originalHeight;
 
+      // Download
       const link = document.createElement('a');
       link.download = `${currentProject?.name || 'tactical'}-${Date.now()}.png`;
       link.href = dataUrl;
