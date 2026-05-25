@@ -87,7 +87,7 @@ export default function AiChat() {
           try {
             const j = await res.json();
             if (j?.error) errMsg = String(j.error);
-          } catch {}
+          } catch { }
           throw new Error(errMsg);
         }
 
@@ -243,15 +243,18 @@ export default function AiChat() {
   const active = conversations.find((c) => c.id === activeId) ?? null;
 
   return (
-    <div className="flex h-[calc(100dvh-5rem)] w-full overflow-hidden rounded-2xl border bg-background">
-      <AiConversationsList
-        conversations={conversations}
-        activeId={activeId}
-        onSelect={handleSelect}
-        onNew={handleNew}
-        onDelete={handleDelete}
-        disabled={isStreaming}
-      />
+    <div className="relative flex h-[calc(100dvh-5rem)] w-full overflow-hidden rounded-2xl border bg-background">
+      <div className="max-w-60">
+        <AiConversationsList
+          conversations={conversations}
+          activeId={activeId}
+          onSelect={handleSelect}
+          onNew={handleNew}
+          onDelete={handleDelete}
+          disabled={isStreaming}
+        />
+      </div>
+
 
       <main className="flex-1 flex flex-col min-w-0">
         {active && active.messages.length > 0 ? (

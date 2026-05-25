@@ -1,9 +1,10 @@
 "use client";
 
-import React, { memo } from "react";
-import { MessageSquare, Plus, Trash2 } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import React, { memo, useCallback, useState } from "react";
+import { MessageSquare, Plus, Trash2, PanelLeft } from "lucide-react";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import type { AiConversation } from "@/types/ai";
 
@@ -44,13 +45,27 @@ export default memo(function AiConversationsList({
   onDelete,
   disabled,
 }: Props) {
+  const [open, setOpen] = useState(false);
   const groups = groupByDate(conversations);
 
-  return (
-    <aside className="flex flex-col h-full w-64 lg:w-72 shrink-0 border-r bg-card/40">
+  const handleSelect = useCallback(
+    (id: string) => {
+      onSelect(id);
+      setOpen(false);
+    },
+    [onSelect],
+  );
+
+  const handleNew = useCallback(() => {
+    onNew();
+    setOpen(false);
+  }, [onNew]);
+
+  const content = (
+    <>
       <div className="p-3 border-b">
         <Button
-          onClick={onNew}
+          onClick={handleNew}
           disabled={disabled}
           variant="outline"
           size="sm"
@@ -61,8 +76,8 @@ export default memo(function AiConversationsList({
         </Button>
       </div>
 
-      <ScrollArea className="flex-1 min-h-0">
-        <div className="p-2 space-y-4">
+      <div className="min-h-0">
+        <div className="p-2 space-y-4 w-full overflow-y-auto">
           {conversations.length === 0 ? (
             <div className="text-center text-xs text-muted-foreground p-6">
               No conversations yet
@@ -74,7 +89,7 @@ export default memo(function AiConversationsList({
                   label="Today"
                   items={groups.today}
                   activeId={activeId}
-                  onSelect={onSelect}
+                  onSelect={handleSelect}
                   onDelete={onDelete}
                 />
               )}
@@ -83,7 +98,7 @@ export default memo(function AiConversationsList({
                   label="Yesterday"
                   items={groups.yesterday}
                   activeId={activeId}
-                  onSelect={onSelect}
+                  onSelect={handleSelect}
                   onDelete={onDelete}
                 />
               )}
@@ -92,15 +107,44 @@ export default memo(function AiConversationsList({
                   label="Previous"
                   items={groups.previous}
                   activeId={activeId}
-                  onSelect={onSelect}
+                  onSelect={handleSelect}
                   onDelete={onDelete}
                 />
               )}
             </>
           )}
         </div>
-      </ScrollArea>
-    </aside>
+      </div>
+    </>
+  );
+
+  return (
+    <>
+      {/* <aside className="hidden md:flex flex-col h-full w-64 lg:w-72 shrink-0 border-r bg-card/40">
+        {content}
+      </aside> */}
+      <aside className="hidden md:flex flex-col h-full border-r bg-card/40">
+        {content}
+      </aside>
+
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetTrigger asChild>
+          <Button
+            variant="outline"
+            size="icon"
+            className="md:hidden absolute top-2 left-2 z-10 shadow-sm bg-background"
+          >
+            <PanelLeft className="w-4 h-4" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent
+          side="left"
+          className="w-72 p-0 [&>button]:hidden flex flex-col"
+        >
+          {content}
+        </SheetContent>
+      </Sheet>
+    </>
   );
 });
 
@@ -119,7 +163,7 @@ function Group({
 }) {
   return (
     <div>
-      <div className="px-2 py-1 text-[11px] uppercase tracking-wider text-muted-foreground/65 font-medium">
+      <div className="px-2 py-1 text-xs font-semibold text-muted-foreground/70">
         {label}
       </div>
       <ul className="space-y-0.5">
@@ -132,7 +176,7 @@ function Group({
                 className={cn(
                   "group/item w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-left transition-colors",
                   isActive
-                    ? "bg-accent text-accent-foreground"
+                    ? "bg-accent text-accent-foreground font-medium"
                     : "hover:bg-accent/60 text-foreground/85",
                 )}
               >
@@ -149,7 +193,7 @@ function Group({
                     e.stopPropagation();
                     onDelete(c.id);
                   }}
-                  className="opacity-0 group-hover/item:opacity-100 hover:text-destructive transition-opacity"
+                  className="opacity-0 group-hover/item:opacity-100 max-md:opacity-100 hover:text-destructive transition-opacity shrink-0"
                   aria-label="Delete conversation"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
