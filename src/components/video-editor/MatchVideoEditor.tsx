@@ -1842,7 +1842,7 @@ function TagsPanel({
         {/* Scrollable Timeline Grid */}
         <div 
           ref={scrollContainerRef}
-          className={`flex-1 overflow-x-auto overflow-y-hidden relative [&::-webkit-scrollbar]:hidden [scrollbar-width:none] ${
+          className={`flex-1 overflow-x-auto relative [&::-webkit-scrollbar]:hidden [scrollbar-width:none] ${
             isPanning ? "cursor-grabbing" : "cursor-grab"
           }`}
           onMouseDown={handleTimelineMouseDown}
@@ -1994,6 +1994,14 @@ function TagsPanel({
                             left: `${displayLeftPercent}%`,
                             width: `${displayWidthPercent}%`,
                           }}
+                          onMouseEnter={(e) => {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            const x = e.clientX - rect.left;
+                            e.currentTarget.style.setProperty("--mouse-x", `${x}px`);
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.removeProperty("--mouse-x");
+                          }}
                           onClick={(e) => {
                             e.stopPropagation();
                             if (isResizing) return;
@@ -2031,7 +2039,13 @@ function TagsPanel({
                           )}
 
                           {/* Hover bridge wrapper */}
-                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 pb-2 hidden group-hover:block z-45">
+                          <div
+                            className="absolute bottom-full pb-2 hidden group-hover:block z-50"
+                            style={{
+                              left: "var(--mouse-x, 50%)",
+                              transform: "translateX(-50%)",
+                            }}
+                          >
                             <div className="flex items-center gap-1.5 bg-popover border border-border text-popover-foreground px-2.5 py-1 rounded-md shadow-lg text-[10px] whitespace-nowrap">
                               <span className="font-mono font-medium opacity-80">
                                 {tagEndTime !== null ? `${(tagEndTime - startTime).toFixed(1)}s` : "ongoing"}
