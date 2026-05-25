@@ -164,7 +164,7 @@ export default function Services() {
                         {services.map((service, index) => (
                             <div
                                 key={service.id}
-                                className="group relative cursor-pointer border-b border-gray-200 dark:border-gray-800 last:border-0"
+                                className="group relative cursor-pointer border-b border-gray-200 last:border-0"
                                 onMouseEnter={() => setActiveIndex(index)}
                                 onClick={() => setActiveIndex(index)}
                             >
@@ -179,7 +179,7 @@ export default function Services() {
                                     <h2
                                         className={cn(
                                             "text-4xl md:text-6xl font-bold tracking-tight transition-colors duration-500",
-                                            activeIndex === index ? "text-black dark:text-white" : "text-gray-400 dark:text-gray-500"
+                                            activeIndex === index ? "text-black" : "text-gray-400"
                                         )}
                                     >
                                         {service.title}

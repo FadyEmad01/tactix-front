@@ -85,9 +85,13 @@ export function AppSidebar({user, ...props }: AppSidebarProps) {
 
                   let isActive = false;
 
-                  // Special handling for the 'Chat' item
+                  // Special handling for items with nested routes
                   if (item.url === "/chat") {
                     isActive = pathname === "/chat" || pathname.startsWith("/chat/");
+                  } else if (item.url === "/settings") {
+                    isActive = pathname === "/settings" || pathname.startsWith("/settings/");
+                  } else if (item.url === "/board") {
+                    isActive = pathname === "/board" || pathname.startsWith("/board/");
                   } else {
                     // Default behavior for other items: exact match
                     isActive = pathname === item.url;

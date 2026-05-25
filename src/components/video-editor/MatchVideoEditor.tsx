@@ -1039,9 +1039,11 @@ import {
   FileVideo,
   ImageUpIcon,
   LayoutGrid,
+  LayoutDashboard,
   Loader2,
   Play,
   Plus,
+  Scissors,
   ShieldCheck,
   StopCircle,
   Tag,
@@ -1772,12 +1774,14 @@ function TagItem({
   onPlay,
   onDelete,
   onEdit,
+  onCut,
   matchId,
 }: {
   tag: VideoTag;
   onPlay: () => void;
   onDelete: () => void;
   onEdit: () => void;
+  onCut?: () => void;
   matchId: string;
 }) {
   const router = useRouter();
@@ -1829,7 +1833,7 @@ function TagItem({
           >
             <Play className="w-4 h-4" />
           </Button>
-          {tag.endTime !== null && (
+          {tag.endTime !== null && onCut && (
             <Button
               onClick={onCut}
               size="sm"
@@ -1841,7 +1845,7 @@ function TagItem({
             </Button>
           )}
           <Button
-            onClick={onOpenBoard}
+            onClick={handleCreateBoard}
             size="sm"
             variant="ghost"
             className="h-8 w-8 p-0 text-emerald-500 hover:text-emerald-400"
