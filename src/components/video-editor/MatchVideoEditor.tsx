@@ -39,10 +39,12 @@ import {
   FileVideo,
   ImageUpIcon,
   LayoutGrid,
+  LayoutDashboard,
   Loader2,
   Play,
   Pause,
   Plus,
+  Scissors,
   ShieldCheck,
   StopCircle,
   Tag,
@@ -60,8 +62,6 @@ import {
   ZoomOut,
   MoveHorizontal,
   Keyboard,
-  Scissors,
-  LayoutDashboard,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -2198,7 +2198,7 @@ function TagItem({
           >
             <Play className="w-3.5 h-3.5" />
           </Button>
-          {tag.endTime !== null && (
+          {tag.endTime !== null && onCut && (
             <Button
               onClick={onCut}
               size="sm"
@@ -2210,7 +2210,7 @@ function TagItem({
             </Button>
           )}
           <Button
-            onClick={onOpenBoard}
+            onClick={handleCreateBoard}
             size="sm"
             variant="ghost"
             className="h-8 w-8 p-0 text-emerald-500 hover:text-emerald-400"

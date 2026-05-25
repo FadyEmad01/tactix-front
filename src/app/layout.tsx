@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Syne } from "next/font/google";
 import "../styles/globals.css";
 import { ThemeProvider } from "@/provider/theme-provider";
+import { ThemePresetProvider } from "@/provider/theme-preset-provider";
 // import { Toaster } from "@/components/ui/sonner";
 import { ToastProvider } from "@/components/ui/toast";
 import { Analytics } from "@vercel/analytics/next"
@@ -115,15 +116,17 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {/* coss.com toast */}
-          <ToastProvider>
-            {children}
-          </ToastProvider>
+          <ThemePresetProvider>
+            {/* coss.com toast */}
+            <ToastProvider>
+              {children}
+            </ToastProvider>
 
 
-          {/* shadcn toast */}
-          {/* <Toaster position="bottom-right"/> */}
+            {/* shadcn toast */}
+            {/* <Toaster position="bottom-right"/> */}
 
+          </ThemePresetProvider>
         </ThemeProvider>
         <Analytics />
       </body>

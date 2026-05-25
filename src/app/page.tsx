@@ -15,6 +15,7 @@ import Image from "next/image";
 import Services from "@/components/landing/Services/Services";
 import Footer from "@/components/landing/footer";
 import Lenis from "@/components/landing/provider/Lenis";
+import { LandingThemeWrapper } from "@/components/theme/LandingThemeWrapper";
 
 export default async function Home() {
   const user = await fetchUserProfile();
@@ -75,9 +76,9 @@ export default async function Home() {
         </>
       ) : (
         <>
-          <Lenis>
-            <div className="relative">
-              <div className="bg-white">
+          <LandingThemeWrapper>
+            <Lenis>
+              <div className="relative">
                 <div className="w-full overflow-hidden">
                   <IntroAnimation />
                   <Hero />
@@ -87,9 +88,8 @@ export default async function Home() {
                   <Footer />
                 </div>
               </div>
-
-            </div>
-          </Lenis>
+            </Lenis>
+          </LandingThemeWrapper>
         </>
       )}
 
