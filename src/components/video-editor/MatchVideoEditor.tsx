@@ -175,7 +175,60 @@ export default function MatchVideoEditor({
     // Open placeholder tab synchronously while we still have the user gesture.
     // We'll redirect it to the board URL when the flow completes. This avoids
     // popup blockers triggering on async window.open() after upload finishes.
-    boardTabRef.current = window.open("about:blank", "_blank");
+    const tab = window.open("about:blank", "_blank");
+    if (tab) {
+      tab.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <title>Creating Tactical Board...</title>
+            <style>
+              body {
+                margin: 0;
+                background: #0f172a;
+                color: #e2e8f0;
+                font-family: system-ui, -apple-system, sans-serif;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh;
+                gap: 1.5rem;
+              }
+              .spinner {
+                width: 48px;
+                height: 48px;
+                border: 4px solid rgba(255,255,255,0.1);
+                border-top-color: #3b82f6;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+              }
+              @keyframes spin {
+                to { transform: rotate(360deg); }
+              }
+              h2 {
+                margin: 0;
+                font-size: 1.25rem;
+                font-weight: 600;
+              }
+              p {
+                margin: 0;
+                color: #94a3b8;
+                font-size: 0.875rem;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="spinner"></div>
+            <h2>Creating Tactical Board</h2>
+            <p>Cutting clip and uploading... This may take a moment.</p>
+          </body>
+        </html>
+      `);
+      tab.document.close();
+    }
+    boardTabRef.current = tab;
     setBoardCreateTag(tag);
   };
 
