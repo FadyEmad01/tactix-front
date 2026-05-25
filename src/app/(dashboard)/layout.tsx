@@ -30,8 +30,8 @@ export default async function AppLayout({
 
           <div className="px-4 md:px-6 lg:px-8 @container ">
             {/* <div className="w-full max-w-7xl mx-auto"> */}
-            <div className="w-full  mx-auto relative">
-              <header className="bg-background sticky z-50 top-0 w-full flex flex-wrap gap-3 min-h-10 py-4 shrink-0 items-center transition-all ease-linear border-b">
+            <div className="w-full mx-auto relative">
+              <header className="bg-background sticky z-50 top-0 w-full flex flex-wrap gap-3 min-h-7 py-2 shrink-0 items-center transition-all ease-linear border-b">
                 {/* Left side */}
                 <div className="flex flex-1 items-center gap-2">
                   <SidebarTrigger className="-ms-1" />
