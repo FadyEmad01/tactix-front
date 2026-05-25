@@ -56,6 +56,10 @@ export default async function Page({ params }: PageProps) {
 
   const videoUrl: string | null = match.videoUrl ?? null;
   const tags = match.tags ?? [];
+  const matchTitle =
+    "title" in match && typeof match.title === "string"
+      ? match.title
+      : match.name;
 
   return (
     <MatchVideoEditor
@@ -63,6 +67,7 @@ export default async function Page({ params }: PageProps) {
       initialVideoUrl={videoUrl}
       initialTags={tags}
       customPanels={panels}
+      matchName={matchTitle || "Untitled Match"}
     />
   );
 }
