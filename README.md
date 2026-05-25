@@ -1,52 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Tactix
+
+AI-powered football match analysis platform. Tactical board editor, video analysis, and event tagging for football coaches and analysts.
+
+## Tech Stack
+
+- **Framework**: Next.js 15.5 (App Router) + React 19 + TypeScript 5
+- **Styling**: Tailwind CSS v4 + shadcn/ui (Radix primitives)
+- **Auth**: JWT in httpOnly cookies (custom middleware)
+- **State**: Zustand (tactical board), React context (intro animation)
+- **Animation**: Motion (Framer Motion successor), GSAP, Lenis
+- **Backend**: External REST API at `tactix-graduation-project-backend.vercel.app`
+
+## Features
+
+- **Match Dashboard** — CRUD for football matches with team logos, results, search
+- **Tactical Board Editor** — SVG-based football field with drawing tools, player placement, formations (4-3-3, 4-4-2, 3-5-2), multi-scene management, undo/redo
+- **Video Analysis Editor** — Video playback with time-based event tagging, panel system, linked tactical boards
+- **Panel/Tag System** — Customizable event categories with color-coded tags
+- **Board Linking** — Link tactical boards to specific video tags
+- **Auth Flow** — Email/password with OTP verification, password reset
+- **Profile & Settings** — Avatar upload with cropping, dark/light mode
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Environment Variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Variable | Description |
+|---|---|
+| `API_URL` | Backend API base URL |
+| `NEXT_PUBLIC_SITE_URL` | Public site URL (e.g. `http://localhost:3000`) |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Project Structure
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
-
+```
 src/
-├── app/                     # Next.js App Router
-│   ├── auth/                # Auth pages (login, signup, otp, etc.)
-│   ├── page.tsx             # Main landing page
-│
-├── components/              # Reusable UI and logic components
-│   ├── auth/                # Auth-related components
-│   ├── theme/               # Dark/Light theme switch
-│   ├── ui/                  # Shared UI elements (buttons, modals, inputs...)
-│
-├── lib/                     # API calls, helpers, constants
-├── provider/                # Context providers (theme, session, etc.)
-├── styles/                  # Global styles & Tailwind configuration
-├── validation/              # Zod validation schemas
+├── app/                    # Next.js App Router pages
+│   ├── (dashboard)/        # Protected dashboard routes
+│   ├── auth/               # Login, signup, password reset
+│   └── api/auth/           # Login/logout API routes
+├── components/
+│   ├── TacticalBoard/      # Full tactical board editor
+│   ├── video-editor/       # Video analysis editor
+│   ├── board/              # Board listing dashboard
+│   ├── projects/           # Match dashboard
+│   ├── tags/               # Panel/tag management
+│   ├── landing/            # Landing page (intro animation, hero)
+│   └── ui/                 # shadcn/ui primitives
+├── lib/                    # Server actions, auth helpers, utilities
+├── stores/                 # Zustand store (tactical board state)
+├── types/                  # TypeScript type definitions
+├── validation/             # Zod schemas
+├── hooks/                  # Custom React hooks
+├── constant/               # App constants (events, leagues, nav)
+└── middleware.ts           # Auth guard middleware
+```
+
+## Architecture
+
+- **Auth**: Middleware checks `token` cookie on protected routes. Server components use `fetchUserProfile()` to get user data.
+- **State**: Complex editor state (tactical board) in Zustand. Coordination state (intro animation) in React context.
+- **Data**: Server actions for all CRUD operations. IndexedDB for offline video storage. localStorage for board-to-tag links.
+- **Styling**: Tailwind CSS v4 with `cn()` utility (clsx + tailwind-merge). Dark mode via `next-themes`.
