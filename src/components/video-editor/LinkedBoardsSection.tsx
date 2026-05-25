@@ -52,23 +52,24 @@ export function LinkedBoardsSection({ projectId, tagId }: LinkedBoardsSectionPro
   };
 
   return (
-    <div className="border rounded-lg bg-card p-3 mt-3">
+    <div className="border rounded-lg bg-card p-3 mt-3 @container">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <LayoutGrid className="size-4 text-muted-foreground" />
-          <span className="font-medium text-sm">Linked Boards</span>
-          <Badge variant="secondary" className="text-xs">
+          <LayoutGrid className="size-4 text-muted-foreground shrink-0" />
+          <span className="font-medium text-sm hidden @[220px]:inline">Linked Boards</span>
+          <span className="font-medium text-sm inline @[220px]:hidden">Boards</span>
+          <Badge variant="secondary" className="text-xs px-1.5 py-0">
             {linkedBoards.length}
           </Badge>
         </div>
         <Button 
           size="sm" 
           variant="ghost" 
-          className="h-7 px-2"
+          className="h-7 @[220px]:px-2 px-1 shrink-0"
           onClick={handleCreateBoard}
         >
-          <Plus className="size-4 mr-1" />
-          New
+          <Plus className="size-4 @[220px]:mr-1 mr-0" />
+          <span className="hidden @[220px]:inline">New</span>
         </Button>
       </div>
 
@@ -78,18 +79,18 @@ export function LinkedBoardsSection({ projectId, tagId }: LinkedBoardsSectionPro
         </div>
       ) : linkedBoards.length === 0 ? (
         <div className="text-center py-4 text-sm text-muted-foreground">
-          <p>No linked boards</p>
+          <p className="text-xs">No linked boards</p>
           <Button 
             variant="outline" 
             size="sm" 
-            className="mt-2"
+            className="mt-2 text-xs"
             onClick={handleCreateBoard}
           >
-            Create linked board
+            Create board
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 @[240px]:grid-cols-2 gap-2">
           {linkedBoards.map((board) => (
             <div
               key={board.id}
