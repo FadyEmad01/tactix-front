@@ -325,6 +325,7 @@
  :root {
    /* --phosphor: #D2FF00; */
    --phosphor: #aff33e;
+   --sidebar: #020617;
 
    --background: #fbfcf8;
    --foreground: #0f172a;
@@ -391,24 +392,25 @@
 
 
    /* 1. Individual Utility Presets */
-  --radius-none: 0rem;
-  --radius-normal: 0.325rem;
-  --radius-medium: 0.5rem;
-  --radius-high: 0.625rem;
-  --radius-full: 9999px;
+   --radius-none: 0rem;
+   --radius-normal: 0.325rem;
+   --radius-medium: 0.5rem;
+   --radius-high: 0.625rem;
+   --radius-full: 9999px;
 
-  /* 2. Global Active Radius (Uncomment the one you want to use) */
-  /* --radius: var(--radius-none);   */
-  --radius: var(--radius-high);
-  /* Default */
-  /* --radius: var(--radius-medium); */
-  /* --radius: var(--radius-high);   */
-  /* --radius: var(--radius-full);   */
+   /* 2. Global Active Radius (Uncomment the one you want to use) */
+   /* --radius: var(--radius-none);   */
+   --radius: var(--radius-high);
+   /* Default */
+   /* --radius: var(--radius-medium); */
+   /* --radius: var(--radius-high);   */
+   /* --radius: var(--radius-full);   */
  }
 
  .dark {
    /* --phosphor: #D2FF00; */
    --phosphor: #aff33e;
+   --sidebar: #1e293b;
 
    --background: #020617;
    --foreground: #f8fafc;
@@ -434,11 +436,11 @@
    --chart-3: #22c55e;
    --chart-4: #a855f7;
    --chart-5: #f59e0b;
-   --sidebar: #020617;
+   /* --sidebar: #020617; */
    --sidebar-foreground: #f8fafc;
    --sidebar-primary: #aff33e;
    --sidebar-primary-foreground: #000000;
-   --sidebar-accent: #1e293b;
+   --sidebar-accent: #14532d;
    --sidebar-accent-foreground: #f8fafc;
    --sidebar-border: #1e293b;
    --sidebar-ring: #aff33e;
@@ -463,19 +465,19 @@
 
 
    /* 1. Individual Utility Presets */
-  --radius-none: 0rem;
-  --radius-normal: 0.325rem;
-  --radius-medium: 0.5rem;
-  --radius-high: 0.625rem;
-  --radius-full: 9999px;
+   --radius-none: 0rem;
+   --radius-normal: 0.325rem;
+   --radius-medium: 0.5rem;
+   --radius-high: 0.625rem;
+   --radius-full: 9999px;
 
-  /* 2. Global Active Radius (Uncomment the one you want to use) */
-  /* --radius: var(--radius-none);   */
-  --radius: var(--radius-high);
-  /* Default */
-  /* --radius: var(--radius-medium); */
-  /* --radius: var(--radius-high);   */
-  /* --radius: var(--radius-full);   */
+   /* 2. Global Active Radius (Uncomment the one you want to use) */
+   /* --radius: var(--radius-none);   */
+   --radius: var(--radius-high);
+   /* Default */
+   /* --radius: var(--radius-medium); */
+   /* --radius: var(--radius-high);   */
+   /* --radius: var(--radius-full);   */
  }
 
 
@@ -492,6 +494,8 @@
 
  @theme inline {
    --color-phosphor: var(--phosphor);
+   --color-white-sidebar: var(--white-sidebar);
+
    --font-syne: var(--font-syne-sans);
 
    --color-background: var(--background);
@@ -554,21 +558,21 @@
    --color-info-foreground: var(--info-foreground);
    --color-info: var(--info);
 
-    /* Mapping the variables to Tailwind utilities */
-  --radius-none: var(--radius-none);
-  --radius-normal: var(--radius-normal);
-  --radius-medium: var(--radius-medium);
-  --radius-high: var(--radius-high);
-  --radius-full: var(--radius-full);
+   /* Mapping the variables to Tailwind utilities */
+   --radius-none: var(--radius-none);
+   --radius-normal: var(--radius-normal);
+   --radius-medium: var(--radius-medium);
+   --radius-high: var(--radius-high);
+   --radius-full: var(--radius-full);
 
-  /* This keeps your existing Shadcn components working based on the active --radius */
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+   /* This keeps your existing Shadcn components working based on the active --radius */
+   --radius-sm: calc(var(--radius) * 0.6);
+   --radius-md: calc(var(--radius) * 0.8);
+   --radius-lg: var(--radius);
+   --radius-xl: calc(var(--radius) * 1.4);
+   --radius-2xl: calc(var(--radius) * 1.8);
+   --radius-3xl: calc(var(--radius) * 2.2);
+   --radius-4xl: calc(var(--radius) * 2.6);
  }
 
  @layer base {

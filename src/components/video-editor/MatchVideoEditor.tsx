@@ -68,8 +68,15 @@ import { useRouter } from "next/navigation";
 
 import { Categories } from "@/constant/EVENTS";
 import { formatTime } from "@/lib/video-utils";
-import { createTag, deleteTag, updateTag } from "@/lib/match/actions";
+import { toast } from "sonner";
+import {
+  createTag,
+  deleteTag,
+  updateTag,
+} from "@/lib/match/actions";
 import type { Tag as VideoTag } from "@/types/video-editor";
+import ClipPreviewModal from "@/components/video-editor/ClipPreviewModal";
+import CreateBoardModal from "@/components/video-editor/CreateBoardModal";
 import { BackendTag } from "@/types/match";
 import { Panel } from "@/lib/panel/panel-actions";
 import { LinkedBoardsSection } from "./LinkedBoardsSection";
@@ -95,6 +102,7 @@ const mapBackendTagToTag = (backend: BackendTag) => ({
   createdAt: backend.createdAt
     ? new Date(backend.createdAt).getTime()
     : Date.now(),
+  clipUrl: backend.clipURL,
 });
 
 function ShortcutRow({ action, keys }: { action: string; keys: string[] }) {
@@ -145,6 +153,9 @@ export default function MatchVideoEditor({
     initialTagModels.length ? 0 : -1
   );
   const [videoUrl, setVideoUrl] = useState<string | null>(initialVideoUrl);
+  const [clipTag, setClipTag] = useState<VideoTag | null>(null);
+  const [boardCreateTag, setBoardCreateTag] = useState<VideoTag | null>(null);
+  const boardTabRef = useRef<Window | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isLoadingVideo, setIsLoadingVideo] = useState(true);
@@ -155,6 +166,19 @@ export default function MatchVideoEditor({
   const [showShortcutsHelper, setShowShortcutsHelper] = useState(false);
   const [activeHelpTab, setActiveHelpTab] = useState<'player' | 'timeline' | 'tagging'>('player');
 
+  const handleOpenTacticalBoard = (tag: VideoTag) => {
+    if (!tag.tagId) {
+      toast.error(
+        "Tag is not synced to backend yet. Please refresh and try again.",
+      );
+      return;
+    }
+    // Open placeholder tab synchronously while we still have the user gesture.
+    // We'll redirect it to the board URL when the flow completes. This avoids
+    // popup blockers triggering on async window.open() after upload finishes.
+    boardTabRef.current = window.open("about:blank", "_blank");
+    setBoardCreateTag(tag);
+  };
 
   // Check IndexedDB for existing video on mount
   useEffect(() => {
@@ -358,6 +382,23 @@ export default function MatchVideoEditor({
         }
       } else {
         console.error("Failed to create tag via server action:", result.error);
+        return;
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const data: any = (result as any).data;
+      const newTagId: string | undefined =
+        data?.data?._id ||
+        data?.data?.id ||
+        data?._id ||
+        data?.id;
+      if (newTagId) {
+        setTags((prev) =>
+          prev.map((t) =>
+            t.id === completedTag.id ? { ...t, tagId: newTagId } : t,
+          ),
+        );
+      } else {
+        console.warn("createTag succeeded but no tagId in response:", data);
       }
     } catch (err) {
       console.error("Failed to create tag:", err);
@@ -798,6 +839,49 @@ export default function MatchVideoEditor({
           <Keyboard className="h-5 w-5" />
         </Button>
       </div>
+
+      {clipTag && (
+        <ClipPreviewModal
+          open={!!clipTag}
+          tag={clipTag}
+          matchId={matchId}
+          onClose={() => setClipTag(null)}
+          onUploaded={(uploadedTagId, clipUrl) => {
+            setTags((prev) =>
+              prev.map((t) =>
+                t.tagId === uploadedTagId ? { ...t, clipUrl } : t,
+              ),
+            );
+            setClipTag((prev) =>
+              prev && prev.tagId === uploadedTagId
+                ? { ...prev, clipUrl }
+                : prev,
+            );
+          }}
+        />
+      )}
+
+      {boardCreateTag && (
+        <CreateBoardModal
+          open={!!boardCreateTag}
+          tag={boardCreateTag}
+          matchId={matchId}
+          targetWindow={boardTabRef.current}
+          onClose={() => {
+            setBoardCreateTag(null);
+            boardTabRef.current = null;
+          }}
+          onCreated={(uploadedTagId, clipUrl) => {
+            if (clipUrl) {
+              setTags((prev) =>
+                prev.map((t) =>
+                  t.tagId === uploadedTagId ? { ...t, clipUrl } : t,
+                ),
+              );
+            }
+          }}
+        />
+      )}
     </main>
   );
 }
@@ -2015,6 +2099,26 @@ function TagItem({
             title="Play clip"
           >
             <Play className="w-3.5 h-3.5" />
+          </Button>
+          {tag.endTime !== null && (
+            <Button
+              onClick={onCut}
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0 text-blue-500 hover:text-blue-400"
+              title="Cut to clip"
+            >
+              <Scissors className="w-4 h-4" />
+            </Button>
+          )}
+          <Button
+            onClick={onOpenBoard}
+            size="sm"
+            variant="ghost"
+            className="h-8 w-8 p-0 text-emerald-500 hover:text-emerald-400"
+            title="Open tactical board"
+          >
+            <LayoutDashboard className="w-4 h-4" />
           </Button>
           <Button
             onClick={handleCreateBoard}

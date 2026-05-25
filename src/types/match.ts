@@ -22,6 +22,7 @@ export interface BackendTag {
   notes?: string;
   createdAt?: string;
   updatedAt?: string;
+  clipURL?: string;
 }
 
 export interface TagPayload {

@@ -3,6 +3,7 @@ import {
   Folders,
   LandPlot,
   Settings,
+  Sparkles,
   Tags
 } from "lucide-react";
 
@@ -36,6 +37,11 @@ export const NAVIGATION_DATA: NavigationData = {
           title: "Tactical Board",
           url: "/board",
           icon: LandPlot,
+        },
+        {
+          title: "AI",
+          url: "/ai",
+          icon: Sparkles,
         },
         {
           title: "Settings",
