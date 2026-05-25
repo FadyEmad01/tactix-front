@@ -610,9 +610,9 @@
    left: 0;
    width: 100vw;
    height: 100vh;
-   /* background-color: var(--background); */
+   background-color: var(--background);
    /* background-color: #e2e7e7; */
-   background-color: white;
+   /* background-color: white; */
    z-index: 99999;
    display: flex;
    justify-content: center;

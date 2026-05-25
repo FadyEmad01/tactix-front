@@ -137,7 +137,7 @@ export default function Services() {
     const [activeIndex, setActiveIndex] = useState(0);
 
     return (
-        <section className="w-full py-20 bg-white text-slate-900 relative z-50">
+        <section className="w-full py-20 bg-background text-slate-900 relative z-50">
             <Container className="!px-[18px]">
                 <div className="grid grid-cols-1 md:grid-cols-12 sm:grid-cols-12 gap-12 lg:gap-20 items-start relative">
                     {/* LEFT COLUMN: Image & Static Text */}
@@ -164,7 +164,7 @@ export default function Services() {
                         {services.map((service, index) => (
                             <div
                                 key={service.id}
-                                className="group relative cursor-pointer border-b border-gray-200"
+                                className="group relative cursor-pointer border-b border-gray-200 dark:border-gray-800 last:border-0"
                                 onMouseEnter={() => setActiveIndex(index)}
                                 onClick={() => setActiveIndex(index)}
                             >
@@ -179,7 +179,7 @@ export default function Services() {
                                     <h2
                                         className={cn(
                                             "text-4xl md:text-6xl font-bold tracking-tight transition-colors duration-500",
-                                            activeIndex === index ? "text-black" : "text-gray-400"
+                                            activeIndex === index ? "text-black dark:text-white" : "text-gray-400 dark:text-gray-500"
                                         )}
                                     >
                                         {service.title}
