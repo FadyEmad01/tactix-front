@@ -667,7 +667,7 @@ export default function MatchVideoEditor({
   }
 
   return (
-    <main className="h-[calc(97dvh-105px)] w-full flex flex-col font-sans text-foreground bg-transparent overflow-hidden">
+    <main className="h-[calc(100dvh-88px)] w-full flex flex-col font-sans text-foreground bg-transparent overflow-hidden">
       <div className="w-full h-full flex-1 flex flex-col min-h-0 relative" ref={containerRef}>
         {/* Resizable Editor Panel Group */}
         <div className="flex-1 min-h-0 bg-transparent">
@@ -677,7 +677,7 @@ export default function MatchVideoEditor({
           >
             <ResizablePanel className="flex flex-col relative" minSize={40} defaultSize={70}>
               <ResizablePanelGroup direction="vertical" className="h-full">
-                <ResizablePanel defaultSize={68} minSize={52} className="relative p-1.5">
+                <ResizablePanel defaultSize={60} minSize={45} className="relative p-1.5">
                   <VideoPanel
                     videoRef={videoRef}
                     currentTime={currentTime}
@@ -694,8 +694,8 @@ export default function MatchVideoEditor({
                   className="h-1 bg-transparent hover:bg-primary/20 duration-150 cursor-row-resize z-30"
                 />
 
-                <ResizablePanel defaultSize={32} minSize={30} maxSize={45} className="p-1.5">
-                    <TagsPanel
+                <ResizablePanel defaultSize={40} minSize={30} maxSize={55} className="p-1.5">
+                  <TagsPanel
                       tags={tags}
                       activeTag={activeTag}
                       currentTime={currentTime}
