@@ -60,9 +60,8 @@ import {
   ZoomOut,
   MoveHorizontal,
   Keyboard,
-
-
-
+  Scissors,
+  LayoutDashboard,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -696,27 +695,28 @@ export default function MatchVideoEditor({
                 />
 
                 <ResizablePanel defaultSize={32} minSize={30} maxSize={45} className="p-1.5">
-                  <TagsPanel
-                    tags={tags}
-                    activeTag={activeTag}
-                    currentTime={currentTime}
-                    duration={duration}
-                    onPlayClip={playClip}
-                    onDeleteTag={deleteTagHandler}
-                    onEditTag={setEditingTag}
-                    onUpdateTag={updateTagFunc}
-                    matchId={matchId}
-                    videoRef={videoRef}
-                    selectionRange={selectionRange}
-                    setSelectionRange={setSelectionRange}
-                    onUndo={undo}
-                    onRedo={redo}
-                    canUndo={historyIndex > 0}
-                    canRedo={historyIndex < tagHistory.length - 1}
-                    zoom={zoom}
-                    setZoom={setZoom}
-
-                  />
+                    <TagsPanel
+                      tags={tags}
+                      activeTag={activeTag}
+                      currentTime={currentTime}
+                      duration={duration}
+                      onPlayClip={playClip}
+                      onDeleteTag={deleteTagHandler}
+                      onEditTag={setEditingTag}
+                      onUpdateTag={updateTagFunc}
+                      matchId={matchId}
+                      videoRef={videoRef}
+                      selectionRange={selectionRange}
+                      setSelectionRange={setSelectionRange}
+                      onUndo={undo}
+                      onRedo={redo}
+                      canUndo={historyIndex > 0}
+                      canRedo={historyIndex < tagHistory.length - 1}
+                      zoom={zoom}
+                      setZoom={setZoom}
+                      setClipTag={setClipTag}
+                      handleOpenTacticalBoard={handleOpenTacticalBoard}
+                    />
                 </ResizablePanel>
               </ResizablePanelGroup>
             </ResizablePanel>
@@ -1337,6 +1337,8 @@ function TagsPanel({
   canRedo,
   zoom,
   setZoom,
+  setClipTag,
+  handleOpenTacticalBoard,
 }: {
   tags: VideoTag[];
   activeTag: VideoTag | null;
@@ -1356,6 +1358,8 @@ function TagsPanel({
   canRedo: boolean;
   zoom: number;
   setZoom: React.Dispatch<React.SetStateAction<number>>;
+  setClipTag: React.Dispatch<React.SetStateAction<VideoTag | null>>;
+  handleOpenTacticalBoard: (tag: VideoTag) => void;
 }) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isDraggingSelection, setIsDraggingSelection] = useState(false);
@@ -1648,6 +1652,8 @@ function TagsPanel({
                 onPlay={() => onPlayClip(tag)}
                 onDelete={() => onDeleteTag(tag.id)}
                 onEdit={() => onEditTag(tag)}
+                onCut={() => setClipTag(tag)}
+                onOpenBoard={() => handleOpenTacticalBoard(tag)}
                 matchId={matchId}
               />
             ))}
@@ -2010,6 +2016,27 @@ function TagsPanel({
                               >
                                 <Trash2 className="size-3" />
                               </button>
+                              <div className="w-[1px] h-3 bg-border" />
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setClipTag(tag);
+                                }}
+                                className="text-muted-foreground hover:text-blue-500 transition p-0.5"
+                                title="Cut to clip"
+                              >
+                                <Scissors className="size-3" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleOpenTacticalBoard(tag);
+                                }}
+                                className="text-muted-foreground hover:text-emerald-500 transition p-0.5"
+                                title="Open tactical board"
+                              >
+                                <LayoutDashboard className="size-3" />
+                              </button>
                             </div>
                           </div>
                         </div>
@@ -2031,12 +2058,16 @@ function TagItem({
   onPlay,
   onDelete,
   onEdit,
+  onCut,
+  onOpenBoard,
   matchId,
 }: {
   tag: VideoTag;
   onPlay: () => void;
   onDelete: () => void;
   onEdit: () => void;
+  onCut?: () => void;
+  onOpenBoard?: () => void;
   matchId: string;
 }) {
   const router = useRouter();
