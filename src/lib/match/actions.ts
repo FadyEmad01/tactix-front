@@ -293,3 +293,127 @@ export async function deleteTag(tagId: string) {
     return { success: false, error } as const;
   }
 }
+
+// POST: Get presigned S3 upload URL for a tag clip
+export async function getTagUploadUrl(tagId: string) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_URL}/api/tag/${tagId}/upload-url`, {
+      method: "POST",
+      headers,
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      console.error(`Get upload URL failed for tag ${tagId}:`, res.status, text);
+      return { success: false, error: text } as const;
+    }
+
+    const json = await res.json();
+    const data = json?.data ?? json;
+    if (!data?.url) {
+      return { success: false, error: "Missing url in response" } as const;
+    }
+    return { success: true, data: data as { url: string; key?: string } } as const;
+  } catch (error) {
+    console.error("Error getting tag upload URL:", error);
+    return { success: false, error } as const;
+  }
+}
+
+// GET: Fetch tactical board linked to a tag
+export async function getTagBoard(tagId: string) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_URL}/api/tag/${tagId}/board`, {
+      method: "GET",
+      headers,
+      cache: "no-store",
+    });
+
+    const rawText = await res.text();
+    console.log(`[getTagBoard ${tagId}] status=${res.status} body=${rawText.slice(0, 500)}`);
+
+    if (!res.ok) {
+      return { success: false, status: res.status, error: rawText } as const;
+    }
+
+    let json: unknown;
+    try { json = JSON.parse(rawText); } catch { json = null; }
+    const j = json as { data?: unknown } | null;
+    const data = j?.data;
+    const board = Array.isArray(data) ? data[0] : data;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const boardId = (board as any)?._id || (board as any)?.id;
+    if (!boardId) {
+      return { success: false, error: "No board ID in response" } as const;
+    }
+    return { success: true, boardId: String(boardId) } as const;
+  } catch (error) {
+    console.error("Error getting tag board:", error);
+    return { success: false, error } as const;
+  }
+}
+
+// POST: Create a new tactical board linked to the tag
+export async function linkTagToBoard(tagId: string) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_URL}/api/tag/${tagId}/link`, {
+      method: "POST",
+      headers,
+    });
+
+    const rawText = await res.text();
+    console.log(`[linkTagToBoard ${tagId}] status=${res.status} body=${rawText.slice(0, 500)}`);
+
+    if (!res.ok) {
+      const alreadyExists = rawText.toLowerCase().includes("already exists");
+      return {
+        success: false,
+        error: rawText,
+        status: res.status,
+        alreadyExists,
+      } as const;
+    }
+
+    let json: unknown;
+    try { json = JSON.parse(rawText); } catch { json = null; }
+    const j = json as { data?: unknown } | null;
+    const data = j?.data;
+    const board = Array.isArray(data) ? data[0] : data;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const boardId = (board as any)?._id || (board as any)?.id;
+    if (!boardId) {
+      return { success: false, error: "No board ID in link response" } as const;
+    }
+    return { success: true, boardId: String(boardId) } as const;
+  } catch (error) {
+    console.error("Error linking tag to board:", error);
+    return { success: false, error } as const;
+  }
+}
+
+// POST: Confirm S3 upload completed → backend persists permanent URL
+export async function verifyTagUpload(tagId: string) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_URL}/api/tag/${tagId}/verify-upload`, {
+      method: "POST",
+      headers,
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      console.error(`Verify upload failed for tag ${tagId}:`, res.status, text);
+      return { success: false, error: text } as const;
+    }
+
+    const json = await res.json();
+    const url = typeof json?.data === "string" ? json.data : json?.data?.url;
+    return { success: true, url: url as string | undefined } as const;
+  } catch (error) {
+    console.error("Error verifying tag upload:", error);
+    return { success: false, error } as const;
+  }
+}

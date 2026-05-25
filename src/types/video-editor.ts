@@ -26,6 +26,7 @@ export interface Tag {
     endTime: number | null;
     notes?: string;
     createdAt: number;
+    clipUrl?: string; // S3 URL once the clip has been uploaded
 }
 
 export interface Category {

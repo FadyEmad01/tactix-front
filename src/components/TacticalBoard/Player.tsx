@@ -99,6 +99,7 @@ const PlayerElement = memo<PlayerProps>(({ player, scale }) => {
       {/* Selection Ring */}
       {isSelected && (
         <div
+          data-export-hide
           className="absolute rounded-full border-2 border-primary animate-pulse"
           style={{
             width: size + 8,

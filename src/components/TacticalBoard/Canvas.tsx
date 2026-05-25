@@ -463,6 +463,7 @@ const Canvas = memo(() => {
           {/* Eraser Cursor */}
           {activeTool === 'eraser' && (
             <circle
+              data-export-hide
               cx="50"
               cy="50"
               r={toolSettings.eraserSize}
