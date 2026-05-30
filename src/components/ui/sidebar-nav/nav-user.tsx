@@ -36,6 +36,20 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar();
 
+  const getInitials = (name?: string) => {
+  if (!name) return "";
+
+  const parts = name.trim().split(" ");
+
+  if (parts.length === 1) {
+    return parts[0][0].toUpperCase(); 
+  }
+
+  return (
+    parts[0][0] + parts[parts.length - 1][0]
+  ).toUpperCase(); 
+};
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -47,7 +61,7 @@ export function NavUser({
             >
               <Avatar className="in-data-[state=expanded]:size-10 transition-[width,height] duration-200 ease-in-out">
                 <AvatarImage className="object-cover" src={user.avatar} alt={user.name} />
-                <AvatarFallback>CN</AvatarFallback>
+                <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight ms-1">
                 <span className="truncate font-medium">{user.name}</span>
