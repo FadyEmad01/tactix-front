@@ -66,17 +66,18 @@ export const metadata: Metadata = {
     },
   ],
   publisher: 'Tactix',
+  metadataBase: new URL('https://tactix-front.vercel.app/'),
   openGraph: {
     title: 'Tactix - Football Analysis Platform',
     description:
-      'Advanced football analysis platform for coaches, analysts, and scouts. Visualize tactics, track player performance, and gain deep insights into match statistics.',
+    'Advanced football analysis platform for coaches, analysts, and scouts. Visualize tactics, track player performance, and gain deep insights into match statistics.',
     url: 'https://tactix-front.vercel.app/',
     siteName: 'Tactix',
     images: [
       {
         url: '/og-images/og-image.png',
-        // width: 1200,
-        // height: 630,
+        width: 1200,
+        height: 630,
         alt: 'Tactix Dashboard Preview',
       },
     ],
@@ -92,8 +93,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: '/og-images/og-image.png',
-        // width: 1200,
-        // height: 630,
+        width: 1200,
+        height: 630,
         alt: 'Tactix Dashboard Preview',
       },
     ],
