@@ -62,6 +62,8 @@ interface TacticalState {
 
   createProject: (name: string) => void;
   updateProjectName: (name: string) => void;
+  setLinkedInfo: (matchId: string, tagId: string) => void;
+  clearLinkedInfo: () => void;
 
   updateHomeTeam: (config: Partial<TeamConfig>) => void;
   updateAwayTeam: (config: Partial<TeamConfig>) => void;
@@ -810,6 +812,33 @@ export const useTacticalStore = create<TacticalState>()((set, get) => ({
         currentProject: {
           ...state.currentProject,
           name,
+          updatedAt: Date.now(),
+        },
+      };
+    });
+  },
+
+  setLinkedInfo: (matchId, tagId) => {
+    set((state) => {
+      if (!state.currentProject) return state;
+      return {
+        currentProject: {
+          ...state.currentProject,
+          linkedMatchId: matchId,
+          linkedTagId: tagId,
+          updatedAt: Date.now(),
+        },
+      };
+    });
+  },
+
+  clearLinkedInfo: () => {
+    set((state) => {
+      if (!state.currentProject) return state;
+      const { linkedMatchId, linkedTagId, ...rest } = state.currentProject;
+      return {
+        currentProject: {
+          ...rest,
           updatedAt: Date.now(),
         },
       };

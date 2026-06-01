@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -17,10 +17,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { fetchMatches } from '@/lib/match/actions';
-import { fetchPanels } from '@/lib/panel/panel-actions';
-import { Project as MatchProject } from '@/types/match';
-import { Panel } from '@/lib/panel/panel-actions';
+import { RefreshCw, AlertCircle } from 'lucide-react';
+import { fetchMatches, fetchMatchById } from '@/lib/match/actions';
+import { Project as MatchProject, BackendTag } from '@/types/match';
 import { saveBoardLink } from '@/lib/board-link/local-storage';
 
 interface LinkBoardModalProps {
@@ -28,36 +27,63 @@ interface LinkBoardModalProps {
   boardName: string;
   isOpen: boolean;
   onClose: () => void;
-  onLinked: () => void;
+  onLinked: (projectId: string, tagId: string) => void;
 }
 
 export function LinkBoardModal({ boardId, boardName, isOpen, onClose, onLinked }: LinkBoardModalProps) {
   const [selectedProject, setSelectedProject] = useState('');
   const [selectedTag, setSelectedTag] = useState('');
   const [projects, setProjects] = useState<MatchProject[]>([]);
-  const [panels, setPanels] = useState<Panel[]>([]);
+  const [matchTags, setMatchTags] = useState<BackendTag[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingTags, setLoadingTags] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadProjects = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const matches = await fetchMatches();
+      setProjects(matches);
+    } catch (err) {
+      console.error('Failed to load projects:', err);
+      setError('Failed to load projects. Check your connection and try again.');
+    }
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
-      loadData();
+      setSelectedProject('');
+      setSelectedTag('');
+      setMatchTags([]);
+      loadProjects();
     }
-  }, [isOpen]);
+  }, [isOpen, loadProjects]);
 
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const [matches, fetchedPanels] = await Promise.all([
-        fetchMatches(),
-        fetchPanels()
-      ]);
-      setProjects(matches);
-      setPanels(fetchedPanels);
-    } catch (error) {
-      console.error('Failed to load data:', error);
+  // Fetch match tags when project is selected
+  useEffect(() => {
+    if (!selectedProject) {
+      setMatchTags([]);
+      setSelectedTag('');
+      return;
     }
-    setLoading(false);
-  };
+
+    const loadMatchTags = async () => {
+      setLoadingTags(true);
+      setSelectedTag('');
+      try {
+        const match = await fetchMatchById(selectedProject);
+        setMatchTags(match?.tags || []);
+      } catch (err) {
+        console.error('Failed to load match tags:', err);
+        setMatchTags([]);
+      }
+      setLoadingTags(false);
+    };
+
+    loadMatchTags();
+  }, [selectedProject]);
 
   const handleLink = () => {
     if (!selectedProject || !selectedTag) return;
@@ -66,9 +92,12 @@ export function LinkBoardModal({ boardId, boardName, isOpen, onClose, onLinked }
     saveBoardLink(boardId, selectedProject, selectedTag);
     
     // Reset and close
+    const projectId = selectedProject;
+    const tagId = selectedTag;
     setSelectedProject('');
     setSelectedTag('');
-    onLinked();
+    setMatchTags([]);
+    onLinked(projectId, tagId);
     onClose();
   };
 
@@ -85,6 +114,17 @@ export function LinkBoardModal({ boardId, boardName, isOpen, onClose, onLinked }
         </DialogHeader>
         
         <div className="space-y-4 py-4">
+          {error && (
+            <div className="flex items-center gap-2 rounded-md bg-destructive/10 p-3 text-destructive text-sm">
+              <AlertCircle className="size-4 shrink-0" />
+              <span className="flex-1">{error}</span>
+              <Button variant="ghost" size="sm" onClick={loadProjects} className="h-7 shrink-0">
+                <RefreshCw className="size-3.5 mr-1" />
+                Retry
+              </Button>
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label>Project *</Label>
             <Select
@@ -106,23 +146,36 @@ export function LinkBoardModal({ boardId, boardName, isOpen, onClose, onLinked }
           </div>
 
           <div className="space-y-2">
-            <Label>Tag * <span className="text-red-500">Required</span></Label>
+            <Label>Match Tag * <span className="text-red-500">Required</span></Label>
             <Select
               value={selectedTag}
               onValueChange={setSelectedTag}
-              disabled={!selectedProject || loading}
+              disabled={!selectedProject || loadingTags}
             >
               <SelectTrigger>
-                <SelectValue placeholder={selectedProject ? "Select tag..." : "Select project first"} />
+                <SelectValue placeholder={selectedProject ? "Select match tag..." : "Select project first"} />
               </SelectTrigger>
               <SelectContent>
-                {panels.map((panel) => (
-                  <SelectItem key={panel.id} value={panel.id}>
-                    {panel.title}
-                  </SelectItem>
-                ))}
+                {matchTags.length === 0 && !loadingTags ? (
+                  <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+                    <p>No tags found for this match.</p>
+                    <p className="mt-1">Add tags in the video editor first.</p>
+                  </div>
+                ) : (
+                  matchTags.map((tag) => (
+                    <SelectItem key={tag._id} value={tag._id || ''}>
+                      {tag.event} {tag.startTime ? `(${Math.floor(tag.startTime / 60)}:${String(Math.floor(tag.startTime % 60)).padStart(2, '0')})` : ''}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
+            {loadingTags && (
+              <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                <RefreshCw className="size-3 animate-spin" />
+                Loading tags...
+              </p>
+            )}
           </div>
         </div>
 

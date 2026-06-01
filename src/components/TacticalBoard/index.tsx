@@ -456,6 +456,7 @@ export default function TacticalBoard({ initialBoards }: { initialBoards?: Proje
     const updateProjectName = useTacticalStore((s) => s.updateProjectName);
     const setInitialBoards = useTacticalStore((s) => s.setInitialBoards);
     const createProject = useTacticalStore((s) => s.createProject);
+    const setLinkedInfo = useTacticalStore((s) => s.setLinkedInfo);
 
     // Initialize project
     useEffect(() => {
@@ -466,12 +467,14 @@ export default function TacticalBoard({ initialBoards }: { initialBoards?: Proje
         }
     }, [initialBoards]);
 
-    // Check if board is linked
+    // Check if board is linked (localStorage + board's own fields)
     useEffect(() => {
         if (currentProject?.id) {
-            setIsLinked(!!getBoardLink(currentProject.id));
+            const localLink = getBoardLink(currentProject.id);
+            const boardLinked = !!(currentProject.linkedMatchId && currentProject.linkedTagId);
+            setIsLinked(!!localLink || boardLinked);
         }
-    }, [currentProject?.id]);
+    }, [currentProject?.id, currentProject?.linkedMatchId, currentProject?.linkedTagId]);
 
     const handleProjectNameChange = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -487,18 +490,26 @@ export default function TacticalBoard({ initialBoards }: { initialBoards?: Proje
         setIsSyncing(true);
 
         try {
-            const localId = (currentProject as any)._id || currentProject.id;
+            // Include link info from localStorage in the board payload
+            const boardLink = currentProject.id ? getBoardLink(currentProject.id) : null;
+            const projectPayload = {
+                ...currentProject,
+                linkedMatchId: boardLink?.projectId || currentProject.linkedMatchId,
+                linkedTagId: boardLink?.tagId || currentProject.linkedTagId,
+            };
+
+            const localId = (projectPayload as any)._id || projectPayload.id;
             const isLocal = !localId;
 
             if (isLocal) {
                 // CREATE
-                const res = await createBoardAction(currentProject);
+                const res = await createBoardAction(projectPayload);
                 const newId = getIdFromResponse(res);
 
                 if (newId) {
                     // Update store with server ID
                     useTacticalStore.setState((s) => ({
-                        currentProject: { ...s.currentProject, id: newId, _id: newId } as any,
+                        currentProject: { ...s.currentProject, id: newId, _id: newId, linkedMatchId: projectPayload.linkedMatchId, linkedTagId: projectPayload.linkedTagId } as any,
                     }));
 
                     // Check for pending link from tag creation
@@ -513,8 +524,8 @@ export default function TacticalBoard({ initialBoards }: { initialBoards?: Proje
                     router.replace(`/board/${newId}`);
                 }
             } else {
-                // UPDATE
-                await updateBoardAction(localId, currentProject);
+                // UPDATE — persist link info to backend
+                await updateBoardAction(localId, projectPayload);
             }
         } catch (error) {
             console.error("Save error:", error);
@@ -569,6 +580,14 @@ export default function TacticalBoard({ initialBoards }: { initialBoards?: Proje
                             Back to Boards
                         </Button>
                     )}
+                    
+                    {/* Board Name Input */}
+                    <Input
+                        type="text"
+                        value={currentProject.name}
+                        onChange={handleProjectNameChange}
+                        className="bg-gray-700 text-white h-8 border-gray-600 focus-visible:ring-primary w-32 sm:w-48"
+                    />
                     
                     {/* Breadcrumb */}
                     {currentProject && (
@@ -693,7 +712,10 @@ export default function TacticalBoard({ initialBoards }: { initialBoards?: Proje
                     boardName={currentProject.name}
                     isOpen={showLinkModal}
                     onClose={() => setShowLinkModal(false)}
-                    onLinked={() => setIsLinked(true)}
+                    onLinked={(projectId, tagId) => {
+                        setLinkedInfo(projectId, tagId);
+                        setIsLinked(true);
+                    }}
                 />
             )}
         </div>

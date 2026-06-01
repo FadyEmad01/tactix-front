@@ -23,19 +23,34 @@ export function BoardBreadcrumb({ boardId, boardName }: BoardBreadcrumbProps) {
   useEffect(() => {
     const link = getBoardLink(boardId);
     if (link) {
-      Promise.all([
-        fetchMatchById(link.projectId),
-        fetchPanels().then(panels => panels.find(p => p.id === link.tagId))
-      ]).then(([match, panel]) => {
-        if (match && panel) {
+      // Try panel lookup first (legacy), then BackendTag lookup
+      (async () => {
+        const match = await fetchMatchById(link.projectId);
+        if (!match) return;
+
+        const panels = await fetchPanels();
+        const panel = panels.find(p => p.id === link.tagId);
+
+        if (panel) {
           setLinkInfo({
             projectId: link.projectId,
             projectName: match.name,
             tagId: link.tagId,
-            tagName: panel.title
+            tagName: panel.title,
           });
+        } else {
+          // Try BackendTag lookup
+          const backendTag = match.tags?.find(t => t._id === link.tagId);
+          if (backendTag) {
+            setLinkInfo({
+              projectId: link.projectId,
+              projectName: match.name,
+              tagId: link.tagId,
+              tagName: backendTag.event,
+            });
+          }
         }
-      });
+      })();
     }
   }, [boardId]);
 

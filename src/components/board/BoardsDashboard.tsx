@@ -81,6 +81,8 @@ export default function BoardsDashboard({ initialProjects = [] }: { initialProje
             timestamp: Date.now(),
           },
         ],
+        linkedMatchId: boardType === 'linked' ? projectId : undefined,
+        linkedTagId: boardType === 'linked' ? tagId : undefined,
       });
 
       const newId = newBoard?.data?._id || newBoard?.data?.id || newBoard?._id || newBoard?.id;
@@ -113,18 +115,20 @@ export default function BoardsDashboard({ initialProjects = [] }: { initialProje
     }
   };
 
+  function isBoardLinked(p: Project): boolean {
+    const links = getBoardLinks();
+    const linkedIds = new Set(links.map(l => l.boardId));
+    return linkedIds.has(p.id) || linkedIds.has((p as any)._id) || !!(p.linkedMatchId && p.linkedTagId);
+  }
+
   const filteredProjects = useMemo(() => {
     let filtered = projects;
     
     // Filter by tab
     if (activeTab === 'individual') {
-      const links = getBoardLinks();
-      const linkedIds = new Set(links.map(l => l.boardId));
-      filtered = projects.filter(p => !linkedIds.has(p.id) && !linkedIds.has((p as any)._id));
+      filtered = projects.filter(p => !isBoardLinked(p));
     } else if (activeTab === 'linked') {
-      const links = getBoardLinks();
-      const linkedIds = new Set(links.map(l => l.boardId));
-      filtered = projects.filter(p => linkedIds.has(p.id) || linkedIds.has((p as any)._id));
+      filtered = projects.filter(p => isBoardLinked(p));
     }
     
     // Filter by search
@@ -219,20 +223,39 @@ function BoardCard({ project, onDelete }: { project: Project; onDelete: (id: str
 
   useEffect(() => {
     const link = getBoardLink(identifier);
-    if (link) {
-      Promise.all([
-        fetchMatchById(link.projectId),
-        fetchPanels().then(panels => panels.find(p => p.id === link.tagId))
-      ]).then(([match, panel]) => {
-        if (match && panel) {
+    const boardLink = link || (project.linkedMatchId && project.linkedTagId ? {
+      boardId: identifier,
+      projectId: project.linkedMatchId,
+      tagId: project.linkedTagId,
+      linkedAt: Date.now()
+    } : null);
+
+    if (boardLink) {
+      (async () => {
+        const match = await fetchMatchById(boardLink.projectId);
+        if (!match) return;
+
+        // Try panel lookup first (legacy), then BackendTag lookup
+        const panels = await fetchPanels();
+        const panel = panels.find(p => p.id === boardLink.tagId);
+
+        if (panel) {
           setLinkDisplay({
             projectName: match.name,
-            tagName: panel.title
+            tagName: panel.title,
           });
+        } else {
+          const backendTag = match.tags?.find(t => t._id === boardLink.tagId);
+          if (backendTag) {
+            setLinkDisplay({
+              projectName: match.name,
+              tagName: backendTag.event,
+            });
+          }
         }
-      });
+      })();
     }
-  }, [identifier]);
+  }, [identifier, project.linkedMatchId, project.linkedTagId]);
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();

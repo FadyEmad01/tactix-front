@@ -94,14 +94,27 @@ export async function fetchMatchById(matchId: string): Promise<Project | null> {
     }
 
     const json = await res.json();
-    const match = json.data ?? json;
+    const raw = json.data ?? json;
+    const match = raw.match ?? raw;
 
     if (!match || (!match.id && !match._id && !match.matchId)) {
       console.warn(`Match ${matchId} returned empty or invalid structure.`, json);
       return null;
     }
 
-    return match;
+    return {
+      id: match.id ?? match._id ?? String(match.matchId ?? ""),
+      name: match.title ?? "Untitled Match",
+      description: match.description ?? "",
+      teamA: match.teamA ?? "Team A",
+      teamALogo: match.teamALogo ?? "",
+      teamB: match.teamB ?? "Team B",
+      teamBLogo: match.teamBLogo ?? "",
+      matchResult: match.matchResult ?? "",
+      tags: Array.isArray(match.tags) ? match.tags : [],
+      matchDate: match.matchDate ?? undefined,
+      createdAt: match.createdAt ?? new Date().toISOString(),
+    };
   } catch (error) {
     console.error(`Error fetching match ${matchId}:`, error);
     return null;

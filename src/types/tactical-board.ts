@@ -80,6 +80,8 @@ export interface Project {
     fieldRotation: FieldRotation;
     createdAt: number;
     updatedAt: number;
+    linkedMatchId?: string;
+    linkedTagId?: string;
 }
 
 export type FieldType =
