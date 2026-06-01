@@ -8,14 +8,24 @@ import { getBoardLink } from './local-storage';
 let panelsCache: { id: string; title: string; tags: string[] }[] | null = null;
 
 export async function getTagDisplayName(projectId: string, tagId: string): Promise<string> {
-  // tagId in this context is actually the panel ID
-  // We need to find which panel contains this tag
+  // Try panel lookup first (legacy links)
   if (!panelsCache) {
     panelsCache = await fetchPanels();
   }
   
   const panel = panelsCache.find(p => p.id === tagId);
-  return panel?.title || 'Unknown Tag';
+  if (panel) return panel?.title || 'Unknown Tag';
+
+  // Fallback: BackendTag lookup
+  try {
+    const match = await fetchMatchById(projectId);
+    const backendTag = match?.tags?.find(t => t._id === tagId);
+    if (backendTag) return backendTag.event;
+  } catch {
+    // ignore
+  }
+
+  return 'Unknown Tag';
 }
 
 export async function getProjectDisplayName(projectId: string): Promise<string> {

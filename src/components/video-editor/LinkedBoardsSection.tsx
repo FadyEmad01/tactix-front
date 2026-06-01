@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus, LayoutGrid, ArrowUpRight } from 'lucide-react';
 import { getBoardsByTag } from '@/lib/board-link/local-storage';
-import { getBoardByIdAction } from '@/app/(dashboard)/board/actions';
+import { getBoardByIdAction, getBoardsAction } from '@/app/(dashboard)/board/actions';
 import { Project as BoardProject } from '@/types/tactical-board';
 import BoardPreview from '@/components/board/BoardPreview';
 
@@ -28,10 +28,24 @@ export function LinkedBoardsSection({ projectId, tagId }: LinkedBoardsSectionPro
     setLoading(true);
     try {
       const boardIds = getBoardsByTag(projectId, tagId);
-      const boards = await Promise.all(
-        boardIds.map(id => getBoardByIdAction(id))
-      );
-      setLinkedBoards(boards.filter(Boolean) as BoardProject[]);
+      let boards: BoardProject[] = [];
+
+      if (boardIds.length > 0) {
+        boards = await Promise.all(
+          boardIds.map(id => getBoardByIdAction(id))
+        );
+        boards = boards.filter(Boolean) as BoardProject[];
+      }
+
+      // Also check backend-persisted links
+      if (boards.length === 0) {
+        const allBoards = await getBoardsAction();
+        boards = allBoards.filter(
+          (b: BoardProject) => b.linkedMatchId === projectId && b.linkedTagId === tagId
+        );
+      }
+
+      setLinkedBoards(boards);
     } catch (error) {
       console.error('Failed to load linked boards:', error);
     }

@@ -19,10 +19,8 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { fetchMatches } from '@/lib/match/actions';
-import { fetchPanels } from '@/lib/panel/panel-actions';
-import { Project as MatchProject } from '@/types/match';
-import { Panel } from '@/lib/panel/panel-actions';
+import { fetchMatches, fetchMatchById } from '@/lib/match/actions';
+import { Project as MatchProject, BackendTag } from '@/types/match';
 import { BoardType } from '@/types/board-link';
 
 interface CreateBoardModalProps {
@@ -37,29 +35,50 @@ export function CreateBoardModal({ isOpen, onClose, onCreate }: CreateBoardModal
   const [selectedProject, setSelectedProject] = useState('');
   const [selectedTag, setSelectedTag] = useState('');
   const [projects, setProjects] = useState<MatchProject[]>([]);
-  const [panels, setPanels] = useState<Panel[]>([]);
+  const [matchTags, setMatchTags] = useState<BackendTag[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingTags, setLoadingTags] = useState(false);
 
   useEffect(() => {
     if (isOpen && boardType === 'linked') {
-      loadProjectsAndPanels();
+      loadProjects();
     }
   }, [isOpen, boardType]);
 
-  const loadProjectsAndPanels = async () => {
+  const loadProjects = async () => {
     setLoading(true);
     try {
-      const [matches, fetchedPanels] = await Promise.all([
-        fetchMatches(),
-        fetchPanels()
-      ]);
+      const matches = await fetchMatches();
       setProjects(matches);
-      setPanels(fetchedPanels);
     } catch (error) {
-      console.error('Failed to load data:', error);
+      console.error('Failed to load projects:', error);
     }
     setLoading(false);
   };
+
+  // Fetch match tags when project is selected
+  useEffect(() => {
+    if (boardType !== 'linked' || !selectedProject) {
+      setMatchTags([]);
+      setSelectedTag('');
+      return;
+    }
+
+    const loadMatchTags = async () => {
+      setLoadingTags(true);
+      setSelectedTag('');
+      try {
+        const match = await fetchMatchById(selectedProject);
+        setMatchTags(match?.tags || []);
+      } catch (err) {
+        console.error('Failed to load match tags:', err);
+        setMatchTags([]);
+      }
+      setLoadingTags(false);
+    };
+
+    loadMatchTags();
+  }, [selectedProject, boardType]);
 
   const handleCreate = () => {
     if (!name.trim()) return;
@@ -159,23 +178,35 @@ export function CreateBoardModal({ isOpen, onClose, onCreate }: CreateBoardModal
               </div>
 
               <div className="space-y-2">
-                <Label>Tag * <span className="text-xs text-red-500">(Required)</span></Label>
+                <Label>Match Tag * <span className="text-xs text-red-500">(Required)</span></Label>
                 <Select
                   value={selectedTag}
                   onValueChange={setSelectedTag}
-                  disabled={!selectedProject || loading}
+                  disabled={!selectedProject || loadingTags}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={selectedProject ? "Select tag..." : "Select project first"} />
+                    <SelectValue placeholder={selectedProject ? "Select match tag..." : "Select project first"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {panels.map((panel) => (
-                      <SelectItem key={panel.id} value={panel.id}>
-                        {panel.title}
-                      </SelectItem>
-                    ))}
+                    {matchTags.length === 0 && !loadingTags ? (
+                      <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+                        <p>No tags found for this match.</p>
+                        <p className="mt-1">Add tags in the video editor first.</p>
+                      </div>
+                    ) : (
+                      matchTags.map((tag) => (
+                        <SelectItem key={tag._id} value={tag._id || ''}>
+                          {tag.event} {tag.startTime ? `(${Math.floor(tag.startTime / 60)}:${String(Math.floor(tag.startTime % 60)).padStart(2, '0')})` : ''}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
+                {loadingTags && (
+                  <p className="text-xs text-muted-foreground animate-pulse">
+                    Loading tags...
+                  </p>
+                )}
               </div>
             </div>
           )}
