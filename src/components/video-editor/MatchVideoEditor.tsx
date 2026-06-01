@@ -2094,7 +2094,7 @@ function TagsPanel({
                               >
                                 <Scissors className="size-3" />
                               </button>
-                              <button
+                              {/* <button
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleOpenTacticalBoard(tag);
@@ -2103,7 +2103,7 @@ function TagsPanel({
                                 title="Open tactical board"
                               >
                                 <LayoutDashboard className="size-3" />
-                              </button>
+                              </button> */}
                             </div>
                           </div>
                         </div>
@@ -2209,7 +2209,7 @@ function TagItem({
               <Scissors className="w-4 h-4" />
             </Button>
           )}
-          <Button
+          {/* <Button
             onClick={handleCreateBoard}
             size="sm"
             variant="ghost"
@@ -2217,7 +2217,7 @@ function TagItem({
             title="Open tactical board"
           >
             <LayoutDashboard className="w-4 h-4" />
-          </Button>
+          </Button> */}
           <Button
             onClick={handleCreateBoard}
             size="sm"

@@ -18,6 +18,7 @@ import {
   linkTagToBoard,
   verifyTagUpload,
 } from '@/lib/match/actions';
+import { updateBoardAction } from '@/app/(dashboard)/board/actions';
 import type { Tag as VideoTag } from '@/types/video-editor';
 
 interface CreateBoardModalProps {
@@ -112,6 +113,12 @@ export default function CreateBoardModal({
         setStep({ kind: 'checking-board' });
         const existing = await getTagBoard(tagId);
         if (existing.success) {
+          // Ensure the board has linkedMatchId/linkedTagId in its JSON
+          await updateBoardAction(existing.boardId, {
+            linkedMatchId: matchId,
+            linkedTagId: tagId,
+            updatedAt: Date.now(),
+          } as any);
           openBoardTab(`/board/${existing.boardId}`, targetWindow);
           setStep({ kind: 'done', boardId: existing.boardId });
           onCreated?.(tagId, tag.clipUrl ?? null, existing.boardId);
@@ -160,6 +167,13 @@ export default function CreateBoardModal({
               : 'Failed to create tactical board',
           );
         }
+
+        // Persist link info in the board's JSON
+        await updateBoardAction(linked.boardId, {
+          linkedMatchId: matchId,
+          linkedTagId: tagId,
+          updatedAt: Date.now(),
+        } as any);
 
         openBoardTab(`/board/${linked.boardId}`, targetWindow);
         setStep({ kind: 'done', boardId: linked.boardId });
