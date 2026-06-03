@@ -98,21 +98,16 @@ export function SignupForm({
         let id: string | undefined;
       
         try {
-          const formData = new FormData();
-          formData.append("userName", data.userName);
-          formData.append("email", data.email);
-          formData.append("password", data.password);
-      
-          if (data.image instanceof File) {
-            formData.append("image", data.image);
-          }
-      
           id = toastManager.add({
             title: "Creating account...",
             type: "loading",
           });
       
-          const result = await signUp(formData);
+          const result = await signUp({
+            userName: data.userName,
+            email: data.email,
+            password: data.password,
+          });
       
           // ✅ Close loading toast
           toastManager.close(id);

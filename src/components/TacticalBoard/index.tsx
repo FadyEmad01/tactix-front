@@ -418,8 +418,8 @@ import { createBoardAction, updateBoardAction } from '@/app/(dashboard)/board/ac
 import { Project } from '@/types/tactical-board';
 import { BoardBreadcrumb } from './BoardBreadcrumb';
 import { LinkBoardModal } from './LinkBoardModal';
-import { getBoardLink, isBoardLinked, saveBoardLink } from '@/lib/board-link/local-storage';
 import { Link2, ArrowLeft } from 'lucide-react';
+import { encodeBoardName, decodeBoardName, getBoardName, isBoardLinked as isBoardLinkedHelper } from '@/lib/board-name';
 
 // Lazy load modals
 const PropertiesPanel = dynamic(() => import('./PropertiesPanel'), { ssr: false });
@@ -467,64 +467,57 @@ export default function TacticalBoard({ initialBoards }: { initialBoards?: Proje
         }
     }, [initialBoards]);
 
-    // Check if board is linked (localStorage + board's own fields)
+    // Check if board is linked via tagId, linked fields, or encoded name
     useEffect(() => {
         if (currentProject?.id) {
-            const localLink = getBoardLink(currentProject.id);
-            const boardLinked = !!(currentProject.linkedMatchId && currentProject.linkedTagId);
-            setIsLinked(!!localLink || boardLinked);
+            setIsLinked(isBoardLinkedHelper(currentProject));
         }
-    }, [currentProject?.id, currentProject?.linkedMatchId, currentProject?.linkedTagId]);
+    }, [currentProject?.id, currentProject?.linkedMatchId, currentProject?.linkedTagId, (currentProject as any)?.tagId, currentProject?.name]);
 
     const handleProjectNameChange = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>) => {
-            updateProjectName(e.target.value);
+            const newDisplayName = e.target.value;
+            const currentName = currentProject?.name ?? '';
+            const decoded = decodeBoardName(currentName);
+            if (decoded.matchId && decoded.tagId) {
+                updateProjectName(encodeBoardName(decoded.matchId, decoded.tagId, newDisplayName));
+            } else {
+                updateProjectName(newDisplayName);
+            }
         },
-        [updateProjectName]
+        [updateProjectName, currentProject?.name]
     );
 
-    // ✅ Quick Save / Auto Save Handler
     const handleQuickSave = useCallback(async () => {
         if (!currentProject) return;
 
         setIsSyncing(true);
 
         try {
-            // Include link info from localStorage in the board payload
-            const boardLink = currentProject.id ? getBoardLink(currentProject.id) : null;
+            const currentName = currentProject.name ?? '';
+            const decoded = decodeBoardName(currentName);
             const projectPayload = {
                 ...currentProject,
-                linkedMatchId: boardLink?.projectId || currentProject.linkedMatchId,
-                linkedTagId: boardLink?.tagId || currentProject.linkedTagId,
+                name: decoded.matchId && decoded.tagId
+                    ? currentName
+                    : currentName,
             };
 
             const localId = (projectPayload as any)._id || projectPayload.id;
             const isLocal = !localId;
 
             if (isLocal) {
-                // CREATE
                 const res = await createBoardAction(projectPayload);
                 const newId = getIdFromResponse(res);
 
                 if (newId) {
-                    // Update store with server ID
                     useTacticalStore.setState((s) => ({
-                        currentProject: { ...s.currentProject, id: newId, _id: newId, linkedMatchId: projectPayload.linkedMatchId, linkedTagId: projectPayload.linkedTagId } as any,
+                        currentProject: { ...s.currentProject, id: newId, _id: newId } as any,
                     }));
-
-                    // Check for pending link from tag creation
-                    const pendingLink = sessionStorage.getItem('pendingBoardLink');
-                    if (pendingLink) {
-                        const { projectId, tagId } = JSON.parse(pendingLink);
-                        saveBoardLink(newId, projectId, tagId);
-                        setIsLinked(true);
-                        sessionStorage.removeItem('pendingBoardLink');
-                    }
 
                     router.replace(`/board/${newId}`);
                 }
             } else {
-                // UPDATE — persist link info to backend
                 await updateBoardAction(localId, projectPayload);
             }
         } catch (error) {
@@ -584,7 +577,7 @@ export default function TacticalBoard({ initialBoards }: { initialBoards?: Proje
                     {/* Board Name Input */}
                     <Input
                         type="text"
-                        value={currentProject.name}
+                        value={getBoardName(currentProject.name)}
                         onChange={handleProjectNameChange}
                         className="bg-gray-700 text-white h-8 border-gray-600 focus-visible:ring-primary w-32 sm:w-48"
                     />
@@ -594,6 +587,8 @@ export default function TacticalBoard({ initialBoards }: { initialBoards?: Proje
                         <BoardBreadcrumb 
                             boardId={currentProject.id} 
                             boardName={currentProject.name} 
+                            linkedMatchId={currentProject.linkedMatchId}
+                            linkedTagId={currentProject.linkedTagId}
                         />
                     )}
                 </div>

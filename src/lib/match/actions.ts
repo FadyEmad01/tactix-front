@@ -111,6 +111,7 @@ export async function fetchMatchById(matchId: string): Promise<Project | null> {
       teamB: match.teamB ?? "Team B",
       teamBLogo: match.teamBLogo ?? "",
       matchResult: match.matchResult ?? "",
+      videoUrl: match.videoUrl ?? null,
       tags: Array.isArray(match.tags) ? match.tags : [],
       matchDate: match.matchDate ?? undefined,
       createdAt: match.createdAt ?? new Date().toISOString(),

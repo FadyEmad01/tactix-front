@@ -9,13 +9,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Project } from "@/types/tactical-board";
-import { BoardType } from "@/types/board-link";
 import BoardPreview from "./BoardPreview";
 import { CreateBoardModal } from "./CreateBoardModal";
 import { deleteBoardAction, createBoardAction } from "@/app/(dashboard)/board/actions";
 import { fetchMatchById } from "@/lib/match/actions";
 import { fetchPanels } from "@/lib/panel/panel-actions";
-import { saveBoardLink, getBoardLink, getBoardLinks } from "@/lib/board-link/local-storage";
+import { encodeBoardName, decodeBoardName, isBoardLinked as isBoardLinkedHelper, getBoardName } from "@/lib/board-name";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,14 +45,21 @@ export default function BoardsDashboard({ initialProjects = [] }: { initialProje
 
   const handleCreateBoard = async (
     name: string,
-    boardType: BoardType,
+    boardType: 'individual' | 'linked',
     projectId?: string,
     tagId?: string
   ) => {
     try {
+      const displayName = name || "Untitled Board";
+      const encodedName = encodeBoardName(
+        boardType === 'linked' ? projectId : undefined,
+        boardType === 'linked' ? tagId : undefined,
+        displayName,
+      );
+
       const newBoard = await createBoardAction({
         id: "",
-        name: name || "Untitled Board",
+        name: encodedName,
         fieldType: "full",
         fieldRotation: 0,
         createdAt: Date.now(),
@@ -88,10 +94,6 @@ export default function BoardsDashboard({ initialProjects = [] }: { initialProje
       const newId = newBoard?.data?._id || newBoard?.data?.id || newBoard?._id || newBoard?.id;
 
       if (newId) {
-        // Save link if it's a linked board
-        if (boardType === 'linked' && projectId && tagId) {
-          saveBoardLink(newId, projectId, tagId);
-        }
         router.push(`/board/${newId}`);
       } else {
         console.error("Backend did not return an ID:", newBoard);
@@ -116,9 +118,7 @@ export default function BoardsDashboard({ initialProjects = [] }: { initialProje
   };
 
   function isBoardLinked(p: Project): boolean {
-    const links = getBoardLinks();
-    const linkedIds = new Set(links.map(l => l.boardId));
-    return linkedIds.has(p.id) || linkedIds.has((p as any)._id) || !!(p.linkedMatchId && p.linkedTagId);
+    return isBoardLinkedHelper(p);
   }
 
   const filteredProjects = useMemo(() => {
@@ -219,43 +219,41 @@ function BoardCard({ project, onDelete }: { project: Project; onDelete: (id: str
   const [linkDisplay, setLinkDisplay] = useState<LinkDisplay | null>(null);
   
   const identifier = (project as any)._id || project.id;
+  const decodedName = decodeBoardName(project.name ?? '');
+  const displayName = decodedName.displayName || project.name || "Untitled Board";
   const createdAt = new Date(project.createdAt || Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
   useEffect(() => {
-    const link = getBoardLink(identifier);
-    const boardLink = link || (project.linkedMatchId && project.linkedTagId ? {
-      boardId: identifier,
-      projectId: project.linkedMatchId,
-      tagId: project.linkedTagId,
-      linkedAt: Date.now()
-    } : null);
+    const matchId = project.linkedMatchId || decodedName.matchId;
+    const tagId = project.linkedTagId || (project as any).tagId || decodedName.tagId;
+    if (!matchId || !tagId) {
+      setLinkDisplay(null);
+      return;
+    }
 
-    if (boardLink) {
-      (async () => {
-        const match = await fetchMatchById(boardLink.projectId);
-        if (!match) return;
+    (async () => {
+      const match = await fetchMatchById(matchId);
+      if (!match) return;
 
-        // Try panel lookup first (legacy), then BackendTag lookup
-        const panels = await fetchPanels();
-        const panel = panels.find(p => p.id === boardLink.tagId);
+      const panels = await fetchPanels();
+      const panel = panels.find(p => p.id === tagId);
 
-        if (panel) {
+      if (panel) {
+        setLinkDisplay({
+          projectName: match.name,
+          tagName: panel.title,
+        });
+      } else {
+        const backendTag = match.tags?.find(t => t._id === tagId);
+        if (backendTag) {
           setLinkDisplay({
             projectName: match.name,
-            tagName: panel.title,
+            tagName: backendTag.event,
           });
-        } else {
-          const backendTag = match.tags?.find(t => t._id === boardLink.tagId);
-          if (backendTag) {
-            setLinkDisplay({
-              projectName: match.name,
-              tagName: backendTag.event,
-            });
-          }
         }
-      })();
-    }
-  }, [identifier, project.linkedMatchId, project.linkedTagId]);
+      }
+    })();
+  }, [project.linkedMatchId, project.linkedTagId, decodedName.matchId, decodedName.tagId]);
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -286,7 +284,7 @@ function BoardCard({ project, onDelete }: { project: Project; onDelete: (id: str
 
         <CardContent className="flex flex-col flex-1 p-4 gap-2">
           <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-foreground/90 line-clamp-1 truncate pr-2">{project.name || "Untitled Board"}</h3>
+            <h3 className="font-semibold text-foreground/90 line-clamp-1 truncate pr-2">{displayName}</h3>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

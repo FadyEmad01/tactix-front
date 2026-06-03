@@ -1,0 +1,30 @@
+import { NextResponse } from "next/server";
+
+export async function POST(req: Request) {
+  const body = await req.json();
+
+  const res = await fetch(`${process.env.API_URL}/api/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  const result = await res.json();
+
+  if (!res.ok) {
+    return NextResponse.json(result, { status: res.status });
+  }
+
+  const response = NextResponse.json(result);
+
+  if (result.token) {
+    response.cookies.set("token", result.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/",
+    });
+  }
+
+  return response;
+}

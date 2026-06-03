@@ -33,7 +33,7 @@
 
 
 import MatchVideoEditor from "@/components/video-editor/MatchVideoEditor";
-import { fetchMatchById } from "@/lib/matches";
+import { fetchMatchById } from "@/lib/match/actions";
 import { fetchPanels } from "@/lib/panel/panel-actions";
 import { notFound } from "next/navigation";
 

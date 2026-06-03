@@ -5,10 +5,10 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus, LayoutGrid, ArrowUpRight } from 'lucide-react';
-import { getBoardsByTag } from '@/lib/board-link/local-storage';
-import { getBoardByIdAction, getBoardsAction } from '@/app/(dashboard)/board/actions';
+import { getBoardsAction } from '@/app/(dashboard)/board/actions';
 import { Project as BoardProject } from '@/types/tactical-board';
 import BoardPreview from '@/components/board/BoardPreview';
+import { decodeBoardName, getBoardName, isBoardLinked as isBoardLinkedHelper } from '@/lib/board-name';
 
 interface LinkedBoardsSectionProps {
   projectId: string;
@@ -27,24 +27,14 @@ export function LinkedBoardsSection({ projectId, tagId }: LinkedBoardsSectionPro
   const loadLinkedBoards = async () => {
     setLoading(true);
     try {
-      const boardIds = getBoardsByTag(projectId, tagId);
-      let boards: BoardProject[] = [];
-
-      if (boardIds.length > 0) {
-        boards = await Promise.all(
-          boardIds.map(id => getBoardByIdAction(id))
+      const allBoards = await getBoardsAction();
+      const boards = allBoards.filter((b: BoardProject) => {
+        const decoded = decodeBoardName(b.name ?? '');
+        return (
+          (b.linkedMatchId === projectId && b.linkedTagId === tagId) ||
+          (decoded.matchId === projectId && decoded.tagId === tagId)
         );
-        boards = boards.filter(Boolean) as BoardProject[];
-      }
-
-      // Also check backend-persisted links
-      if (boards.length === 0) {
-        const allBoards = await getBoardsAction();
-        boards = allBoards.filter(
-          (b: BoardProject) => b.linkedMatchId === projectId && b.linkedTagId === tagId
-        );
-      }
-
+      });
       setLinkedBoards(boards);
     } catch (error) {
       console.error('Failed to load linked boards:', error);
@@ -53,12 +43,7 @@ export function LinkedBoardsSection({ projectId, tagId }: LinkedBoardsSectionPro
   };
 
   const handleCreateBoard = () => {
-    // Navigate to board creation with pre-filled link info
-    sessionStorage.setItem('pendingBoardLink', JSON.stringify({
-      projectId,
-      tagId
-    }));
-    router.push('/board/new?linked=true');
+    router.push('/board');
   };
 
   const handleOpenBoard = (boardId: string) => {
@@ -115,7 +100,7 @@ export function LinkedBoardsSection({ projectId, tagId }: LinkedBoardsSectionPro
                 <BoardPreview project={board} />
               </div>
               <div className="p-2">
-                <p className="text-xs font-medium truncate">{board.name}</p>
+                <p className="text-xs font-medium truncate">{getBoardName(board.name)}</p>
                 <div className="flex items-center gap-1 mt-1 text-[10px] text-muted-foreground opacity-0 group-hover:opacity-100 transition">
                   <span>Open board</span>
                   <ArrowUpRight className="size-3" />
