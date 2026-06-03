@@ -21,7 +21,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { fetchMatches, fetchMatchById } from '@/lib/match/actions';
 import { Project as MatchProject, BackendTag } from '@/types/match';
-import { BoardType } from '@/types/board-link';
+type BoardType = 'individual' | 'linked';
 
 interface CreateBoardModalProps {
   isOpen: boolean;

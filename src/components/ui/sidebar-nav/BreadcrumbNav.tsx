@@ -9,50 +9,59 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { usePathname } from "next/navigation";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { NAVIGATION_DATA } from "@/constant/SIDEBAR_NAVIGATION_DATA";
-import { SETTINGS_NAV_ITEMS } from "@/constant/SETTINGS"; // <-- import your settings items
+import { SETTINGS_NAV_ITEMS } from "@/constant/SETTINGS";
+import { fetchMatchById } from "@/lib/match/actions";
 
 export default function BreadcrumbNav() {
   const pathname = usePathname();
+  const [matchName, setMatchName] = useState<string | null>(null);
 
   const videoEditorMatch = pathname.match(/^\/video-editor\/([^/]+)$/);
+  const boardMatch = pathname.match(/^\/board\/([^/]+)$/);
   const matchId = videoEditorMatch ? videoEditorMatch[1] : "";
 
+  useEffect(() => {
+    if (matchId) {
+      fetchMatchById(matchId).then((match) => {
+        setMatchName(match?.name ?? null);
+      });
+    }
+  }, [matchId]);
+
   const breadcrumbItems: { title: string; url?: string }[] = [];
-
-
 
   // Always start with Home
   breadcrumbItems.push({ title: "Home", url: "/" });
 
- // ================================
+  // ================================
   // 1) VIDEO EDITOR ROUTES (Dynamic)
   // ================================
   if (videoEditorMatch && matchId) {
-    breadcrumbItems.push({
-      title: "Projects",
-      url: "/projects",
-    });
-    breadcrumbItems.push({
-      title: "Video Tagging",
-    });
+    breadcrumbItems.push({ title: "Projects", url: "/projects" });
+    if (matchName) {
+      breadcrumbItems.push({ title: matchName });
+    }
+    breadcrumbItems.push({ title: "Video Tagging" });
   }
 
   // ================================
-  // 2) SETTINGS ROUTES
+  // 2) BOARD ROUTES (Dynamic)
+  // ================================
+  else if (boardMatch) {
+    breadcrumbItems.push({ title: "Tactical Boards" });
+  }
+
+  // ================================
+  // 3) SETTINGS ROUTES
   // ================================
   else if (pathname.startsWith("/settings")) {
-    // If NOT on /settings → add parent
     if (pathname !== "/settings") {
-      breadcrumbItems.push({
-        title: "Settings",
-        url: "/settings",
-      });
+      breadcrumbItems.push({ title: "Settings", url: "/settings" });
     }
 
-    // Try to match this page
     const currentSetting = SETTINGS_NAV_ITEMS.find(
       (item) => item.href === pathname
     );
@@ -68,7 +77,7 @@ export default function BreadcrumbNav() {
   }
 
   // ================================
-  // 3) STATIC ROUTES FROM NAVIGATION_DATA
+  // 4) STATIC ROUTES FROM NAVIGATION_DATA
   // ================================
   else {
     const allItems = NAVIGATION_DATA.navMain.flatMap(
@@ -82,7 +91,6 @@ export default function BreadcrumbNav() {
     } else if (pathname === "/") {
       // Already has Home
     } else {
-      // Anything else → fallback
       breadcrumbItems.push({ title: "Unknown" });
     }
   }

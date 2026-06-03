@@ -2169,7 +2169,7 @@ function TagItem({
         eventName: tag.eventName,
       })
     );
-    router.push("/board/new?linked=true");
+    router.push("/board");
   };
 
   return (

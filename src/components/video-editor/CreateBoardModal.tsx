@@ -18,7 +18,8 @@ import {
   linkTagToBoard,
   verifyTagUpload,
 } from '@/lib/match/actions';
-import { updateBoardAction } from '@/app/(dashboard)/board/actions';
+import { updateBoardAction, getBoardByIdAction } from '@/app/(dashboard)/board/actions';
+import { encodeBoardName } from '@/lib/board-name';
 import type { Tag as VideoTag } from '@/types/video-editor';
 
 interface CreateBoardModalProps {
@@ -113,8 +114,10 @@ export default function CreateBoardModal({
         setStep({ kind: 'checking-board' });
         const existing = await getTagBoard(tagId);
         if (existing.success) {
-          // Ensure the board has linkedMatchId/linkedTagId in its JSON
+          const existingBoard = await getBoardByIdAction(existing.boardId);
+          const existingName = existingBoard?.name ?? 'Tactical Board';
           await updateBoardAction(existing.boardId, {
+            name: encodeBoardName(matchId, tagId, existingName),
             linkedMatchId: matchId,
             linkedTagId: tagId,
             updatedAt: Date.now(),
@@ -169,7 +172,10 @@ export default function CreateBoardModal({
         }
 
         // Persist link info in the board's JSON
+        const newBoard = await getBoardByIdAction(linked.boardId);
+        const newBoardName = newBoard?.name ?? 'Tactical Board';
         await updateBoardAction(linked.boardId, {
+          name: encodeBoardName(matchId, tagId, newBoardName),
           linkedMatchId: matchId,
           linkedTagId: tagId,
           updatedAt: Date.now(),

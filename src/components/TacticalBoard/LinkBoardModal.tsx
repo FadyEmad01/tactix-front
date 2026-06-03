@@ -20,7 +20,8 @@ import { Label } from '@/components/ui/label';
 import { RefreshCw, AlertCircle } from 'lucide-react';
 import { fetchMatches, fetchMatchById } from '@/lib/match/actions';
 import { Project as MatchProject, BackendTag } from '@/types/match';
-import { saveBoardLink } from '@/lib/board-link/local-storage';
+import { updateBoardAction } from '@/app/(dashboard)/board/actions';
+import { encodeBoardName, decodeBoardName } from '@/lib/board-name';
 
 interface LinkBoardModalProps {
   boardId: string;
@@ -85,20 +86,31 @@ export function LinkBoardModal({ boardId, boardName, isOpen, onClose, onLinked }
     loadMatchTags();
   }, [selectedProject]);
 
-  const handleLink = () => {
+  const handleLink = async () => {
     if (!selectedProject || !selectedTag) return;
-    
-    // Save to localStorage
-    saveBoardLink(boardId, selectedProject, selectedTag);
-    
-    // Reset and close
-    const projectId = selectedProject;
-    const tagId = selectedTag;
-    setSelectedProject('');
-    setSelectedTag('');
-    setMatchTags([]);
-    onLinked(projectId, tagId);
-    onClose();
+
+    try {
+      const decoded = decodeBoardName(boardName);
+      const displayName = decoded.displayName || boardName;
+      const encodedName = encodeBoardName(selectedProject, selectedTag, displayName);
+
+      await updateBoardAction(boardId, {
+        name: encodedName,
+        linkedMatchId: selectedProject,
+        linkedTagId: selectedTag,
+        updatedAt: Date.now(),
+      } as any);
+
+      const projectId = selectedProject;
+      const tagId = selectedTag;
+      setSelectedProject('');
+      setSelectedTag('');
+      setMatchTags([]);
+      onLinked(projectId, tagId);
+      onClose();
+    } catch (err) {
+      console.error('Failed to link board:', err);
+    }
   };
 
   const canLink = !!selectedProject && !!selectedTag;
@@ -109,7 +121,7 @@ export function LinkBoardModal({ boardId, boardName, isOpen, onClose, onLinked }
         <DialogHeader>
           <DialogTitle>Link Board to Project</DialogTitle>
           <DialogDescription>
-            Link &quot;{boardName}&quot; to a project tag. This will convert it to a linked board.
+            Link &quot;{decodeBoardName(boardName).displayName || boardName}&quot; to a project tag. This will convert it to a linked board.
           </DialogDescription>
         </DialogHeader>
         
