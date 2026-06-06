@@ -266,7 +266,7 @@ const Toolbar = memo(() => {
       <div className="h-px bg-gray-700 my-2" />
 
       {/* Formation Quick Apply */}
-      <div className="relative">
+      {/* <div className="relative">
         <Button
           variant="ghost"
           size="icon"
@@ -320,7 +320,7 @@ const Toolbar = memo(() => {
             </div>
           </div>
         )}
-      </div>
+      </div> */}
 
       {/* Clear Canvas */}
       <Button
