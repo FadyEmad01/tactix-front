@@ -65837,12 +65837,5 @@ export const LEAGUES = [
             "teamB_logo": "https://brandlogos.net/wp-content/uploads/2014/12/celta_vigo-logo_brandlogos.net_kg8rd-768x768.png"
           }
           ]
-    },
-    {
-        id: "masry",
-        name: "masry",
-        teams: [
-            {}
-        ]
     }
 ];
