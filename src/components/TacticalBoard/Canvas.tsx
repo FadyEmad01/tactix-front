@@ -65,6 +65,11 @@ const Canvas = memo(() => {
     return Math.max(scale, 0.5);
   }, [canvasSize.width]);
 
+  // Aspect ratio for correcting angle/perpendicular math in stretched SVG space
+  const aspectRatio = useMemo(() => {
+    return fieldRotation === 90 || fieldRotation === 270 ? 10 / 16 : 16 / 10;
+  }, [fieldRotation]);
+
   // Convert screen coordinates to canvas percentage
   const screenToCanvas = useCallback((clientX: number, clientY: number): Point => {
     if (!canvasRef.current) return { x: 0, y: 0 };
@@ -193,7 +198,7 @@ const Canvas = memo(() => {
         const midY = (lineStart.y + point.y) / 2;
         const dx = point.x - lineStart.x;
         const dy = point.y - lineStart.y;
-        setCurveControl({ x: midX - dy * 0.3, y: midY + dx * 0.3 });
+        setCurveControl({ x: midX - (dy * 0.3) / aspectRatio, y: midY + (dx * 0.3) * aspectRatio });
       }
     }
   }, [isPanning, panStart, isDrawing, activeTool, lineStart, screenToCanvas, eraseAtPosition, toolSettings, setPan, getEventCoords]);
@@ -289,9 +294,9 @@ const Canvas = memo(() => {
 
     let angle: number;
     if (control) {
-      angle = Math.atan2(end.y - control.y, end.x - control.x);
+      angle = Math.atan2(end.y - control.y, (end.x - control.x) * aspectRatio);
     } else {
-      angle = Math.atan2(end.y - start.y, end.x - start.x);
+      angle = Math.atan2(end.y - start.y, (end.x - start.x) * aspectRatio);
     }
 
     const size = thickness * 3;
@@ -462,11 +467,12 @@ const Canvas = memo(() => {
 
           {/* Eraser Cursor */}
           {activeTool === 'eraser' && (
-            <circle
+            <ellipse
               data-export-hide
               cx="50"
               cy="50"
-              r={toolSettings.eraserSize}
+              rx={toolSettings.eraserSize / aspectRatio}
+              ry={toolSettings.eraserSize}
               fill="none"
               stroke="rgba(255,255,255,0.5)"
               strokeWidth="0.5"
