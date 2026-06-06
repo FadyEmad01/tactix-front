@@ -59,7 +59,7 @@ import { Project } from "@/types/match";
 import { Badge } from "../ui/badge";
 import { LEAGUES } from "@/constant/leagues";
 import { SearchableSelect } from "./SearchableSelect";
-import { cn } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 interface MatchesDashboardProps {
@@ -545,7 +545,7 @@ function ProjectCard({
     <Avatar className="h-12 w-12 border-2 border-background shadow-sm bg-muted">
       <AvatarImage src={url} alt={name} className="object-contain p-1" />
       <AvatarFallback className="font-bold text-muted-foreground bg-muted text-xs">
-        {name.substring(0, 2).toUpperCase()}
+        {getInitials(name)}
       </AvatarFallback>
     </Avatar>
   );

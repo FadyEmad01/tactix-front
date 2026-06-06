@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { CheckIcon, ChevronDownIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Popover,
   PopoverTrigger,
@@ -62,19 +63,20 @@ export function SearchableSelect({
                 {/* Logo Logic for Trigger */}
                 <div className="flex items-center -space-x-2 shrink-0">
                     {selectedItem.logo && (
-                    <img
-                        src={selectedItem.logo}
-                        alt="logo A"
-                        // className="size-8 bg-white/20 backdrop-blur-sm p-[1px] border border-border rounded-full object-scale-down"
-                        className="size-6 object-scale-down"
-                    />
+                      <Avatar className="size-6">
+                        <AvatarImage src={selectedItem.logo} alt="Team A" className="object-scale-down" />
+                        <AvatarFallback className="text-[8px] font-bold">
+                          {getInitials(selectedItem.name.split(" vs ")[0])}
+                        </AvatarFallback>
+                      </Avatar>
                     )}
                     {selectedItem.secondaryLogo && (
-                    <img
-                        src={selectedItem.secondaryLogo}
-                        alt="logo B"
-                        className="size-8 object-scale-down"
-                    />
+                      <Avatar className="size-8">
+                        <AvatarImage src={selectedItem.secondaryLogo} alt="Team B" className="object-scale-down" />
+                        <AvatarFallback className="text-[10px] font-bold">
+                          {getInitials(selectedItem.name.split(" vs ")[1])}
+                        </AvatarFallback>
+                      </Avatar>
                     )}
                 </div>
                 
@@ -120,19 +122,20 @@ export function SearchableSelect({
                     {(item.logo || item.secondaryLogo) && (
                         <div className="flex items-center -space-x-2 shrink-0">
                             {item.logo && (
-                                <img
-                                src={item.logo}
-                                // className="size-8 bg-white/20 backdrop-blur-sm p-[1px] border border-border rounded-full object-scale-down"
-                                className="size-8 object-scale-down"
-                                alt="Team A"
-                                />
+                              <Avatar className="size-8">
+                                <AvatarImage src={item.logo} alt="Team A" className="object-scale-down" />
+                                <AvatarFallback className="text-[10px] font-bold">
+                                  {getInitials(item.name.split(" vs ")[0])}
+                                </AvatarFallback>
+                              </Avatar>
                             )}
                             {item.secondaryLogo && (
-                                <img
-                                src={item.secondaryLogo}
-                                className="size-8 object-scale-down"
-                                alt="Team B"
-                                />
+                              <Avatar className="size-8">
+                                <AvatarImage src={item.secondaryLogo} alt="Team B" className="object-scale-down" />
+                                <AvatarFallback className="text-[10px] font-bold">
+                                  {getInitials(item.name.split(" vs ")[1])}
+                                </AvatarFallback>
+                              </Avatar>
                             )}
                         </div>
                     )}

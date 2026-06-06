@@ -24,6 +24,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "../avatar";
 import LogoutFunctionWrap from "@/components/auth/LogoutFunctionWrap";
 import Link from "next/link";
+import { getInitials } from "@/lib/utils";
 
 export function NavUser({
   user,
@@ -35,20 +36,6 @@ export function NavUser({
   };
 }) {
   const { isMobile } = useSidebar();
-
-  const getInitials = (name?: string) => {
-  if (!name) return "";
-
-  const parts = name.trim().split(" ");
-
-  if (parts.length === 1) {
-    return parts[0][0].toUpperCase(); 
-  }
-
-  return (
-    parts[0][0] + parts[parts.length - 1][0]
-  ).toUpperCase(); 
-};
 
   return (
     <SidebarMenu>
